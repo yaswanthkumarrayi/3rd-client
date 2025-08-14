@@ -15,7 +15,7 @@ const ShippingPolicy = () => (
       <p className="text-muted-foreground max-w-2xl mx-auto mb-2 text-center">
         We are committed to delivering your beautiful sarees safely and efficiently. Learn about our shipping process, timelines, and policies below.
       </p>
-      <p className="text-sm text-gray-500 mb-2 text-center">Last updated: August 13, 2025</p>
+      <p className="text-sm text-gray-500 mb-2 text-center">Last updated: August 14, 2025</p>
       
       <SectionTitle>Free Shipping All Over India! 🇮🇳</SectionTitle>
       <p className="text-pink-700 font-semibold mb-4 text-center">

@@ -22,8 +22,7 @@ const Footer = () => {
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-4 font-heading">Stay in Style</h2>
             <p className="text-fuchsia-200 mb-6 font-inter">
-              Subscribe to our newsletter and be the first to know about new collections, 
-              exclusive offers, and styling tips.
+              Embrace the beauty of heritage craftsmanship, designed to reflect your unique style in every drape.
             </p>
             <p className="text-sm text-fuchsia-300 mb-6 font-inter">Join 10,000+ fashion enthusiasts</p>
             {/* <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
@@ -45,7 +44,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
-            <h3 className="text-2xl font-bold mb-4 font-heading">Ashok Textiles</h3>
+            <h3 className="text-2xl font-bold mb-4 font-heading">Ashok Kumar Textiles</h3>
             <p className="text-fuchsia-200 mb-6 leading-relaxed font-normal">
               Artistry in every drape - handpicked, handcrafted and unique. 
               We have sarees for every occasion ranging from festivals, cocktail parties, 

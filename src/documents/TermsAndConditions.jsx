@@ -16,7 +16,7 @@ const TermsAndConditions = () => (
       <p className="text-sm text-gray-500 mb-2 text-center">Last updated: August 14, 2025</p>
       <SectionTitle>Acceptance of Terms</SectionTitle>
       <p className="text-gray-700 mb-4">
-        By accessing and using the VedhaTrendz website, placing orders, or using our services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use our website or services.
+        By accessing and using the Ashok Kumar textiles website, placing orders, or using our services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use our website or services.
       </p>
       <SectionTitle>Important Notice</SectionTitle>
       <ul className="list-disc ml-6 text-pink-700 mb-4">
@@ -33,7 +33,7 @@ const TermsAndConditions = () => (
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Order Confirmation</p>
       <p className="text-gray-700 mb-4">
-        Once your payment is successfully processed, you will receive an order confirmation email. This confirmation constitutes acceptance of your order and creates a binding contract between you and VedhaTrendz.
+        Once your payment is successfully processed, you will receive an order confirmation email. This confirmation constitutes acceptance of your order and creates a binding contract between you and Ashok Kumar Textiles.
       </p>
       <p className="text-gray-700 mb-2 font-semibold">Pricing and Availability</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
@@ -48,7 +48,6 @@ const TermsAndConditions = () => (
       <p className="text-gray-700 mb-2 font-semibold">Delivery Timeline</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
         <li>India: 8-9 working days after dispatch</li>
-        <li>International: 10-12 working days after dispatch</li>
         <li>Free shipping available all over India</li>
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Delivery Conditions</p>
@@ -78,7 +77,7 @@ const TermsAndConditions = () => (
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Exchange Process</p>
       <p className="text-gray-700 mb-4">
-        If your exchange request is approved, you will need to courier the dress back to us. Shipping charges for the return will be paid by VedhaTrendz if the damage is confirmed.
+        If your exchange request is approved, you will need to courier the dress back to us. Shipping charges for the return will be paid by Ashok kumar Textiles if the damage is confirmed.
       </p>
       <SectionTitle>Product Information and Accuracy</SectionTitle>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
@@ -99,7 +98,7 @@ const TermsAndConditions = () => (
       </ul>
       <SectionTitle>Intellectual Property Rights</SectionTitle>
       <p className="text-gray-700 mb-4">
-        All content on this website, including text, graphics, logos, images, and software, is the property of VedhaTrendz or its content suppliers and is protected by Indian and international copyright laws. You may not reproduce, distribute, or use any content without our express written permission.
+        All content on this website, including text, graphics, logos, images, and software, is the property of Ashok Kumar textiles or its content suppliers and is protected by Indian and international copyright laws. You may not reproduce, distribute, or use any content without our express written permission.
       </p>
       <SectionTitle>Privacy and Data Protection</SectionTitle>
       <p className="text-gray-700 mb-4">

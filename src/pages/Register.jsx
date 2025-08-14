@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { auth, googleProvider } from "../firebase";
 import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { Mail, Lock, Eye, EyeOff, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Eye, EyeOff, X } from "lucide-react";
 
 const Register = ({ onClose, onSwitchToLogin }) => {
   const [email, setEmail] = useState("");
@@ -10,14 +10,12 @@ const Register = ({ onClose, onSwitchToLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
   const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       alert("Registration successful!");
-      navigate("/");
       if (onClose) onClose();
     } catch (error) {
       alert(error.message);
@@ -31,7 +29,6 @@ const Register = ({ onClose, onSwitchToLogin }) => {
     try {
       await signInWithPopup(auth, googleProvider);
       alert("Google registration successful!");
-      navigate("/");
       if (onClose) onClose();
     } catch (error) {
       alert(error.message);
@@ -68,14 +65,14 @@ const Register = ({ onClose, onSwitchToLogin }) => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                 <input
                   type="email"
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200 bg-white text-gray-900 placeholder-gray-500"
                 />
               </div>
             </div>
@@ -86,19 +83,19 @@ const Register = ({ onClose, onSwitchToLogin }) => {
                 Password
               </label>
               <div className="relative">
-                <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Lock size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black" />
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200 bg-white text-gray-900 placeholder-gray-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black hover:text-fuchsia-600 transition-colors duration-200"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -162,7 +159,8 @@ const Register = ({ onClose, onSwitchToLogin }) => {
               Already have an account?{" "}
               <button
                 onClick={() => navigate("/login")}
-               className="text-fuchsia-600 hover:text-fuchsia-700 font-semibold transition-colors duration-200">
+                className="text-fuchsia-600 hover:text-fuchsia-700 font-semibold transition-colors duration-200"
+              >
                 Sign In
               </button>
             </p>
