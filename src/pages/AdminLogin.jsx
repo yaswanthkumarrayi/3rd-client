@@ -11,8 +11,8 @@ export default function AdminLogin() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Demo credentials (replace with backend auth in production)
-  const correctPhone = '9392980823';
-  const correctPassword = 'yash123';
+  const correctPhone = '9704447536';
+  const correctPassword = 'ashok@123';
 
   const handleLogin = async (e) => {
     e.preventDefault();
