@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, ShoppingCart, Menu, X, LogOut, Settings } from 'lucide-react';
+import { User, ShoppingCart, Menu, X, LogOut, Settings, ShoppingBag } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Register from '../pages/Register';
 import { useNavigate } from "react-router-dom";
 import Login from '../pages/Login';
+
 const Header = () => {
   const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -45,16 +46,25 @@ const Header = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.user-menu') && !event.target.closest('.user-button')) {
-        setShowUserMenu(false);
-      }
-      if (!event.target.closest('.mobile-menu') && !event.target.closest('.mobile-menu-button')) {
+      // Only close if click is outside BOTH the menu and the button
+      if (
+        showMobileMenu &&
+        !event.target.closest('.mobile-menu') &&
+        !event.target.closest('.mobile-menu-button')
+      ) {
         setShowMobileMenu(false);
+      }
+      if (
+        showUserMenu &&
+        !event.target.closest('.user-menu') &&
+        !event.target.closest('.user-button')
+      ) {
+        setShowUserMenu(false);
       }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  }, [showMobileMenu, showUserMenu]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -71,7 +81,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-white shadow-md sticky top-0 z-40 border-b border-gray-200">
+      <header className="bg-white shadow-lg fixed top-0 left-0 w-full z-40 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo Section */}
@@ -85,6 +95,7 @@ const Header = () => {
                 </p>
               </div>
             </div>
+
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {menuItems.map((item) => (
@@ -98,6 +109,7 @@ const Header = () => {
                 </a>
               ))}
             </nav>
+
             {/* Actions Section */}
             <div className="flex items-center space-x-3 lg:space-x-4">
               {/* User Menu */}
@@ -105,107 +117,240 @@ const Header = () => {
                 <button
                   onClick={() => {
                     if (!user) {
-                      setShowRegister(true); // Show Register modal
+                      setShowRegister(true);
                     } else {
-                      setShowUserMenu((prev) => !prev); // Toggle user menu
+                      setShowUserMenu((prev) => !prev);
                     }
                   }}
-                  className="user-button flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-black hover:text-fuchsia-600 transition-all duration-200 transform hover:scale-105"
+                  className="user-button flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-gray-700 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-full transition-all duration-200 transform hover:scale-105"
                 >
                   <User size={20} />
                 </button>
-                {/* User Dropdown */}
+
+                {/* Enhanced User Dropdown */}
                 {showUserMenu && user && (
-                  <div className="user-menu absolute right-0 mt-3 w-72 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
-                    <div className="px-4 py-3 border-b border-gray-200">
+                  <div className="user-menu absolute right-0 mt-3 w-80 sm:w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-1 z-50 transform opacity-100 scale-100 animate-in duration-200">
+                    {/* User Info Header */}
+                    <div className="px-4 py-4 border-b border-gray-100 bg-gradient-to-r from-fuchsia-50 to-purple-50 rounded-t-2xl">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <User size={18} className="text-fuchsia-600" />
+                        <div className="w-12 h-12 flex items-center justify-center bg-gradient-to-r from-fuchsia-600 to-purple-600 rounded-full shadow-md">
+                          <User size={20} className="text-white" />
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">{user.email}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-800 truncate text-sm">
+                            {user.email}
+                          </p>
+                          <p className="text-xs text-gray-500">Welcome back!</p>
                         </div>
                       </div>
                     </div>
+
                     <div className="py-2">
+                      {/* Profile Information */}
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
                           navigate("/user");
                         }}
-                        className="w-full px-4 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-colors duration-200 flex items-center space-x-3"
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 hover:text-fuchsia-700 transition-all duration-200 flex items-center space-x-3 group"
                       >
-                        <Settings size={18} />
-                        <span>Profile Information</span>
+                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-fuchsia-100 rounded-full transition-colors duration-200">
+                          <Settings size={16} />
+                        </div>
+                        <span className="font-medium">Profile Settings</span>
                       </button>
+
+                      {/* Your Orders */}
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          navigate("/orders");
+                        }}
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 hover:text-fuchsia-700 transition-all duration-200 flex items-center space-x-3 group"
+                      >
+                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-fuchsia-100 rounded-full transition-colors duration-200">
+                          <ShoppingBag size={16} />
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">Your Orders</span>
+                          <p className="text-xs text-gray-500">Track & manage orders</p>
+                        </div>
+                      </button>
+
+                      Your Cart
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
                           navigate("/cart");
                         }}
-                        className="w-full px-4 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-colors duration-200 flex items-center space-x-3"
+                        className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 hover:text-fuchsia-700 transition-all duration-200 flex items-center space-x-3 group"
                       >
-                        <ShoppingCart size={18} />
-                        <span>Your Cart</span>
-                        {cartCount > 0 && (
-                          <span className="ml-2 bg-fuchsia-600 text-white text-xs rounded-full px-2 py-0.5 font-bold">
-                            {cartCount}
-                          </span>
-                        )}
+                        <div className="w-8 h-8 flex items-center justify-center bg-gray-100 group-hover:bg-fuchsia-100 rounded-full transition-colors duration-200 relative">
+                          <ShoppingCart size={16} />
+                          {cartCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-fuchsia-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold text-[10px]">
+                              {cartCount}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-medium">Shopping Cart</span>
+                          <p className="text-xs text-gray-500">
+                            {cartCount === 0 ? 'Empty cart' : `${cartCount} item${cartCount > 1 ? 's' : ''}`}
+                          </p>
+                        </div>
                       </button>
+
+                      {/* Divider */}
+                      <div className="border-t border-gray-100 my-2"></div>
+
+                      {/* Sign Out */}
                       <button
                         onClick={handleLogout}
-                        className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center space-x-3"
+                        className="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-3 group"
                       >
-                        <LogOut size={18} />
-                        <span>Sign Out</span>
+                        <div className="w-8 h-8 flex items-center justify-center bg-red-100 group-hover:bg-red-200 rounded-full transition-colors duration-200">
+                          <LogOut size={16} />
+                        </div>
+                        <span className="font-medium">Sign Out</span>
                       </button>
                     </div>
                   </div>
                 )}
               </div>
+
               {/* Cart Icon */}
               <div className="relative">
                 <button
                   onClick={() => navigate("/cart")}
-                  className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-black hover:text-fuchsia-600 transition-all duration-200 transform hover:scale-105"
+                  className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-gray-700 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-full transition-all duration-200 transform hover:scale-105"
                 >
                   <ShoppingCart size={20} />
                 </button>
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-fuchsia-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
-                    {cartCount}
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
+                    {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
               </div>
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="mobile-menu-button lg:hidden flex items-center justify-center w-10 h-10 text-black hover:text-fuchsia-600 transition-all duration-200 transform hover:scale-105"
+                className="mobile-menu-button lg:hidden flex items-center justify-center w-10 h-10 text-gray-700 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-full transition-all duration-200 transform hover:scale-105"
               >
                 {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
           </div>
         </div>
-        {/* Mobile Menu */}
+
+        {/* Enhanced Mobile Menu */}
         {showMobileMenu && (
-          <div className="mobile-menu lg:hidden bg-white border-t border-gray-200 shadow-lg">
-            <div className="px-4 py-3 space-y-1">
-              {menuItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setShowMobileMenu(false)}
-                  className="block px-4 py-3 text-gray-800 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-lg font-medium transition-all duration-200"
-                >
-                  {item.name}
-                </a>
-              ))}
+          <div
+            className="mobile-menu fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden"
+            onClick={() => setShowMobileMenu(false)}
+          >
+            <div
+              className="absolute top-16 left-0 w-full bg-white shadow-2xl max-h-[calc(100vh-4rem)] overflow-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="px-4 py-6 space-y-2">
+                {/* Navigation Links */}
+                <div className="space-y-1">
+                  {menuItems.map((item, index) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setShowMobileMenu(false)}
+                      className="block px-4 py-4 text-gray-800 hover:text-fuchsia-600 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 rounded-xl font-medium transition-all duration-200 transform hover:translate-x-1"
+                      style={{
+                        animationDelay: `${index * 50}ms`
+                      }}
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+
+                {/* User Section for Mobile */}
+                {user && (
+                  <>
+                    <div className="border-t border-gray-200 my-4"></div>
+                    <div className="space-y-1">
+                      <div className="px-4 py-3 bg-gradient-to-r from-fuchsia-50 to-purple-50 rounded-xl">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-r from-fuchsia-600 to-purple-600 rounded-full">
+                            <User size={18} className="text-white" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800 text-sm truncate max-w-48">
+                              {user.email}
+                            </p>
+                            <p className="text-xs text-gray-500">Account Menu</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          navigate("/user");
+                        }}
+                        className="w-full px-4 py-4 text-left text-gray-700 hover:text-fuchsia-600 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3"
+                      >
+                        <Settings size={18} />
+                        <span>Profile Settings</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          navigate("/orders");
+                        }}
+                        className="w-full px-4 py-4 text-left text-gray-700 hover:text-fuchsia-600 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3"
+                      >
+                        <ShoppingBag size={18} />
+                        <span>Your Orders</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          navigate("/cart");
+                        }}
+                        className="w-full px-4 py-4 text-left text-gray-700 hover:text-fuchsia-600 hover:bg-gradient-to-r hover:from-fuchsia-50 hover:to-purple-50 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3"
+                      >
+                        <ShoppingCart size={18} />
+                        <div className="flex items-center space-x-2">
+                          <span>Shopping Cart</span>
+                          {cartCount > 0 && (
+                            <span className="bg-fuchsia-600 text-white text-xs rounded-full px-2 py-0.5 font-bold">
+                              {cartCount}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          handleLogout();
+                        }}
+                        className="w-full px-4 py-4 text-left text-red-600 hover:bg-red-50 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3"
+                      >
+                        <LogOut size={18} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
       </header>
+
       {/* Register Modal */}
       {showRegister && (
         <Register
@@ -216,6 +361,8 @@ const Header = () => {
           }}
         />
       )}
+
+      {/* Login Modal */}
       {showLogin && (
         <Login
           onClose={() => setShowLogin(false)}
