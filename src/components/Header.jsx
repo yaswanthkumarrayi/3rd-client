@@ -12,6 +12,31 @@ const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
+  
+  useEffect(() => {
+    // Initial load
+    const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    setCartCount(items.length);
+
+    // Listen for cart changes from other tabs/windows
+    const handleStorage = () => {
+      const updatedItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      setCartCount(updatedItems.length);
+    };
+    window.addEventListener("storage", handleStorage);
+
+    // Listen for custom cart update events (for same tab)
+    const handleCartUpdate = () => {
+      const updatedItems = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      setCartCount(updatedItems.length);
+    };
+    window.addEventListener("cartUpdated", handleCartUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     // Get current Supabase user

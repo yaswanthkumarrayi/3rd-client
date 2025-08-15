@@ -14,6 +14,8 @@ import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import Product from "./pages/Product";
 import User from "./pages/User";
+import Orders from "./pages/Orders";
+
 
 
 const App = () => {
@@ -32,6 +34,7 @@ const App = () => {
             <Route path="/admin" element={<Admin />} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="/user" element={<User />} />
+            <Route path="/orders" element={<Orders />} />
           <Route path="/terms" element={<TermsAndConditions />} />
     <Route path="/privacy" element={<PrivacyPolicy />} />
     <Route path="/shipping" element={<ShippingPolicy />} />

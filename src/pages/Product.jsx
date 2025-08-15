@@ -5,7 +5,6 @@ import { ArrowLeft, Star, Heart, Share2, Truck, Shield, RotateCcw, ChevronLeft, 
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-
 const Product = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -57,13 +56,54 @@ const Product = () => {
     ? [product.hero_image_url, ...(product.featured_images || [])]
     : [];
 
-  function addToCart() {
-    const newCartCount = cartCount + quantity;
-    localStorage.setItem("cartCount", newCartCount);
-    setCartCount(newCartCount);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+function addToCart() {
+  const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+  const existingIndex = cart.findIndex(item => item.id === product.id);
+
+  if (existingIndex !== -1) {
+    // Product already in cart, update quantity
+    const currentQty = cart[existingIndex].quantity;
+    const newQty = currentQty + quantity;
+    if (newQty > product.quantity) {
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = `Cannot add more than ${product.quantity} items to cart.`;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 2000);
+      return;
+    }
+    cart[existingIndex].quantity = newQty;
+  } else {
+    // Add new product to cart
+    if (quantity > product.quantity) {
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = `Cannot add more than ${product.quantity} items to cart.`;
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 2000);
+      return;
+    }
+    cart.push({
+      id: product.id,
+      title: product.title,
+      hero_image_url: product.hero_image_url,
+      original_price: product.original_price,
+      discount_price: product.discount_price,
+      quantity: quantity,
+      fabric: product.fabric,
+      category: product.category,
+    });
   }
+
+  localStorage.setItem("cartItems", JSON.stringify(cart));
+  localStorage.setItem("cartCount", cart.length);
+  setCartCount(cart.length);
+  setAddedToCart(true);
+  window.dispatchEvent(new Event("cartUpdated"));
+  setTimeout(() => setAddedToCart(false), 2000);
+}
 
   const nextImage = () => {
     setActiveImg((prev) => (prev + 1) % images.length);
