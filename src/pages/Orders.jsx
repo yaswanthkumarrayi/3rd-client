@@ -2,15 +2,13 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
-import { Package, Calendar, CreditCard, ShoppingBag, Clock, CheckCircle, Truck, ArrowLeft, Filter, Search, Star } from "lucide-react";
+import { Package, Calendar, CreditCard, ShoppingBag, Clock, CheckCircle, Truck, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,14 +64,6 @@ const Orders = () => {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesStatus = filterStatus === 'all' || order.status.toLowerCase() === filterStatus;
-    const matchesSearch = searchTerm === '' || 
-      order.items.some(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      order.id.toString().includes(searchTerm);
-    return matchesStatus && matchesSearch;
-  });
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 flex flex-col">
@@ -113,41 +103,6 @@ const Orders = () => {
             <p className="text-gray-600 text-sm sm:text-base">Track and manage your beautiful collection</p>
           </div>
 
-          {/* Filters and Search */}
-          {!loading && orders.length > 0 && (
-            <div className="mb-8 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-white/50">
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search orders or products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-
-                {/* Status Filter */}
-                <div className="relative">
-                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-transparent transition-all duration-200 bg-white"
-                  >
-                    <option value="all">All Orders</option>
-                    <option value="placed">Placed</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
           {loading ? (
             /* Enhanced Loading State */
             <div className="text-center py-16">
@@ -158,7 +113,7 @@ const Orders = () => {
               <p className="text-fuchsia-600 font-semibold text-lg">Loading your orders...</p>
               <p className="text-fuchsia-400 text-sm mt-2">Preparing your order history ✨</p>
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : orders.length === 0 ? (
             /* Enhanced Empty Orders State */
             <div className="text-center py-16 sm:py-24">
               <div className="max-w-md mx-auto">
@@ -169,39 +124,25 @@ const Orders = () => {
                   </div>
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                  {orders.length === 0 ? "No orders yet" : "No matching orders"}
+                  No orders yet
                 </h3>
                 <p className="text-gray-600 mb-8 text-base sm:text-lg leading-relaxed">
-                  {orders.length === 0 
-                    ? "Start your fashion journey with our beautiful collection!" 
-                    : "Try adjusting your search or filter criteria."
-                  }
+                  Start your fashion journey with our beautiful collection!
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex justify-center">
                   <button
                     onClick={() => navigate('/')}
                     className="bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-fuchsia-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
                   >
                     Start Shopping
                   </button>
-                  {orders.length > 0 && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setFilterStatus('all');
-                      }}
-                      className="bg-white text-fuchsia-600 px-8 py-4 rounded-2xl font-semibold border border-fuchsia-200 hover:bg-fuchsia-50 transition-all duration-300"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
           ) : (
             /* Enhanced Orders List */
             <div className="space-y-6 sm:space-y-8">
-              {filteredOrders.map(order => (
+              {orders.map(order => (
                 <div key={order.id} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-lg border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-500">
                   {/* Enhanced Order Header */}
                   <div className="bg-gradient-to-r from-fuchsia-50 via-pink-50 to-purple-50 px-6 py-5 border-b border-fuchsia-100">
