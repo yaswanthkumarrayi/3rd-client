@@ -123,7 +123,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-white overflow-x-hidden pt-20">
       <Header />
 
       {/* Hero Section */}
