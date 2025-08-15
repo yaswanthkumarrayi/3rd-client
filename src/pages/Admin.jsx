@@ -34,10 +34,15 @@ const Admin = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [orders, setOrders] = useState([]);
 
   // Fetch products
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+    useEffect(() => {
+    fetchOrders();
   }, []);
 
   async function fetchProducts() {
@@ -45,6 +50,10 @@ const Admin = () => {
     const { data, error } = await supabase.from("products").select("*");
     if (!error) setProducts(data || []);
     setLoading(false);
+  }
+  async function fetchOrders() {
+    const { data, error } = await supabase.from("orders").select("*, users(*)");
+    if (!error) setOrders(data || []);
   }
 
   // Handle input change
@@ -183,6 +192,40 @@ async function handleDelete(id) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+            <section className="mt-12">
+        <h2 className="text-xl font-bold mb-4">Orders</h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white border">
+            <thead>
+              <tr>
+                <th className="px-4 py-2 border">Order ID</th>
+                <th className="px-4 py-2 border">User</th>
+                <th className="px-4 py-2 border">Phone</th>
+                <th className="px-4 py-2 border">Address</th>
+                <th className="px-4 py-2 border">Products</th>
+                <th className="px-4 py-2 border">Total</th>
+                <th className="px-4 py-2 border">Status</th>
+                <th className="px-4 py-2 border">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map(order => (
+                <tr key={order.id}>
+                  <td className="px-4 py-2 border">{order.id}</td>
+                  <td className="px-4 py-2 border">{order.users?.name || order.user_id}</td>
+                  <td className="px-4 py-2 border">{order.users?.phone}</td>
+                  <td className="px-4 py-2 border">{order.users?.address}</td>
+                  <td className="px-4 py-2 border">{JSON.stringify(order.products)}</td>
+                  <td className="px-4 py-2 border">₹{order.total}</td>
+                  <td className="px-4 py-2 border">{order.status}</td>
+                  <td className="px-4 py-2 border">{order.created_at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

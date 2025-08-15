@@ -13,6 +13,8 @@ import ShippingPolicy from "./documents/ShippingPolicy";
 import AdminLogin from "./pages/AdminLogin";
 import Admin from "./pages/Admin";
 import Product from "./pages/Product";
+import User from "./pages/User";
+
 
 const App = () => {
   return (
@@ -29,6 +31,7 @@ const App = () => {
             <Route path="/adminlogin" element={<AdminLogin />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/product/:id" element={<Product />} />
+            <Route path="/user" element={<User />} />
           <Route path="/terms" element={<TermsAndConditions />} />
     <Route path="/privacy" element={<PrivacyPolicy />} />
     <Route path="/shipping" element={<ShippingPolicy />} />
