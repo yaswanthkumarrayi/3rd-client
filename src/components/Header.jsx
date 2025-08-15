@@ -129,7 +129,7 @@ const Header = () => {
 
                 {/* Enhanced User Dropdown */}
                 {showUserMenu && user && (
-                  <div className="user-menu absolute right-0 mt-3 w-80 sm:w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-1 z-50 transform opacity-100 scale-100 animate-in duration-200">
+                  <div className="user-menu fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm lg:absolute lg:right-0 lg:mt-3 lg:w-72 lg:bg-white lg:rounded-lg lg:shadow-xl lg:border lg:border-gray-200 lg:py-2">
                     {/* User Info Header */}
                     <div className="px-4 py-4 border-b border-gray-100 bg-gradient-to-r from-fuchsia-50 to-purple-50 rounded-t-2xl">
                       <div className="flex items-center space-x-3">
