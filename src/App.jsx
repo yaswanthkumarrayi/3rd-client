@@ -52,7 +52,7 @@ const App = () => {
           position: "fixed",
           bottom: "20px",
           right: "20px",
-          backgroundColor: "#AD56C5",
+          backgroundColor: "#25D366",
           color: "white",
           borderRadius: "50%",
           width: "60px",
