@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
-import { Package, Calendar, CreditCard, ShoppingBag, Clock, CheckCircle, Truck, Star } from "lucide-react";
+import { Package, Calendar, CreditCard, ShoppingBag, Clock, CheckCircle, Truck, ArrowLeft, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Orders = () => {
@@ -35,17 +35,17 @@ const Orders = () => {
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case 'placed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'processing':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'shipped':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-purple-50 text-purple-700 border-purple-200';
       case 'delivered':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-green-50 text-green-700 border-green-200';
       case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-red-50 text-red-700 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
@@ -66,16 +66,20 @@ const Orders = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center pt-20">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Please log in to view your orders</h2>
+        <div className="flex-1 flex items-center justify-center pt-20 px-4">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 bg-fuchsia-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <User className="w-8 h-8 text-fuchsia-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Sign in Required</h2>
+            <p className="text-gray-600 mb-6">Please sign in to view your order history</p>
             <button
               onClick={() => navigate('/')}
-              className="bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-fuchsia-700 hover:to-pink-700 transition-all duration-300"
+              className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
             >
-              Go Home
+              Go to Home
             </button>
           </div>
         </div>
@@ -85,79 +89,75 @@ const Orders = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="flex-1 pt-20 pb-8">
+      <main className="pt-20 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Enhanced Header */}
-          <div className="text-center mb-8 sm:mb-12">
-            <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-md px-6 py-3 rounded-2xl shadow-lg border border-fuchsia-200 mb-6">
-              <div className="p-2 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-xl">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent">
-                Your Orders
-              </h1>
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={() => navigate("/")}
+                className="flex items-center gap-2 text-gray-600 hover:text-fuchsia-600 transition-colors duration-200"
+              >
+                <ArrowLeft className="w-5 h-5" />
+                <span className="hidden sm:inline">Back to Shopping</span>
+              </button>
             </div>
-            <p className="text-gray-600 text-sm sm:text-base">Track and manage your beautiful collection</p>
+            <div className="flex items-center gap-3 mb-2">
+              <Package className="w-7 h-7 text-fuchsia-600" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Your Orders</h1>
+            </div>
+            <p className="text-gray-600">Track and manage your purchases</p>
           </div>
 
           {loading ? (
-            /* Enhanced Loading State */
+            /* Loading State */
             <div className="text-center py-16">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-fuchsia-200 border-t-fuchsia-600 rounded-full animate-spin mx-auto mb-6"></div>
-                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-pink-400 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-              </div>
-              <p className="text-fuchsia-600 font-semibold text-lg">Loading your orders...</p>
-              <p className="text-fuchsia-400 text-sm mt-2">Preparing your order history ✨</p>
+              <div className="w-8 h-8 border-2 border-fuchsia-200 border-t-fuchsia-600 rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your orders...</p>
             </div>
           ) : orders.length === 0 ? (
-            /* Enhanced Empty Orders State */
-            <div className="text-center py-16 sm:py-24">
+            /* Empty Orders State */
+            <div className="text-center py-16">
               <div className="max-w-md mx-auto">
-                <div className="relative mb-8">
-                  <div className="w-32 h-32 bg-gradient-to-r from-fuchsia-100 to-pink-100 rounded-full flex items-center justify-center mx-auto relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-200 to-pink-200 rounded-full animate-ping opacity-20"></div>
-                    <Package className="w-16 h-16 text-fuchsia-400 relative z-10" />
-                  </div>
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Package className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-                  No orders yet
-                </h3>
-                <p className="text-gray-600 mb-8 text-base sm:text-lg leading-relaxed">
-                  Start your fashion journey with our beautiful collection!
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">No orders yet</h3>
+                <p className="text-gray-600 mb-8">
+                  Start shopping to see your orders here
                 </p>
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => navigate('/')}
-                    className="bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-fuchsia-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl"
-                  >
-                    Start Shopping
-                  </button>
-                </div>
+                <button
+                  onClick={() => navigate('/')}
+                  className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+                >
+                  Start Shopping
+                </button>
               </div>
             </div>
           ) : (
-            /* Enhanced Orders List */
-            <div className="space-y-6 sm:space-y-8">
+            /* Orders List */
+            <div className="space-y-6">
               {orders.map(order => (
-                <div key={order.id} className="bg-white/90 backdrop-blur-md rounded-3xl shadow-lg border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-500">
-                  {/* Enhanced Order Header */}
-                  <div className="bg-gradient-to-r from-fuchsia-50 via-pink-50 to-purple-50 px-6 py-5 border-b border-fuchsia-100">
+                <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                  {/* Order Header */}
+                  <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white rounded-xl shadow-md">
-                          <Package className="w-6 h-6 text-fuchsia-600" />
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-fuchsia-100 rounded-lg flex items-center justify-center">
+                            <Package className="w-5 h-5 text-fuchsia-600" />
+                          </div>
                         </div>
                         <div>
-                          <h3 className="font-bold text-fuchsia-800 text-lg lg:text-xl">Order #{order.id}</h3>
+                          <h3 className="font-semibold text-gray-900 text-lg">Order #{order.id}</h3>
                           <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                             <Calendar className="w-4 h-4" />
                             <span>{new Date(order.created_at).toLocaleDateString('en-IN', {
                               year: 'numeric',
-                              month: 'long',
+                              month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
@@ -166,74 +166,73 @@ const Orders = () => {
                         </div>
                       </div>
                       
-                      <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-6">
-                        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border ${getStatusColor(order.status)}`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
                           {getStatusIcon(order.status)}
                           <span>{order.status}</span>
                         </div>
                         <div className="text-right">
-                          <div className="flex items-center gap-2 text-xl font-bold text-green-600">
-                            <CreditCard className="w-5 h-5" />
+                          <div className="flex items-center gap-1 text-xl font-bold text-gray-900">
                             <span>₹{order.total}</span>
                           </div>
-                          <p className="text-sm text-gray-500">Total Amount</p>
+                          <p className="text-sm text-gray-500">Total</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Enhanced Order Items */}
-                  <div className="p-6 lg:p-8">
-                    <h4 className="font-semibold text-gray-800 mb-6 text-sm uppercase tracking-wide flex items-center gap-2">
-                      <ShoppingBag className="w-4 h-4" />
-                      Order Items ({order.items.length})
-                    </h4>
-                    <div className="grid gap-6">
+                  {/* Order Items */}
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ShoppingBag className="w-4 h-4 text-gray-600" />
+                      <h4 className="font-medium text-gray-900">
+                        Items ({order.items.length})
+                      </h4>
+                    </div>
+                    
+                    <div className="space-y-4">
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="flex gap-4 lg:gap-6 p-4 lg:p-6 bg-gradient-to-r from-fuchsia-25 to-pink-25 rounded-2xl border border-fuchsia-100 hover:shadow-md transition-all duration-300 group">
-                          {/* Enhanced Product Image */}
+                        <div key={idx} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                          {/* Product Image */}
                           <div className="flex-shrink-0">
-                            <div className="relative overflow-hidden rounded-xl">
-                              <img
-                                src={item.hero_image_url}
-                                alt={item.title}
-                                className="w-20 h-20 sm:w-28 sm:h-28 lg:w-32 lg:h-32 object-cover border border-fuchsia-100 shadow-sm group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-                            </div>
+                            <img
+                              src={item.hero_image_url}
+                              alt={item.title}
+                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
+                            />
                           </div>
                           
-                          {/* Enhanced Product Details */}
+                          {/* Product Details */}
                           <div className="flex-1 min-w-0">
-                            <h5 className="font-bold text-fuchsia-800 text-base sm:text-lg lg:text-xl mb-3 line-clamp-2 group-hover:text-fuchsia-600 transition-colors duration-300">
+                            <h5 className="font-medium text-gray-900 text-sm sm:text-base mb-2 line-clamp-2">
                               {item.title}
                             </h5>
                             
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              <span className="inline-block bg-white px-3 py-1.5 rounded-full text-xs font-semibold text-fuchsia-700 border border-fuchsia-200 shadow-sm">
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
                                 {item.fabric}
                               </span>
-                              <span className="inline-block bg-white px-3 py-1.5 rounded-full text-xs font-semibold text-purple-700 border border-purple-200 shadow-sm">
+                              <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
                                 {item.category}
                               </span>
                             </div>
                             
-                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                              <div className="flex items-center gap-4">
-                                <div className="text-lg lg:text-xl font-bold text-green-600">₹{item.discount_price}</div>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="flex items-center gap-3">
+                                <span className="font-semibold text-gray-900">₹{item.discount_price}</span>
                                 {item.original_price > item.discount_price && (
-                                  <div className="text-gray-500 line-through text-sm lg:text-base">₹{item.original_price}</div>
+                                  <span className="text-gray-500 line-through text-sm">₹{item.original_price}</span>
                                 )}
                               </div>
                               <div className="flex items-center gap-4">
-                                <span className="bg-fuchsia-100 text-fuchsia-800 px-3 py-1.5 rounded-full text-sm font-bold border border-fuchsia-200">
+                                <span className="bg-fuchsia-50 text-fuchsia-700 px-2 py-1 rounded text-sm font-medium border border-fuchsia-200">
                                   Qty: {item.quantity}
                                 </span>
                                 <div className="text-right">
-                                  <div className="font-bold text-gray-800 text-base lg:text-lg">
+                                  <div className="font-semibold text-gray-900">
                                     ₹{item.discount_price * item.quantity}
                                   </div>
-                                  <p className="text-xs text-gray-500">Item Total</p>
+                                  <p className="text-xs text-gray-500">Subtotal</p>
                                 </div>
                               </div>
                             </div>
@@ -242,25 +241,21 @@ const Orders = () => {
                       ))}
                     </div>
 
-                    {/* Enhanced Order Summary */}
-                    <div className="mt-8 pt-6 border-t border-fuchsia-100">
-                      <div className="bg-gradient-to-r from-fuchsia-50 to-pink-50 rounded-2xl p-6 border border-fuchsia-200">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Package className="w-4 h-4" />
-                              <span>Total Items: <span className="font-semibold">{order.items.reduce((sum, item) => sum + item.quantity, 0)}</span></span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Star className="w-4 h-4 text-yellow-500" />
-                              <span>Premium Quality Assured</span>
-                            </div>
+                    {/* Order Summary */}
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <div className="bg-fuchsia-50 rounded-lg p-4 border border-fuchsia-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4 text-fuchsia-600" />
+                            <span className="font-medium text-gray-900">Order Total</span>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent">
+                            <div className="text-xl font-bold text-fuchsia-600">
                               ₹{order.total}
                             </div>
-                            <p className="text-sm text-gray-500">Grand Total</p>
+                            <p className="text-sm text-gray-600">
+                              {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -271,7 +266,7 @@ const Orders = () => {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       <Footer />
 
