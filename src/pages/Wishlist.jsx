@@ -18,12 +18,13 @@ const Wishlist = () => {
       setWishlist(updated);
     };
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
-    return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () =>
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
   }, []);
 
   function addToCart(item) {
     const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    if (!cart.some(cartItem => cartItem.id === item.id)) {
+    if (!cart.some((cartItem) => cartItem.id === item.id)) {
       cart.push({ ...item, quantity: 1 });
       localStorage.setItem("cartItems", JSON.stringify(cart));
       localStorage.setItem("cartCount", cart.length);
@@ -33,7 +34,7 @@ const Wishlist = () => {
   }
 
   function removeFromWishlist(id) {
-    const updated = wishlist.filter(item => item.id !== id);
+    const updated = wishlist.filter((item) => item.id !== id);
     setWishlist(updated);
     localStorage.setItem("wishlistItems", JSON.stringify(updated));
     window.dispatchEvent(new Event("wishlistUpdated"));
@@ -53,7 +54,9 @@ const Wishlist = () => {
               <div className="w-24 h-24 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Heart size={48} className="text-pink-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">No items in wishlist</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                No items in wishlist
+              </h3>
               <button
                 onClick={() => navigate("/")}
                 className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
@@ -63,38 +66,58 @@ const Wishlist = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {wishlist.map((item, idx) => (
-                <div key={item.id} className="bg-white rounded-xl shadow border border-pink-100 flex items-center gap-6 p-6">
+              {wishlist.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white rounded-xl shadow border border-pink-100 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 p-4 sm:p-6"
+                >
+                  {/* Image */}
                   <img
                     src={item.hero_image_url}
                     alt={item.title}
-                    className="w-20 h-20 object-cover rounded-lg border border-pink-100"
+                    className="w-24 h-24 sm:w-20 sm:h-20 object-cover rounded-lg border border-pink-100 mx-auto sm:mx-0"
                   />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-pink-700">{item.title}</h3>
+
+                  {/* Info */}
+                  <div className="flex-1 text-center sm:text-left">
+                    <h3 className="text-lg font-bold text-pink-700">
+                      {item.title}
+                    </h3>
                     <div className="text-gray-600 text-sm mb-2">
-                      <span className="font-medium">Fabric:</span> {item.fabric} | <span className="font-medium">Category:</span> {item.category}
+                      <span className="font-medium">Fabric:</span>{" "}
+                      {item.fabric} |{" "}
+                      <span className="font-medium">Category:</span>{" "}
+                      {item.category}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-bold text-green-600">₹{item.discount_price}</span>
+                    <div className="flex items-center justify-center sm:justify-start gap-3">
+                      <span className="text-xl font-bold text-green-600">
+                        ₹{item.discount_price}
+                      </span>
                       {item.original_price > item.discount_price && (
-                        <span className="text-base text-gray-500 line-through">₹{item.original_price}</span>
+                        <span className="text-base text-gray-500 line-through">
+                          ₹{item.original_price}
+                        </span>
                       )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => addToCart(item)}
-                    className="bg-fuchsia-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-fuchsia-700 transition flex items-center gap-2"
-                  >
-                    <ShoppingCart size={18} />
-                    Add to Cart
-                  </button>
-                  <button
-                    onClick={() => removeFromWishlist(item.id)}
-                    className="bg-pink-100 text-pink-600 px-3 py-2 rounded-lg font-semibold hover:bg-pink-200 transition flex items-center gap-2"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="flex-1 sm:flex-none bg-fuchsia-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-fuchsia-700 transition flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={18} />
+                      Add to Cart
+                    </button>
+                    <button
+                      onClick={() => removeFromWishlist(item.id)}
+                      className="flex-1 sm:flex-none bg-pink-100 text-pink-600 px-3 py-2 rounded-lg font-semibold hover:bg-pink-200 transition flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={18} />
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
