@@ -68,10 +68,36 @@ const features = [
 const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isVisible, setIsVisible] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
+    
+    // Intersection Observer for collection animations only
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(prev => ({
+              ...prev,
+              [entry.target.id]: true
+            }));
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+
+    // Observe collection sections only after component mounts
+    setTimeout(() => {
+      const collectionsSection = document.getElementById('featured-collection');
+      const testimonialsSection = document.getElementById('testimonials');
+      if (collectionsSection) observer.observe(collectionsSection);
+      if (testimonialsSection) observer.observe(testimonialsSection);
+    }, 100);
+
+    return () => observer.disconnect();
   }, []);
 
   async function fetchProducts() {
@@ -219,8 +245,8 @@ const Home = () => {
       </section>
 
       {/* Featured Collection */}
-      <section id="featured-collection" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
+      <section id="featured-collection" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div className={`text-center mb-12 lg:mb-16 transition-all duration-1000 ${isVisible['featured-collection'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4">
             Featured Collection
           </h2>
@@ -249,12 +275,19 @@ const Home = () => {
             <p className="text-gray-600 text-lg">Please check back later for new arrivals!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.slice(1).map((product) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+            {products.slice(1).map((product, index) => (
               <div 
                 key={product.id} 
                 onClick={() => handleProductClick(product.id)}
-                className="group bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
+                className={`group bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-500 cursor-pointer transform hover:scale-105 ${
+                  isVisible['featured-collection'] 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-10'
+                }`}
+                style={{
+                  transitionDelay: isVisible['featured-collection'] ? `${index * 0.1}s` : '0s'
+                }}
               >
                 <div className="relative overflow-hidden">
                   <img
@@ -341,11 +374,18 @@ const Home = () => {
           </div>
 
           {/* Testimonials Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-12 lg:mb-16">
             {testimonials.map((t, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300"
+                className={`bg-white rounded-2xl shadow-lg p-6 lg:p-8 border border-gray-100 hover:shadow-xl transition-all duration-700 ${
+                  isVisible['testimonials'] 
+                    ? 'opacity-100 translate-y-0 scale-100' 
+                    : 'opacity-0 translate-y-10 scale-95'
+                }`}
+                style={{
+                  transitionDelay: isVisible['testimonials'] ? `${idx * 0.2}s` : '0s'
+                }}
               >
                 <div className="flex items-start gap-4 mb-6">
                   <div className="flex-shrink-0">
@@ -379,7 +419,7 @@ const Home = () => {
           </div>
 
           {/* Additional Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
             {[
               { value: "4.7", label: "Average Rating" },
               { value: "98%", label: "Satisfaction Rate" },
@@ -388,7 +428,14 @@ const Home = () => {
             ].map((stat, idx) => (
               <div
                 key={stat.label}
-                className="bg-white rounded-xl py-6 px-4 text-center border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300"
+                className={`bg-white rounded-xl py-6 lg:py-8 px-4 lg:px-6 text-center border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-500 transform ${
+                  isVisible['testimonials'] 
+                    ? 'opacity-100 translate-y-0 scale-100' 
+                    : 'opacity-0 translate-y-5 scale-95'
+                }`}
+                style={{
+                  transitionDelay: isVisible['testimonials'] ? `${idx * 0.1 + 0.8}s` : '0s'
+                }}
               >
                 <div className="text-3xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-2">
                   {stat.value}
