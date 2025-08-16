@@ -19,7 +19,7 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 
 // WhatsApp phone number (replace with your actual number in international format, without +)
-const WHATSAPP_NUMBER = "1234567890";  
+const WHATSAPP_NUMBER = "9704447158";  
 
 const App = () => {
   return (
