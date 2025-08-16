@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";  // ✅ Import WhatsApp icon
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -59,12 +60,12 @@ const App = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "30px",
+          fontSize: "32px",
           boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
           zIndex: 1000,
         }}
       >
-        <i className="fa fa-whatsapp"></i>
+        <FaWhatsapp />
       </a>
     </Router>
   );
