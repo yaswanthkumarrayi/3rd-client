@@ -26,6 +26,20 @@ const Login = ({ onClose, onSwitchToRegister  }) => {
       if (onClose) onClose();
     }
   };
+  const handleForgotPassword = async () => {
+  if (!email) {
+    alert("Please enter your email address above first.");
+    return;
+  }
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/reset-password",
+  });
+  if (error) {
+    alert(error.message);
+  } else {
+    alert("Password reset email sent! Please check your inbox.");
+  }
+};
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -103,19 +117,13 @@ const Login = ({ onClose, onSwitchToRegister  }) => {
             </div>
             
             <div className="flex items-center justify-between">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-fuchsia-600 bg-gray-100 border-gray-300 rounded focus:ring-fuchsia-500 focus:ring-2"
-                />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
-              </label>
               <button
-                type="button"
-                className="text-sm text-fuchsia-600 hover:text-fuchsia-700 font-medium transition-colors duration-200"
-              >
-                Forgot password?
-              </button>
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-fuchsia-600 hover:text-fuchsia-700 font-medium transition-colors duration-200"
+                >
+                  Forgot password?
+                </button>
             </div>
             
             <button

@@ -40,6 +40,20 @@ const Register = ({ onClose, onSwitchToLogin}) => {
       alert(error.message);
     }
   };
+  const handleForgotPassword = async () => {
+  if (!email) {
+    alert("Please enter your email address above first.");
+    return;
+  }
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + "/reset-password",
+  });
+  if (error) {
+    alert(error.message);
+  } else {
+    alert("Password reset email sent! Please check your inbox.");
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -141,6 +155,13 @@ const Register = ({ onClose, onSwitchToLogin}) => {
             />
             Sign Up with Google
           </button>
+          <button
+  type="button"
+  onClick={handleForgotPassword}
+  className="text-sm text-fuchsia-600 hover:text-fuchsia-700 font-medium transition-colors duration-200 mt-2"
+>
+  Forgot password?
+</button>
           
           <div className="text-center mt-8">
             <p className="text-sm text-gray-600">
