@@ -126,7 +126,7 @@ const Home = () => {
                 </h1>
               </div>
               
-              <p className="text-gray-600 text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0">
+              <p className="text-gray-600 text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 font-inter">
                 Indulge in the artistry of timeless weaves, crafted to celebrate your elegance and make every occasion unforgettable.
               </p>
 
@@ -221,10 +221,10 @@ const Home = () => {
       {/* Featured Collection */}
       <section id="featured-collection" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4">
+          <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4 font-heading">
             Featured Collection
           </h2>
-          <p className="text-gray-600 text-lg leading-relaxed max-w-3xl mx-auto">
+          <p className="text-gray-600 text-lg leading-relaxed max-w-3xl mx-auto font-inter">
             Handpicked sarees that embody the perfect blend of traditional craftsmanship and contemporary elegance
           </p>
         </div>
@@ -332,7 +332,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Heading */}
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4 font-heading">
               What Our Customers Say
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">

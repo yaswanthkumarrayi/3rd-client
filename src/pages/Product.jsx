@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import { ArrowLeft, Star, Heart, Share2, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { Heart } from "lucide-react";
 
 const Product = () => {
   const { id } = useParams();
@@ -57,6 +58,11 @@ const Product = () => {
       setLoading(false);
     }
   }
+  useEffect(() => {
+  // Check if product is wishlisted
+  const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+  setIsWishlisted(wishlist.some(item => item.id === product?.id));
+}, [product]);
 
   const images = product
     ? [product.hero_image_url, ...(product.featured_images || [])]
@@ -99,7 +105,30 @@ const Product = () => {
     showToast(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart!`);
     setTimeout(() => setAddedToCart(false), 2000);
   }
-
+  function toggleWishlist() {
+  const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+  if (isWishlisted) {
+    // Remove from wishlist
+    const updated = wishlist.filter(item => item.id !== product.id);
+    localStorage.setItem("wishlistItems", JSON.stringify(updated));
+    setIsWishlisted(false);
+  } else {
+    // Add to wishlist
+    wishlist.push({
+      id: product.id,
+      title: product.title,
+      hero_image_url: product.hero_image_url,
+      original_price: product.original_price,
+      discount_price: product.discount_price,
+      quantity: 1,
+      fabric: product.fabric,
+      category: product.category,
+    });
+    localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
+    setIsWishlisted(true);
+  }
+  window.dispatchEvent(new Event("wishlistUpdated"));
+}
   const nextImage = () => {
     setActiveImg((prev) => (prev + 1) % images.length);
   };
@@ -389,6 +418,21 @@ const Product = () => {
                   </button>
                 </div>
               </div>
+              <button
+                onClick={toggleWishlist}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-colors duration-200 ${
+                  isWishlisted
+                    ? "bg-pink-100 text-pink-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-pink-50 hover:text-pink-600"
+                }`}
+              >
+                <Heart
+                  size={20}
+                  className={isWishlisted ? "fill-pink-600 text-pink-600" : "text-gray-400"}
+                  fill={isWishlisted ? "#ec4899" : "none"}
+                />
+                {isWishlisted ? "Wishlisted" : "Add to Wishlist"}
+              </button>
 
               {/* Features */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">

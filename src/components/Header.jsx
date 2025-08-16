@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import Register from '../pages/Register';
 import { useNavigate } from "react-router-dom";
 import Login from '../pages/Login';
+import { Heart } from 'lucide-react';
 
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -245,7 +246,22 @@ const Header = () => {
                   )}
                 </button>
               </div>
-
+                  <div className="relative">
+                    <button
+                      onClick={() => navigate("/wishlist")}
+                      className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-gray-700 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition-all duration-300 transform hover:scale-105 group"
+                      title="Wishlist"
+                    >
+                      <Heart size={20} />
+                      {/* Optional: Show count of wishlisted items */}
+                      {localStorage.getItem("wishlistItems") &&
+                        JSON.parse(localStorage.getItem("wishlistItems")).length > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">
+                            {JSON.parse(localStorage.getItem("wishlistItems")).length}
+                          </span>
+                        )}
+                    </button>
+                  </div>
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
