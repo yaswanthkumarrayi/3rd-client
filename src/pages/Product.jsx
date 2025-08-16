@@ -69,42 +69,43 @@ const Product = () => {
     : [];
 
   function addToCart() {
-    const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    const existingIndex = cart.findIndex(item => item.id === product.id);
+  const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+  const existingIndex = cart.findIndex(item => item.id === product.id);
 
-    if (existingIndex !== -1) {
-      const currentQty = cart[existingIndex].quantity;
-      const newQty = currentQty + quantity;
-      if (newQty > product.quantity) {
-        showToast(`Only ${product.quantity} items available in stock`, "error");
-        return;
-      }
-      cart[existingIndex].quantity = newQty;
-    } else {
-      if (quantity > product.quantity) {
-        showToast(`Only ${product.quantity} items available in stock`, "error");
-        return;
-      }
-      cart.push({
-        id: product.id,
-        title: product.title,
-        hero_image_url: product.hero_image_url,
-        original_price: product.original_price,
-        discount_price: product.discount_price,
-        quantity: quantity,
-        fabric: product.fabric,
-        category: product.category,
-      });
+  if (existingIndex !== -1) {
+    const currentQty = cart[existingIndex].quantity;
+    const newQty = currentQty + quantity;
+    if (newQty > product.quantity) {
+      showToast(`Only ${product.quantity} items available in stock`, "error");
+      return;
     }
-
-    localStorage.setItem("cartItems", JSON.stringify(cart));
-    localStorage.setItem("cartCount", cart.length);
-    setCartCount(cart.length);
-    setAddedToCart(true);
-    window.dispatchEvent(new Event("cartUpdated"));
-    showToast(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart!`);
-    setTimeout(() => setAddedToCart(false), 2000);
+    cart[existingIndex].quantity = newQty;
+  } else {
+    if (quantity > product.quantity) {
+      showToast(`Only ${product.quantity} items available in stock`, "error");
+      return;
+    }
+    cart.push({
+      id: product.id,
+      title: product.title,
+      hero_image_url: product.hero_image_url,
+      original_price: product.original_price,
+      discount_price: product.discount_price,
+      quantity: quantity,
+      availableQuantity: product.quantity, // Store max available
+      fabric: product.fabric,
+      category: product.category,
+    });
   }
+
+  localStorage.setItem("cartItems", JSON.stringify(cart));
+  localStorage.setItem("cartCount", cart.length);
+  setCartCount(cart.length);
+  setAddedToCart(true);
+  window.dispatchEvent(new Event("cartUpdated"));
+  showToast(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart!`);
+  setTimeout(() => setAddedToCart(false), 2000);
+}
   function toggleWishlist() {
   const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
   if (isWishlisted) {

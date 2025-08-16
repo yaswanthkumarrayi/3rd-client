@@ -125,15 +125,15 @@ const Cart = () => {
     }, 1500);
   }
 function handleQuantityChange(index, newQuantity) {
-  const product = cartItems[index];
+  const item = cartItems[index];
   if (newQuantity < 1) return;
 
   // Prevent exceeding available quantity
-  if (newQuantity > product.quantity) {
+  if (newQuantity > item.availableQuantity) {
     // Show error notification
     const notification = document.createElement('div');
     notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = `Only ${product.quantity} items available in stock.`;
+    notification.textContent = `Only ${item.availableQuantity} items available in stock.`;
     document.body.appendChild(notification);
     setTimeout(() => document.body.removeChild(notification), 2000);
     return;
@@ -143,7 +143,7 @@ function handleQuantityChange(index, newQuantity) {
   newCart[index].quantity = newQuantity;
   setCartItems(newCart);
   localStorage.setItem("cartItems", JSON.stringify(newCart));
-  localStorage.setItem("cartCount", newCart.reduce((sum, item) => sum + item.quantity, 0));
+  localStorage.setItem("cartCount", newCart.length);
   window.dispatchEvent(new Event("cartUpdated"));
 }
 
