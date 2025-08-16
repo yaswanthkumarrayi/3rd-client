@@ -1,23 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import {
-  ArrowLeft,
-  Star,
-  Heart,
-  Share2,
-  Truck,
-  Shield,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  Minus,
-  Plus,
-  CreditCard,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, Star, Heart, Share2, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+
 
 const Product = () => {
   const { id } = useParams();
@@ -44,8 +31,7 @@ const Product = () => {
   }
 
   function handleShare() {
-    navigator.clipboard
-      .writeText(window.location.href)
+    navigator.clipboard.writeText(window.location.href)
       .then(() => {
         showToast("Product link copied to clipboard!");
       })
@@ -72,11 +58,11 @@ const Product = () => {
       setLoading(false);
     }
   }
-
   useEffect(() => {
-    const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
-    setIsWishlisted(wishlist.some((item) => item.id === product?.id));
-  }, [product]);
+  // Check if product is wishlisted
+  const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+  setIsWishlisted(wishlist.some(item => item.id === product?.id));
+}, [product]);
 
   const images = product
     ? [product.hero_image_url, ...(product.featured_images || [])]
@@ -84,25 +70,19 @@ const Product = () => {
 
   function addToCart() {
     const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    const existingIndex = cart.findIndex((item) => item.id === product.id);
+    const existingIndex = cart.findIndex(item => item.id === product.id);
 
     if (existingIndex !== -1) {
       const currentQty = cart[existingIndex].quantity;
       const newQty = currentQty + quantity;
       if (newQty > product.quantity) {
-        showToast(
-          `Only ${product.quantity} items available in stock`,
-          "error"
-        );
+        showToast(`Only ${product.quantity} items available in stock`, "error");
         return;
       }
       cart[existingIndex].quantity = newQty;
     } else {
       if (quantity > product.quantity) {
-        showToast(
-          `Only ${product.quantity} items available in stock`,
-          "error"
-        );
+        showToast(`Only ${product.quantity} items available in stock`, "error");
         return;
       }
       cart.push({
@@ -122,35 +102,33 @@ const Product = () => {
     setCartCount(cart.length);
     setAddedToCart(true);
     window.dispatchEvent(new Event("cartUpdated"));
-    showToast(
-      `${quantity > 1 ? `${quantity} items` : "Item"} added to cart!`
-    );
+    showToast(`${quantity > 1 ? `${quantity} items` : 'Item'} added to cart!`);
     setTimeout(() => setAddedToCart(false), 2000);
   }
-
   function toggleWishlist() {
-    const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
-    if (isWishlisted) {
-      const updated = wishlist.filter((item) => item.id !== product.id);
-      localStorage.setItem("wishlistItems", JSON.stringify(updated));
-      setIsWishlisted(false);
-    } else {
-      wishlist.push({
-        id: product.id,
-        title: product.title,
-        hero_image_url: product.hero_image_url,
-        original_price: product.original_price,
-        discount_price: product.discount_price,
-        quantity: 1,
-        fabric: product.fabric,
-        category: product.category,
-      });
-      localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
-      setIsWishlisted(true);
-    }
-    window.dispatchEvent(new Event("wishlistUpdated"));
+  const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
+  if (isWishlisted) {
+    // Remove from wishlist
+    const updated = wishlist.filter(item => item.id !== product.id);
+    localStorage.setItem("wishlistItems", JSON.stringify(updated));
+    setIsWishlisted(false);
+  } else {
+    // Add to wishlist
+    wishlist.push({
+      id: product.id,
+      title: product.title,
+      hero_image_url: product.hero_image_url,
+      original_price: product.original_price,
+      discount_price: product.discount_price,
+      quantity: 1,
+      fabric: product.fabric,
+      category: product.category,
+    });
+    localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
+    setIsWishlisted(true);
   }
-
+  window.dispatchEvent(new Event("wishlistUpdated"));
+}
   const nextImage = () => {
     setActiveImg((prev) => (prev + 1) % images.length);
   };
@@ -161,13 +139,13 @@ const Product = () => {
 
   const increaseQuantity = () => {
     if (quantity < product.quantity) {
-      setQuantity((prev) => prev + 1);
+      setQuantity(prev => prev + 1);
     }
   };
 
   const decreaseQuantity = () => {
     if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
+      setQuantity(prev => prev - 1);
     }
   };
 
@@ -178,9 +156,7 @@ const Product = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-4">
             <div className="w-12 h-12 border-3 border-gray-300 border-t-fuchsia-600 rounded-full animate-spin mx-auto"></div>
-            <p className="text-gray-600 font-medium">
-              Loading product details...
-            </p>
+            <p className="text-gray-600 font-medium">Loading product details...</p>
           </div>
         </div>
       </div>
@@ -194,12 +170,8 @@ const Product = () => {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-6 max-w-md mx-auto px-6">
             <div className="text-6xl text-gray-400 mb-4">🔍</div>
-            <h2 className="text-2xl font-bold text-gray-900">
-              Product Not Found
-            </h2>
-            <p className="text-gray-600">
-              The product you're looking for doesn't exist or has been removed.
-            </p>
+            <h2 className="text-2xl font-bold text-gray-900">Product Not Found</h2>
+            <p className="text-gray-600">The product you're looking for doesn't exist or has been removed.</p>
             <button
               onClick={() => navigate("/")}
               className="inline-flex items-center gap-2 bg-fuchsia-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-fuchsia-700 transition-colors"
@@ -213,36 +185,24 @@ const Product = () => {
     );
   }
 
-  const discountPercentage =
-    product.original_price > product.discount_price
-      ? Math.round(
-          ((product.original_price - product.discount_price) /
-            product.original_price) *
-            100
-        )
-      : 0;
+  const discountPercentage = product.original_price > product.discount_price 
+    ? Math.round(((product.original_price - product.discount_price) / product.original_price) * 100)
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-
+      
       {/* Toast Notification */}
       {showNotification && (
-        <div
-          className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 transform ${
-            showNotification
-              ? "translate-y-0 opacity-100"
-              : "-translate-y-2 opacity-0"
-          } ${
-            notificationType === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-medium transition-all duration-300 transform ${
+          showNotification ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+        } ${notificationType === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
           <div className="flex items-center gap-2">
-            {notificationType === "success" ? (
-              <Check className="w-4 h-4" />
-            ) : (
+            {notificationType === 'success' ? 
+              <Check className="w-4 h-4" /> : 
               <span className="text-lg">⚠</span>
-            )}
+            }
             {notificationMessage}
           </div>
         </div>
@@ -250,6 +210,7 @@ const Product = () => {
 
       <div className="pt-20 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
           {/* Breadcrumb */}
           <div className="mb-6">
             <button
@@ -262,12 +223,142 @@ const Product = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            
             {/* Image Gallery Section */}
-            {/* ... (same as your code, omitted for brevity) ... */}
+            <div className="space-y-4">
+              {/* Main Image */}
+              <div className="relative group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
+                <div className="aspect-square w-full relative">
+                  {imageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                      <div className="w-8 h-8 border-2 border-gray-300 border-t-fuchsia-600 rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                  <img
+                    src={images[activeImg]}
+                    alt={product.title}
+                    className="w-full h-full object-contain p-4"
+                    onLoad={() => setImageLoading(false)}
+                    onLoadStart={() => setImageLoading(true)}
+                  />
+                  
+                  {/* Navigation Arrows */}
+                  {images.length > 1 && (
+                    <>
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-gray-700 rounded-full shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/90 hover:bg-white text-gray-700 rounded-full shadow-md transition-all duration-200 opacity-0 group-hover:opacity-100"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+                </div>
+                
+                {/* Badges */}
+                <div className="absolute top-4 left-4 flex flex-col gap-2">
+                  {discountPercentage > 0 && (
+                    <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                      -{discountPercentage}%
+                    </span>
+                  )}
+                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                    New
+                  </span>
+                </div>
+
+                {/* Image Counter */}
+                {images.length > 1 && (
+                  <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                    {activeImg + 1} / {images.length}
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail Gallery */}
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImg(idx)}
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        activeImg === idx
+                          ? "border-fuchsia-500 ring-2 ring-fuchsia-100"
+                          : "border-gray-200 hover:border-fuchsia-300"
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`View ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Product Details Section */}
             <div className="space-y-6">
-              {/* ... Product header, pricing, info ... */}
+              
+              {/* Product Header */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-full text-sm font-medium">
+                    {product.category}
+                  </span>
+                  <span className="text-sm text-gray-500">SKU: {String(product.id).slice(0, 8)}</span>
+                </div>
+                
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+                  {product.title}
+                </h1>
+                
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+
+              {/* Pricing */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-4 mb-2">
+                  <span className="text-3xl font-bold text-green-600">
+                    ₹{product.discount_price.toLocaleString()}
+                  </span>
+                  {discountPercentage > 0 && (
+                    <span className="text-xl text-gray-500 line-through">
+                      ₹{product.original_price.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                {discountPercentage > 0 && (
+                  <p className="text-green-600 font-medium">
+                    You save ₹{(product.original_price - product.discount_price).toLocaleString()}!
+                  </p>
+                )}
+              </div>
+
+              {/* Product Info */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="font-semibold text-gray-900 mb-4">Product Details</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500 block">Fabric</span>
+                    <span className="font-medium text-gray-900">{product.fabric}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Stock</span>
+                    <span className="font-medium text-green-600">{product.quantity} available</span>
+                  </div>
+                </div>
+              </div>
 
               {/* ✅ Updated Quantity Selector */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
