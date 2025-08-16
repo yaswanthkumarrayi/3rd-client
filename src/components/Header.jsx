@@ -273,28 +273,42 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Enhanced Mobile Menu */}
-        {showMobileMenu && (
-          <div className="mobile-menu lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 animate-fade-in">
-            <div 
-              className="absolute top-16 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-2xl border-b border-fuchsia-100 animate-slide-down"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="px-4 py-6 space-y-2">
-                {menuItems.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setShowMobileMenu(false)}
-                    className="block px-4 py-3 text-gray-800 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl font-medium transition-all duration-200 border border-transparent hover:border-fuchsia-200"
-                  >
-                    {item.name}
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+{/* Enhanced Mobile Menu */}
+{showMobileMenu && (
+  <div 
+    className="mobile-menu lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+    onClick={() => setShowMobileMenu(false)} // close on background click
+  >
+    <div 
+      className="absolute top-0 left-0 right-0 bg-white rounded-b-2xl shadow-2xl border-b border-fuchsia-100 animate-slide-down"
+      onClick={e => e.stopPropagation()} // prevent background close
+    >
+      {/* Close Button */}
+      <div className="flex justify-end p-4">
+        <button
+          onClick={() => setShowMobileMenu(false)}
+          className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-fuchsia-100 text-gray-700 hover:text-fuchsia-600 transition-all duration-200"
+        >
+          <X size={22} />
+        </button>
+      </div>
+
+      {/* Menu Items */}
+      <div className="px-6 pb-6 space-y-3">
+        {menuItems.map((item) => (
+          <a
+            key={item.name}
+            href={item.href}
+            onClick={() => setShowMobileMenu(false)}
+            className="block px-4 py-3 text-gray-800 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl font-medium transition-all duration-200 border border-transparent hover:border-fuchsia-200"
+          >
+            {item.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
       </header>
 
       {/* Modals */}
