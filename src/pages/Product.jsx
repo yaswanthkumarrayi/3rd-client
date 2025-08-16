@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import { ArrowLeft, Star, Heart, Share2, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Heart } from "lucide-react";
+
 
 const Product = () => {
   const { id } = useParams();
