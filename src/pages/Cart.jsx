@@ -289,13 +289,13 @@ function handleQuantityChange(index, newQuantity) {
                             <span className="px-4 py-2 font-medium text-gray-900 min-w-[3rem] text-center">
                               {item.quantity}
                             </span>
-                           <button
-  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-  className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors duration-200"
-  disabled={item.quantity >= product.quantity} // Prevent increment if at max
->
-  <Plus className="w-4 h-4 text-gray-600" />
-</button>
+                            <button
+                              onClick={() => handleQuantityChange(idx, item.quantity + 1)}
+                              className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors duration-200"
+                              disabled={item.quantity >= item.availableQuantity}
+                            >
+                              <Plus className="w-4 h-4 text-gray-600" />
+                            </button>
                           </div>
                           
                           <button
