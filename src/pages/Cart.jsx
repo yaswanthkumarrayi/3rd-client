@@ -124,17 +124,28 @@ const Cart = () => {
       navigate("/orders");
     }, 1500);
   }
+function handleQuantityChange(index, newQuantity) {
+  const product = cartItems[index];
+  if (newQuantity < 1) return;
 
-  function handleQuantityChange(index, newQuantity) {
-    if (newQuantity < 1) return;
-
-    const newCart = [...cartItems];
-    newCart[index].quantity = newQuantity;
-    setCartItems(newCart);
-    localStorage.setItem("cartItems", JSON.stringify(newCart));
-    localStorage.setItem("cartCount", newCart.reduce((sum, item) => sum + item.quantity, 0));
-    window.dispatchEvent(new Event("cartUpdated"));
+  // Prevent exceeding available quantity
+  if (newQuantity > product.quantity) {
+    // Show error notification
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = `Only ${product.quantity} items available in stock.`;
+    document.body.appendChild(notification);
+    setTimeout(() => document.body.removeChild(notification), 2000);
+    return;
   }
+
+  const newCart = [...cartItems];
+  newCart[index].quantity = newQuantity;
+  setCartItems(newCart);
+  localStorage.setItem("cartItems", JSON.stringify(newCart));
+  localStorage.setItem("cartCount", newCart.reduce((sum, item) => sum + item.quantity, 0));
+  window.dispatchEvent(new Event("cartUpdated"));
+}
 
   function handleRemove(index) {
     const newCart = [...cartItems];
@@ -278,12 +289,13 @@ const Cart = () => {
                             <span className="px-4 py-2 font-medium text-gray-900 min-w-[3rem] text-center">
                               {item.quantity}
                             </span>
-                            <button
-                              onClick={() => handleQuantityChange(idx, item.quantity + 1)}
-                              className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors duration-200"
-                            >
-                              <Plus className="w-4 h-4 text-gray-600" />
-                            </button>
+                           <button
+  onClick={() => handleQuantityChange(idx, item.quantity + 1)}
+  className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors duration-200"
+  disabled={item.quantity >= product.quantity} // Prevent increment if at max
+>
+  <Plus className="w-4 h-4 text-gray-600" />
+</button>
                           </div>
                           
                           <button
