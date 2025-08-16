@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -17,31 +17,55 @@ import User from "./pages/User";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 
-
-
+// WhatsApp phone number (replace with your actual number in international format, without +)
+const WHATSAPP_NUMBER = "1234567890";  
 
 const App = () => {
   return (
-    
     <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/footer" element={<Footer />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/adminlogin" element={<AdminLogin />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/product/:id" element={<Product />} />
-            <Route path="/user" element={<User />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/terms" element={<TermsAndConditions />} />
-    <Route path="/privacy" element={<PrivacyPolicy />} />
-    <Route path="/shipping" element={<ShippingPolicy />} />
-        </Routes>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/footer" element={<Footer />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/adminlogin" element={<AdminLogin />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/product/:id" element={<Product />} />
+        <Route path="/user" element={<User />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/shipping" element={<ShippingPolicy />} />
+      </Routes>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href={`https://wa.me/${WHATSAPP_NUMBER}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          backgroundColor: "#25D366",
+          color: "white",
+          borderRadius: "50%",
+          width: "60px",
+          height: "60px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "30px",
+          boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+          zIndex: 1000,
+        }}
+      >
+        <i className="fa fa-whatsapp"></i>
+      </a>
     </Router>
   );
 };
