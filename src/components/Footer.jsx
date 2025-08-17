@@ -126,20 +126,6 @@ const Footer = () => {
 </ul>
           </div>
 
-          {/* Shop & Discover */}
-          <div>
-            <h3 className="text-lg font-bold mb-6">Shop & Discover</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">All Products</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Lehengas</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Kurtiset</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Sarees</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Gowns</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Stitched Blouse Sarees</a></li>
-              <li><a href="#" className="text-fuchsia-200 hover:text-white transition-colors duration-300">Kidswear</a></li>
-            </ul>
-          </div>
-
           {/* Customer Support & About */}
           <div>
             <h3 className="text-lg font-bold mb-6">Customer Support</h3>

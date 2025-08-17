@@ -85,11 +85,10 @@ const Header = () => {
     navigate("/");
   };
 
-  const menuItems = [
-    { name: 'Sarees', href: '#sarees' },
-    { name: 'Lehengas', href: '#lehengas' },
-    { name: 'Childware', href: '#childware' }
-  ];
+const menuItems = [
+  { name: 'Contact Us', href: '/contact' },
+  { name: 'About Us', href: '/about' }
+];
 
   return (
     <>
@@ -113,18 +112,19 @@ const Header = () => {
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              {menuItems.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-gray-700 hover:text-fuchsia-600 font-medium transition-all duration-300 relative group py-2"
-                >
-                  {item.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 group-hover:w-full transition-all duration-300"></span>
-                </a>
-              ))}
-            </nav>
+<nav className="hidden lg:flex items-center space-x-8">
+  {menuItems.map((item) => (
+    <button
+      key={item.name}
+      onClick={() => navigate(item.href)}
+      className="text-gray-700 hover:text-fuchsia-600 font-medium transition-all duration-300 relative group py-2 bg-transparent"
+      style={{ background: "none", border: "none" }}
+    >
+      {item.name}
+      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 group-hover:w-full transition-all duration-300"></span>
+    </button>
+  ))}
+</nav>
 
             {/* Actions Section */}
             <div className="flex items-center space-x-2 lg:space-x-3">
@@ -277,11 +277,11 @@ const Header = () => {
 {showMobileMenu && (
   <div 
     className="mobile-menu lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
-    onClick={() => setShowMobileMenu(false)} // close on background click
+    onClick={() => setShowMobileMenu(false)}
   >
     <div 
       className="absolute top-0 left-0 right-0 bg-white rounded-b-2xl shadow-2xl border-b border-fuchsia-100 animate-slide-down"
-      onClick={e => e.stopPropagation()} // prevent background close
+      onClick={e => e.stopPropagation()}
     >
       {/* Close Button */}
       <div className="flex justify-end p-4">
@@ -296,14 +296,17 @@ const Header = () => {
       {/* Menu Items */}
       <div className="px-6 pb-6 space-y-3">
         {menuItems.map((item) => (
-          <a
+          <button
             key={item.name}
-            href={item.href}
-            onClick={() => setShowMobileMenu(false)}
-            className="block px-4 py-3 text-gray-800 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl font-medium transition-all duration-200 border border-transparent hover:border-fuchsia-200"
+            onClick={() => {
+              setShowMobileMenu(false);
+              navigate(item.href);
+            }}
+            className="block w-full text-left px-4 py-3 text-gray-800 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl font-medium transition-all duration-200 border border-transparent hover:border-fuchsia-200"
+            style={{ background: "none", border: "none" }}
           >
             {item.name}
-          </a>
+          </button>
         ))}
       </div>
     </div>
