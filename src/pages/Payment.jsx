@@ -150,9 +150,9 @@ const Payment = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
-        <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="w-full flex items-center justify-center min-h-[70vh]">
           <div className="text-center space-y-4">
             <Loader2 className="w-12 h-12 text-fuchsia-600 animate-spin mx-auto" />
             <p className="text-gray-600 font-medium">Loading payment details...</p>
@@ -165,9 +165,9 @@ const Payment = () => {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
-        <div className="flex items-center justify-center min-h-[70vh] px-4">
+        <div className="w-full flex items-center justify-center min-h-[70vh] px-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-6">
             <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
               <AlertCircle className="w-8 h-8 text-amber-600" />
@@ -202,9 +202,9 @@ const Payment = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
-        <div className="flex items-center justify-center min-h-[70vh] px-4">
+        <div className="w-full flex items-center justify-center min-h-[70vh] px-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center space-y-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
               <ShoppingBag className="w-8 h-8 text-blue-600" />
@@ -229,11 +229,11 @@ const Payment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       
       {/* Progress Steps */}
-      <div className="pt-20 pb-6">
+      <div className="w-full pt-20 pb-6">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center space-x-4 mb-8">
             <div className="flex items-center">
@@ -260,7 +260,7 @@ const Payment = () => {
         </div>
       </div>
 
-      <main className="pb-12">
+      <main className="w-full pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-5 gap-8">
             
