@@ -21,23 +21,21 @@ const AdminOrders = () => {
       if (error) {
         console.error("Error fetching orders:", error);
       } else {
-        // Parse items JSON properly
         const parsedOrders = data.map((order) => {
           let parsedItems = [];
           try {
             if (Array.isArray(order.items)) {
-              parsedItems = order.items; // already array
+              parsedItems = order.items;
             } else if (typeof order.items === "string") {
               parsedItems = JSON.parse(order.items);
             } else if (order.items && typeof order.items === "object") {
-              parsedItems = order.items; // jsonb returns object
+              parsedItems = order.items;
             }
           } catch (err) {
             console.error("Error parsing items for order", order.id, err);
           }
           return { ...order, items: parsedItems };
         });
-
         setOrders(parsedOrders);
       }
     } catch (err) {
@@ -47,9 +45,23 @@ const AdminOrders = () => {
     }
   }
 
+  // ✅ Helper to color statuses
+  function getStatusColor(status) {
+    switch (status?.toLowerCase()) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-700 px-2 py-1 rounded";
+      case "completed":
+        return "bg-green-100 text-green-700 px-2 py-1 rounded";
+      case "cancelled":
+        return "bg-red-100 text-red-700 px-2 py-1 rounded";
+      default:
+        return "bg-gray-100 text-gray-700 px-2 py-1 rounded";
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Admin Orders Header */}
+      {/* Header */}
       <div className="bg-white shadow-sm border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-6 md:py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -66,7 +78,7 @@ const AdminOrders = () => {
         </div>
       </div>
 
-      {/* Orders List */}
+      {/* Orders */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section>
           <h2 className="text-xl font-bold mb-4">All Orders</h2>
@@ -86,7 +98,7 @@ const AdminOrders = () => {
             ) : (
               <table className="min-w-full bg-white border">
                 <thead>
-                  <tr>
+                  <tr className="bg-slate-100">
                     <th className="px-4 py-2 border">Order ID</th>
                     <th className="px-4 py-2 border">User Email</th>
                     <th className="px-4 py-2 border">Phone</th>
@@ -99,7 +111,7 @@ const AdminOrders = () => {
                 </thead>
                 <tbody>
                   {orders.map((order) => (
-                    <tr key={order.id}>
+                    <tr key={order.id} className="hover:bg-slate-50">
                       <td className="px-4 py-2 border">{order.id}</td>
                       <td className="px-4 py-2 border">{order.user_email}</td>
                       <td className="px-4 py-2 border">
@@ -107,7 +119,7 @@ const AdminOrders = () => {
                       </td>
                       <td className="px-4 py-2 border">
                         {order.address
-                          ? `${order.address}, ${order.city}, ${order.state}, ${order.pincode}`
+                          ? `${order.address}, ${order.city || ""}, ${order.state || ""}, ${order.pincode || ""}`
                           : "-"}
                       </td>
                       <td className="px-4 py-2 border">
@@ -123,10 +135,18 @@ const AdminOrders = () => {
                           )}
                         </ul>
                       </td>
-                      <td className="px-4 py-2 border">₹{order.total}</td>
-                      <td className="px-4 py-2 border">{order.status}</td>
                       <td className="px-4 py-2 border">
-                        {new Date(order.created_at).toLocaleString()}
+                        ₹{order.total ?? 0}
+                      </td>
+                      <td className="px-4 py-2 border">
+                        <span className={getStatusColor(order.status)}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 border">
+                        {order.created_at
+                          ? new Date(order.created_at).toLocaleString()
+                          : "-"}
                       </td>
                     </tr>
                   ))}
