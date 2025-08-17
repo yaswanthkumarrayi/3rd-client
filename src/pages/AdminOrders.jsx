@@ -1,40 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ShoppingBag, Package, User, Phone, MapPin, Calendar, DollarSign } from "lucide-react";
-
-// Mock data for demonstration (replace with actual Supabase call)
-const mockOrders = [
-  {
-    id: "ORD-001",
-    user_email: "john@example.com",
-    phone: "+91 9876543210",
-    address: "123 Main St",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pincode: "400001",
-    items: [
-      { title: "Wireless Headphones", quantity: 1 },
-      { title: "Phone Case", quantity: 2 }
-    ],
-    total: 2500,
-    status: "Delivered",
-    created_at: "2024-01-15T10:30:00Z"
-  },
-  {
-    id: "ORD-002", 
-    user_email: "sarah@example.com",
-    phone: "+91 8765432109",
-    address: "456 Park Ave",
-    city: "Delhi",
-    state: "Delhi",
-    pincode: "110001",
-    items: [
-      { title: "Laptop Stand", quantity: 1 }
-    ],
-    total: 1200,
-    status: "Processing",
-    created_at: "2024-01-14T15:45:00Z"
-  }
-];
+import { ShoppingBag, Package, User, Phone, MapPin, DollarSign } from "lucide-react";
+import { supabase } from "../supabaseClient";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -47,11 +13,12 @@ const AdminOrders = () => {
   async function fetchAllOrders() {
     setLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For now, using mock data. Replace with actual Supabase call when available
-      setOrders(mockOrders);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setOrders(data || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
       setOrders([]);
@@ -149,11 +116,15 @@ const AdminOrders = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900">
-                            {order.items?.map((item, idx) => (
-                              <div key={idx} className="mb-1">
-                                {item.title} × {item.quantity}
-                              </div>
-                            )) || "No items"}
+                            {Array.isArray(order.items) && order.items.length > 0 ? (
+                              order.items.map((item, idx) => (
+                                <div key={idx} className="mb-1">
+                                  {item.title} × {item.quantity}
+                                </div>
+                              ))
+                            ) : (
+                              "No items"
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -165,7 +136,7 @@ const AdminOrders = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(order.created_at).toLocaleDateString()}
+                          {order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}
                         </td>
                       </tr>
                     ))}
@@ -181,7 +152,7 @@ const AdminOrders = () => {
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{order.id}</h3>
-                      <p className="text-sm text-gray-500">{new Date(order.created_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-gray-500">{order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</p>
                     </div>
                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                       {order.status}
@@ -209,12 +180,16 @@ const AdminOrders = () => {
                     <div className="border-t pt-3">
                       <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
                       <div className="space-y-1">
-                        {order.items?.map((item, idx) => (
-                          <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                            <span>{item.title}</span>
-                            <span>× {item.quantity}</span>
-                          </div>
-                        )) || <p className="text-sm text-gray-500">No items</p>}
+                        {Array.isArray(order.items) && order.items.length > 0 ? (
+                          order.items.map((item, idx) => (
+                            <div key={idx} className="text-sm text-gray-600 flex justify-between">
+                              <span>{item.title}</span>
+                              <span>× {item.quantity}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500">No items</p>
+                        )}
                       </div>
                     </div>
 
