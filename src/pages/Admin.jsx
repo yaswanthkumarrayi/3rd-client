@@ -193,39 +193,51 @@ async function handleDelete(id) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-            <section className="mt-12">
-        <h2 className="text-xl font-bold mb-4">Orders</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 border">Order ID</th>
-                <th className="px-4 py-2 border">User</th>
-                <th className="px-4 py-2 border">Phone</th>
-                <th className="px-4 py-2 border">Address</th>
-                <th className="px-4 py-2 border">Products</th>
-                <th className="px-4 py-2 border">Total</th>
-                <th className="px-4 py-2 border">Status</th>
-                <th className="px-4 py-2 border">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map(order => (
-                <tr key={order.id}>
-                  <td className="px-4 py-2 border">{order.id}</td>
-                  <td className="px-4 py-2 border">{order.users?.name || order.user_id}</td>
-                  <td className="px-4 py-2 border">{order.users?.phone}</td>
-                  <td className="px-4 py-2 border">{order.users?.address}</td>
-                  <td className="px-4 py-2 border">{JSON.stringify(order.products)}</td>
-                  <td className="px-4 py-2 border">₹{order.total}</td>
-                  <td className="px-4 py-2 border">{order.status}</td>
-                  <td className="px-4 py-2 border">{order.created_at}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+           <section className="mt-12">
+  <h2 className="text-xl font-bold mb-4">Orders</h2>
+  <div className="overflow-x-auto">
+    <table className="min-w-full bg-white border">
+      <thead>
+        <tr>
+          <th className="px-4 py-2 border">Order ID</th>
+          <th className="px-4 py-2 border">User Email</th>
+          <th className="px-4 py-2 border">Phone</th>
+          <th className="px-4 py-2 border">Address</th>
+          <th className="px-4 py-2 border">Items</th>
+          <th className="px-4 py-2 border">Total</th>
+          <th className="px-4 py-2 border">Status</th>
+          <th className="px-4 py-2 border">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.map(order => (
+          <tr key={order.id}>
+            <td className="px-4 py-2 border">{order.id}</td>
+            <td className="px-4 py-2 border">{order.user_email}</td>
+            <td className="px-4 py-2 border">{order.phone || "-"}</td>
+            <td className="px-4 py-2 border">
+              {order.address
+                ? `${order.address}, ${order.city}, ${order.state}, ${order.pincode}`
+                : "-"}
+            </td>
+            <td className="px-4 py-2 border">
+              <ul>
+                {order.items && order.items.map((item, idx) => (
+                  <li key={idx}>
+                    {item.title} x {item.quantity}
+                  </li>
+                ))}
+              </ul>
+            </td>
+            <td className="px-4 py-2 border">₹{order.total}</td>
+            <td className="px-4 py-2 border">{order.status}</td>
+            <td className="px-4 py-2 border">{new Date(order.created_at).toLocaleString()}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</section>
 
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-slate-200">
