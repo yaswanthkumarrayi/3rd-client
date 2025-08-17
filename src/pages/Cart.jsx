@@ -82,19 +82,6 @@ const Cart = () => {
     }
     setIsLoading(false);
   navigate("/payment");
-    // Prepare order data
-    const order = {
-      user_email: user.email,
-      items: cartItems,
-      total: getTotal(),
-      status: "Placed",
-      created_at: new Date().toISOString(),
-    };
-
-    // Insert order into Supabase
-    const { error: orderError } = await supabase
-      .from("orders")
-      .insert([order]);
 
     if (orderError) {
       setError("Failed to place order. Please try again.");

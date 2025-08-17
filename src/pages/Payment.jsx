@@ -67,31 +67,31 @@ const Payment = () => {
   }
 
   async function placeOrder(paymentId) {
-    const order = {
-      user_email: profile?.email,
-      phone: profile?.phone,
-      address: profile?.address,
-      city: profile?.city,
-      state: profile?.state,
-      pincode: profile?.pincode,
-      items: cartItems,
-      total: getTotal(),
-      status: "Paid",
-      created_at: new Date().toISOString(),
-      payment_id: paymentId,
-    };
+  const order = {
+    user_email: profile?.email,
+    phone: profile?.phone,
+    address: profile?.address,
+    city: profile?.city,
+    state: profile?.state,
+    pincode: profile?.pincode,
+    items: cartItems,
+    total: getTotal(),
+    status: "Paid",
+    created_at: new Date().toISOString(),
+    payment_id: paymentId,
+  };
 
-    const { error } = await supabase.from("orders").insert([order]);
-    if (!error) {
-      localStorage.removeItem("cartItems");
-      localStorage.setItem("cartCount", "0");
-      setCartItems([]);
-      alert("Order placed successfully!");
-      navigate("/orders");
-    } else {
-      alert("Order failed to save. Please contact support.");
-    }
+  const { error } = await supabase.from("orders").insert([order]);
+  if (!error) {
+    localStorage.removeItem("cartItems");
+    localStorage.setItem("cartCount", "0");
+    setCartItems([]);
+    alert("Order placed successfully!");
+    navigate("/orders");
+  } else {
+    alert("Order failed to save. Please contact support.");
   }
+}
 
   if (!user || !profile) {
     return (
