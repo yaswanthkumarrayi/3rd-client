@@ -288,15 +288,15 @@ const User = () => {
                         Full Name
                       </label>
                       <input
-                        type="text"
-                        name="full_name"
-                        value={user.full_name}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 ${
-                          errors.full_name ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                        placeholder="Enter your full name"
-                      />
+  type="text"
+  name="full_name"
+  value={user.full_name}
+  onChange={handleChange}
+  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 text-gray-900 bg-white ${
+    errors.full_name ? 'border-red-300' : 'border-gray-300'
+  }`}
+  placeholder="Enter your full name"
+/>
                       {errors.full_name && (
                         <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
                       )}
@@ -309,15 +309,15 @@ const User = () => {
                         Phone Number
                       </label>
                       <input
-                        type="tel"
-                        name="phone"
-                        value={user.phone}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 ${
-                          errors.phone ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                        placeholder="Enter your phone number"
-                      />
+  type="tel"
+  name="phone"
+  value={user.phone}
+  onChange={handleChange}
+  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 text-gray-900 bg-white ${
+    errors.phone ? 'border-red-300' : 'border-gray-300'
+  }`}
+  placeholder="Enter your phone number"
+/>
                       {errors.phone && (
                         <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                       )}
@@ -351,7 +351,7 @@ const User = () => {
                         name="city"
                         value={user.city}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 ${
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200  text-gray-900 bg-white${
                           errors.city ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter your city"
@@ -372,7 +372,7 @@ const User = () => {
                         name="state"
                         value={user.state}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 ${
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 text-gray-900 bg-white${
                           errors.state ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter your state"
@@ -393,7 +393,7 @@ const User = () => {
                         name="pincode"
                         value={user.pincode}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 ${
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 text-gray-900 bg-white ${
                           errors.pincode ? 'border-red-300' : 'border-gray-300'
                         }`}
                         placeholder="Enter your pincode"
@@ -411,15 +411,15 @@ const User = () => {
                         Address
                       </label>
                       <textarea
-                        name="address"
-                        value={user.address}
-                        onChange={handleChange}
-                        rows={4}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 resize-none ${
-                          errors.address ? 'border-red-300' : 'border-gray-300'
-                        }`}
-                        placeholder="Enter your complete address"
-                      />
+  name="address"
+  value={user.address}
+  onChange={handleChange}
+  rows={4}
+  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-colors duration-200 resize-none text-gray-900 bg-white ${
+    errors.address ? 'border-red-300' : 'border-gray-300'
+  }`}
+  placeholder="Enter your complete address"
+/>
                       {errors.address && (
                         <p className="mt-1 text-sm text-red-600">{errors.address}</p>
                       )}
