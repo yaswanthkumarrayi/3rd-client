@@ -146,86 +146,98 @@ const menuItems = [
                   )}
                 </button>
 
-                {/* Enhanced User Dropdown */}
+                {/* Responsive User Dropdown */}
                 {showUserMenu && user && (
-                  <div className="user-menu absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 z-50 animate-fade-in-up">
-                    {/* User Header */}
-                    <div className="px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center">
-                          <User size={20} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{user.email}</p>
-                          <p className="text-sm text-fuchsia-600">Welcome back!</p>
+                  <>
+                    {/* Mobile Backdrop */}
+                    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 sm:hidden" 
+                         onClick={() => setShowUserMenu(false)}></div>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="user-menu absolute 
+                                  left-1/2 transform -translate-x-1/2 sm:left-auto sm:right-0 sm:transform-none
+                                  mt-3 w-72 sm:w-80 max-w-[calc(100vw-2rem)]
+                                  bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 
+                                  z-50 animate-fade-in-up">
+                      
+                      {/* User Header */}
+                      <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="w-10 sm:w-12 h-10 sm:h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User size={18} className="text-white sm:w-5 sm:h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-900 truncate text-sm sm:text-base">{user.email}</p>
+                            <p className="text-xs sm:text-sm text-fuchsia-600">Welcome back!</p>
+                          </div>
                         </div>
                       </div>
+
+                      <div className="py-2">
+                        {/* Profile Information */}
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            navigate("/user");
+                          }}
+                          className="w-full px-4 sm:px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-3 sm:space-x-4 group"
+                        >
+                          <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200 flex-shrink-0">
+                            <Settings size={16} className="text-blue-600 sm:w-5 sm:h-5" />
+                          </div>
+                          <span className="font-medium text-sm sm:text-base">Profile Information</span>
+                        </button>
+
+                        {/* Your Orders */}
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            navigate("/orders");
+                          }}
+                          className="w-full px-4 sm:px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-3 sm:space-x-4 group"
+                        >
+                          <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200 flex-shrink-0">
+                            <ShoppingBag size={16} className="text-purple-600 sm:w-5 sm:h-5" />
+                          </div>
+                          <span className="font-medium text-sm sm:text-base">Your Orders</span>
+                        </button>
+
+                        {/* Your Cart */}
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            navigate("/cart");
+                          }}
+                          className="w-full px-4 sm:px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-3 sm:space-x-4 group"
+                        >
+                          <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200 flex-shrink-0">
+                            <ShoppingCart size={16} className="text-green-600 sm:w-5 sm:h-5" />
+                          </div>
+                          <div className="flex items-center justify-between w-full min-w-0">
+                            <span className="font-medium text-sm sm:text-base">Your Cart</span>
+                            {cartCount > 0 && (
+                              <span className="bg-fuchsia-600 text-white text-xs rounded-full px-2 py-1 font-bold ml-2 flex-shrink-0">
+                                {cartCount}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </div>
+
+                      <div className="border-t border-fuchsia-100 pt-2">
+                        {/* Sign Out */}
+                        <button
+                          onClick={handleLogout}
+                          className="w-full px-4 sm:px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-3 sm:space-x-4 group"
+                        >
+                          <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-200 flex-shrink-0">
+                            <LogOut size={16} className="text-red-600 sm:w-5 sm:h-5" />
+                          </div>
+                          <span className="font-medium text-sm sm:text-base">Sign Out</span>
+                        </button>
+                      </div>
                     </div>
-
-                    <div className="py-2">
-                      {/* Profile Information */}
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate("/user");
-                        }}
-                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-                      >
-                        <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
-                          <Settings size={18} className="text-blue-600" />
-                        </div>
-                        <span className="font-medium">Profile Information</span>
-                      </button>
-
-                      {/* Your Orders */}
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate("/orders");
-                        }}
-                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-                      >
-                        <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
-                          <ShoppingBag size={18} className="text-purple-600" />
-                        </div>
-                        <span className="font-medium">Your Orders</span>
-                      </button>
-
-                      {/* Your Cart */}
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          navigate("/cart");
-                        }}
-                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-                      >
-                        <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200">
-                          <ShoppingCart size={18} className="text-green-600" />
-                        </div>
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-medium">Your Cart</span>
-                          {cartCount > 0 && (
-                            <span className="bg-fuchsia-600 text-white text-xs rounded-full px-2.5 py-1 font-bold">
-                              {cartCount}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="border-t border-fuchsia-100 pt-2">
-                      {/* Sign Out */}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-4 group"
-                      >
-                        <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-200">
-                          <LogOut size={18} className="text-red-600" />
-                        </div>
-                        <span className="font-medium">Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
 
