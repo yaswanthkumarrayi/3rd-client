@@ -17,8 +17,6 @@ import {
   Loader2,
   Lock,
   Truck,
-  Clock,
-  Star,
   Edit3
 } from "lucide-react";
 
@@ -99,7 +97,7 @@ const Payment = () => {
           email: profile?.email,
           contact: profile?.phone,
         },
-        theme: { color: "#d946ef" },
+        theme: { color: "#3b82f6" },
         modal: {
           ondismiss: function() {
             setIsPaying(false);
@@ -138,7 +136,6 @@ const Payment = () => {
         localStorage.setItem("cartCount", "0");
         setCartItems([]);
         
-        // Show success state briefly before navigating
         setTimeout(() => {
           navigate("/orders");
         }, 1500);
@@ -155,15 +152,13 @@ const Payment = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-md w-full border border-gray-100">
-            <div className="w-16 h-16 bg-gradient-to-br from-fuchsia-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Loading Payment Details</h3>
-            <p className="text-gray-600">Please wait while we prepare your checkout...</p>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-sm w-full">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment</h3>
+            <p className="text-gray-600">Please wait...</p>
           </div>
         </div>
         <Footer />
@@ -173,27 +168,25 @@ const Payment = () => {
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-100">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Complete Your Profile</h2>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              To proceed with your order, please complete your profile with delivery address information.
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-md p-8 max-w-sm w-full text-center">
+            <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Complete Your Profile</h2>
+            <p className="text-gray-600 mb-6">
+              Please add your delivery address to proceed with payment.
             </p>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <button
                 onClick={() => navigate("/user")}
-                className="w-full bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-700 hover:to-purple-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 Complete Profile
               </button>
               <button
                 onClick={() => navigate("/cart")}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back to Cart
@@ -208,22 +201,20 @@ const Payment = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-100">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-3">Your Cart is Empty</h2>
-            <p className="text-gray-600 mb-8 leading-relaxed">
-              Add some beautiful textiles to your cart before proceeding to payment.
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-md p-8 max-w-sm w-full text-center">
+            <ShoppingBag className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">Cart is Empty</h2>
+            <p className="text-gray-600 mb-6">
+              Add products to your cart before checkout.
             </p>
             <button
               onClick={() => navigate("/products")}
-              className="w-full bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-700 hover:to-purple-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
-              Continue Shopping
+              Shop Now
             </button>
           </div>
         </div>
@@ -233,238 +224,178 @@ const Payment = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
       {/* Progress Steps */}
-      <div className="pt-20 pb-4 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="ml-3 hidden sm:block">
-                    <p className="text-sm font-semibold text-green-600">Cart</p>
-                    <p className="text-xs text-gray-500">Items selected</p>
-                  </div>
-                </div>
-                <div className="w-8 sm:w-16 h-1 bg-gradient-to-r from-green-500 to-fuchsia-500 rounded-full"></div>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gradient-to-br from-fuchsia-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg animate-pulse">
-                    <CreditCard className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="ml-3 hidden sm:block">
-                    <p className="text-sm font-semibold text-fuchsia-600">Payment</p>
-                    <p className="text-xs text-gray-500">Secure checkout</p>
-                  </div>
-                </div>
-                <div className="w-8 sm:w-16 h-1 bg-gray-200 rounded-full"></div>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="ml-3 hidden sm:block">
-                    <p className="text-sm font-medium text-gray-400">Complete</p>
-                    <p className="text-xs text-gray-400">Order confirmed</p>
-                  </div>
-                </div>
+      <div className="pt-20 pb-6 bg-white border-b">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="flex items-center justify-center space-x-4">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-white" />
               </div>
+              <span className="ml-2 text-sm font-medium text-green-600 hidden sm:inline">Cart</span>
+            </div>
+            <div className="w-16 h-1 bg-green-500 rounded"></div>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-white" />
+              </div>
+              <span className="ml-2 text-sm font-medium text-blue-600 hidden sm:inline">Payment</span>
+            </div>
+            <div className="w-16 h-1 bg-gray-300 rounded"></div>
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-gray-500" />
+              </div>
+              <span className="ml-2 text-sm font-medium text-gray-500 hidden sm:inline">Complete</span>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="flex-1 pb-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-8">
+      <main className="flex-1 py-6">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="grid lg:grid-cols-3 gap-6">
             
-            {/* Payment Details - Left Column */}
+            {/* Left Column - Payment Details */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* Delivery Address Card */}
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                      <MapPin className="w-4 h-4 text-white" />
-                    </div>
+              {/* Delivery Address */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-blue-600" />
                     Delivery Address
                   </h3>
                   <button
                     onClick={() => navigate("/user")}
-                    className="flex items-center gap-2 text-fuchsia-600 hover:text-fuchsia-700 font-medium text-sm transition-colors bg-fuchsia-50 hover:bg-fuchsia-100 px-3 py-2 rounded-lg"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
                   >
                     <Edit3 className="w-4 h-4" />
                     Edit
                   </button>
                 </div>
                 
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                        <User className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900">{profile.full_name}</p>
-                        <p className="text-sm text-gray-600">Primary Contact</p>
-                      </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <User className="w-5 h-5 text-gray-500" />
+                      <span className="font-medium text-gray-900">{profile.full_name}</span>
                     </div>
                     
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                        <MapPin className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-800 leading-relaxed">
-                          {profile.address}<br />
-                          {profile.city}, {profile.state} - {profile.pincode}
-                        </p>
+                      <MapPin className="w-5 h-5 text-gray-500 mt-0.5" />
+                      <div className="text-gray-700">
+                        <p>{profile.address}</p>
+                        <p>{profile.city}, {profile.state} - {profile.pincode}</p>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                          <Phone className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <span className="text-gray-800 font-medium">{profile.phone}</span>
+                        <Phone className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">{profile.phone}</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                          <Mail className="w-4 h-4 text-gray-600" />
-                        </div>
-                        <span className="text-gray-800 font-medium">{profile.email}</span>
+                        <Mail className="w-5 h-5 text-gray-500" />
+                        <span className="text-gray-700">{profile.email}</span>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Delivery Information */}
-                <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <div className="bg-green-50 rounded-xl p-4 text-center border border-green-200">
-                    <Truck className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-green-700">Free Delivery</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-200">
-                    <Clock className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-blue-700">3-5 Days</p>
-                  </div>
-                  <div className="bg-amber-50 rounded-xl p-4 text-center border border-amber-200 col-span-2 sm:col-span-1">
-                    <Star className="w-6 h-6 text-amber-600 mx-auto mb-2" />
-                    <p className="text-xs font-semibold text-amber-700">Premium Care</p>
                   </div>
                 </div>
               </div>
 
-              {/* Payment Security */}
-              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                  Secure Payment Gateway
+              {/* Payment Method */}
+              <div className="bg-white rounded-lg shadow-sm p-6 border">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-green-600" />
+                  Secure Payment
                 </h3>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 text-center border border-green-200">
-                    <Lock className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                    <div className="font-bold text-sm text-green-700">256-bit SSL</div>
-                    <div className="text-xs text-green-600">Encrypted</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 text-center border border-blue-200">
-                    <Shield className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                    <div className="font-bold text-sm text-blue-700">PCI DSS</div>
-                    <div className="text-xs text-blue-600">Compliant</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-xl p-4 text-center border border-purple-200 col-span-2 sm:col-span-1">
-                    <CreditCard className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                    <div className="font-bold text-sm text-purple-700">Razorpay</div>
-                    <div className="text-xs text-purple-600">Trusted</div>
-                  </div>
-                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 text-center border border-indigo-200 col-span-2 sm:col-span-1">
-                    <CheckCircle className="w-6 h-6 text-indigo-600 mx-auto mb-2" />
-                    <div className="font-bold text-sm text-indigo-700">Bank Grade</div>
-                    <div className="text-xs text-indigo-600">Security</div>
+                <div className="mb-6">
+                  <div className="flex items-center justify-center space-x-6 py-4 bg-gray-50 rounded-lg">
+                    <div className="text-center">
+                      <Lock className="w-6 h-6 text-green-600 mx-auto mb-1" />
+                      <p className="text-xs font-medium text-gray-700">SSL Encrypted</p>
+                    </div>
+                    <div className="text-center">
+                      <Shield className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                      <p className="text-xs font-medium text-gray-700">Bank Grade Security</p>
+                    </div>
+                    <div className="text-center">
+                      <CreditCard className="w-6 h-6 text-purple-600 mx-auto mb-1" />
+                      <p className="text-xs font-medium text-gray-700">Razorpay</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* Payment Button */}
+                {/* Pay Button */}
                 <button
                   onClick={handlePayment}
                   disabled={isPaying}
-                  className="w-full bg-gradient-to-r from-green-600 via-emerald-600 to-green-700 hover:from-green-700 hover:via-emerald-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 text-white py-5 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] disabled:scale-100 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-xl relative overflow-hidden group"
+                  className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-3 mb-4"
                 >
                   {isPaying ? (
                     <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      <span>Processing Payment...</span>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Processing Payment...
                     </>
                   ) : (
                     <>
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                      <Lock className="w-6 h-6" />
-                      <span>Pay Securely ₹{getTotal().toLocaleString()}</span>
+                      <Lock className="w-5 h-5" />
+                      Pay ₹{getTotal().toLocaleString()}
                     </>
                   )}
                 </button>
 
-                <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
-                  <p className="text-sm text-green-800 text-center leading-relaxed">
-                    <Shield className="w-4 h-4 inline mr-2" />
-                    Your payment information is encrypted and secure. By proceeding, you agree to our 
-                    <span className="font-semibold"> Terms & Conditions</span> and 
-                    <span className="font-semibold"> Privacy Policy</span>.
+                <div className="text-center">
+                  <p className="text-sm text-gray-600">
+                    <Shield className="w-4 h-4 inline mr-1" />
+                    Your payment information is secure and encrypted
                   </p>
                 </div>
               </div>
 
-              {/* Back to Cart */}
+              {/* Back Button */}
               <div className="text-center">
                 <button
                   onClick={() => navigate("/cart")}
-                  className="inline-flex items-center gap-3 text-gray-600 hover:text-gray-900 font-semibold transition-colors bg-white hover:bg-gray-50 px-6 py-3 rounded-2xl shadow-md border border-gray-200"
+                  className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium bg-white hover:bg-gray-50 px-4 py-2 rounded-lg border transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4" />
                   Back to Cart
                 </button>
               </div>
             </div>
 
-            {/* Order Summary - Right Column */}
+            {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-24">
-                <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-                  <div className="bg-gradient-to-br from-fuchsia-600 via-purple-600 to-indigo-600 p-6 text-white relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
-                    <div className="relative">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-xl font-bold">Order Summary</h2>
-                        <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
-                          <span className="text-sm font-semibold">{getItemCount()} items</span>
-                        </div>
-                      </div>
-                      <p className="text-fuchsia-100">Review your order details</p>
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                  <div className="bg-blue-600 p-4 text-white">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold">Order Summary</h2>
+                      <span className="bg-blue-500 px-2 py-1 rounded text-sm">{getItemCount()} items</span>
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                  <div className="p-4">
+                    {/* Cart Items */}
+                    <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
                       {cartItems.map((item, idx) => (
-                        <div key={idx} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                          <div className="w-16 h-16 bg-gradient-to-br from-fuchsia-100 to-purple-100 rounded-xl flex items-center justify-center border border-fuchsia-200">
-                            <ShoppingBag className="w-6 h-6 text-fuchsia-600" />
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <ShoppingBag className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-gray-900 truncate mb-1">
+                            <h4 className="font-medium text-gray-900 truncate text-sm">
                               {item.title}
-                            </h3>
-                            <div className="flex items-center justify-between">
+                            </h4>
+                            <div className="flex items-center justify-between mt-1">
                               <span className="text-sm text-gray-500">Qty: {item.quantity}</span>
-                              <span className="text-lg font-bold text-fuchsia-600">
+                              <span className="font-semibold text-blue-600">
                                 ₹{(item.discount_price * item.quantity).toLocaleString()}
                               </span>
                             </div>
@@ -473,44 +404,44 @@ const Payment = () => {
                       ))}
                     </div>
 
-                    <div className="border-t border-gray-200 pt-6 space-y-4">
+                    {/* Order Total */}
+                    <div className="border-t pt-4 space-y-2">
                       <div className="flex justify-between text-gray-600">
-                        <span className="font-medium">Subtotal</span>
-                        <span className="font-semibold">₹{getTotal().toLocaleString()}</span>
+                        <span>Subtotal</span>
+                        <span>₹{getTotal().toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
-                        <span className="font-medium">Shipping</span>
-                        <span className="text-green-600 font-bold">FREE</span>
+                        <span>Shipping</span>
+                        <span className="text-green-600 font-medium">FREE</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
-                        <span className="font-medium">Tax</span>
-                        <span className="text-gray-500">Included</span>
+                        <span>Tax</span>
+                        <span>Included</span>
                       </div>
-                      <div className="bg-gradient-to-br from-fuchsia-50 to-purple-50 rounded-xl p-4 border border-fuchsia-200">
+                      <div className="border-t pt-2">
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-bold text-gray-900">Total Amount</span>
-                          <span className="text-2xl font-bold text-fuchsia-600">
+                          <span className="text-lg font-semibold text-gray-900">Total</span>
+                          <span className="text-xl font-bold text-blue-600">
                             ₹{getTotal().toLocaleString()}
                           </span>
                         </div>
-                        <p className="text-sm text-fuchsia-600 mt-1">Inclusive of all charges</p>
                       </div>
                     </div>
 
-                    {/* Trust Badges */}
-                    <div className="mt-6 pt-4 border-t border-gray-200">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="p-2">
-                          <Shield className="w-5 h-5 text-green-600 mx-auto mb-1" />
-                          <p className="text-xs font-medium text-gray-600">Secure</p>
+                    {/* Trust Indicators */}
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex justify-center items-center gap-4 text-center">
+                        <div className="text-center">
+                          <Truck className="w-5 h-5 text-green-600 mx-auto mb-1" />
+                          <p className="text-xs text-gray-600">Free Shipping</p>
                         </div>
-                        <div className="p-2">
-                          <Truck className="w-5 h-5 text-blue-600 mx-auto mb-1" />
-                          <p className="text-xs font-medium text-gray-600">Fast Ship</p>
+                        <div className="text-center">
+                          <Shield className="w-5 h-5 text-blue-600 mx-auto mb-1" />
+                          <p className="text-xs text-gray-600">Secure Payment</p>
                         </div>
-                        <div className="p-2">
+                        <div className="text-center">
                           <CheckCircle className="w-5 h-5 text-purple-600 mx-auto mb-1" />
-                          <p className="text-xs font-medium text-gray-600">Quality</p>
+                          <p className="text-xs text-gray-600">Quality Assured</p>
                         </div>
                       </div>
                     </div>
