@@ -12,6 +12,7 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import ShippingPolicy from "./documents/ShippingPolicy";
 import AdminLogin from "./pages/AdminLogin";
+import AdminOrders from "./pages/AdminOrders";
 import Admin from "./pages/Admin";
 import Product from "./pages/Product";
 import User from "./pages/User";
@@ -35,6 +36,7 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/adminlogin" element={<AdminLogin />} />
+        <Route path="/adminorders" element={<AdminOrders />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/product/:id" element={<Product />} />

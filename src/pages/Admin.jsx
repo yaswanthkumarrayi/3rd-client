@@ -212,56 +212,17 @@ async function handleDelete(id) {
                 <Plus className="h-5 w-5" />
                 Add Product
               </button>
+                              <button
+                  onClick={() => navigate("/adminorders")}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <ShoppingBag className="h-5 w-5" />
+                  Admin Orders
+                </button>
             </div>
           </div>
         </div>
       </div>
-      <section className="mt-12">
-  <h2 className="text-xl font-bold mb-4">Orders</h2>
-  <div className="overflow-x-auto">
-    <table className="min-w-full bg-white border">
-      <thead>
-        <tr>
-          <th className="px-4 py-2 border">Order ID</th>
-          <th className="px-4 py-2 border">User Email</th>
-          <th className="px-4 py-2 border">Phone</th>
-          <th className="px-4 py-2 border">Address</th>
-          <th className="px-4 py-2 border">Items</th>
-          <th className="px-4 py-2 border">Total</th>
-          <th className="px-4 py-2 border">Status</th>
-          <th className="px-4 py-2 border">Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        {orders.map(order => (
-          <tr key={order.id}>
-            <td className="px-4 py-2 border">{order.id}</td>
-            <td className="px-4 py-2 border">{order.user_email}</td>
-            <td className="px-4 py-2 border">{order.phone || "-"}</td>
-            <td className="px-4 py-2 border">
-              {order.address
-                ? `${order.address}, ${order.city}, ${order.state}, ${order.pincode}`
-                : "-"}
-            </td>
-            <td className="px-4 py-2 border">
-              <ul>
-                {order.items && order.items.map((item, idx) => (
-                  <li key={idx}>
-                    {item.title} x {item.quantity}
-                  </li>
-                ))}
-              </ul>
-            </td>
-            <td className="px-4 py-2 border">₹{order.total}</td>
-            <td className="px-4 py-2 border">{order.status}</td>
-            <td className="px-4 py-2 border">{new Date(order.created_at).toLocaleString()}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</section>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Add Product Form */}
         {showForm && (
