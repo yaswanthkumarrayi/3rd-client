@@ -100,15 +100,15 @@ const menuItems = [
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo Section */}
-           <div
-  className="flex items-center space-x-3 cursor-pointer group"
+            <div
+  className="flex items-center space-x-2 cursor-pointer group"
   onClick={() => navigate('/')}
 >
-  <div className="text-center transform group-hover:scale-105 transition-all duration-300">
-    <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-fuchsia-900 via-fuchsia-800 to-fuchsia-600 bg-clip-text text-transparent font-heading">
+  <div className="flex flex-col items-start transform group-hover:scale-105 transition-all duration-300">
+    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-fuchsia-900 via-fuchsia-800 to-fuchsia-600 bg-clip-text text-transparent font-heading leading-tight">
       Ashok Kumar
     </h1>
-    <p className="text-xs lg:text-sm text-fuchsia-600/80 font-medium -mt-1">
+    <p className="text-xs sm:text-sm md:text-base text-fuchsia-600/80 font-medium -mt-0.5">
       Textiles
     </p>
   </div>
