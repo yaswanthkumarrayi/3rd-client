@@ -147,102 +147,86 @@ const Header = () => {
                 </button>
 
                 {/* Enhanced User Dropdown */}
-            {showUserMenu && user && (
-  <>
-    {/* Overlay for mobile */}
-    <div
-      className="user-menu fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm lg:static lg:bg-transparent"
-      onClick={() => setShowUserMenu(false)}
-    >
-      {/* Dropdown Card */}
-      <div
-        className="bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 w-full max-w-xs mx-4 relative animate-fade-in-up
-          lg:absolute lg:right-0 lg:mt-3 lg:w-80"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* User Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center">
-              <User size={20} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-900 truncate text-sm">{user.email}</p>
-              <p className="text-xs text-fuchsia-600">Welcome back!</p>
-            </div>
-          </div>
-        </div>
-        <div className="py-2">
-          {/* Profile Information */}
-          <button
-            onClick={() => {
-              setShowUserMenu(false);
-              navigate("/user");
-            }}
-            className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-          >
-            <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
-              <Settings size={18} className="text-blue-600" />
-            </div>
-            <span className="font-medium text-sm">Profile Information</span>
-          </button>
-          {/* Your Orders */}
-          <button
-            onClick={() => {
-              setShowUserMenu(false);
-              navigate("/orders");
-            }}
-            className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-          >
-            <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
-              <ShoppingBag size={18} className="text-purple-600" />
-            </div>
-            <span className="font-medium text-sm">Your Orders</span>
-          </button>
-          {/* Your Cart */}
-          <button
-            onClick={() => {
-              setShowUserMenu(false);
-              navigate("/cart");
-            }}
-            className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
-          >
-            <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200">
-              <ShoppingCart size={18} className="text-green-600" />
-            </div>
-            <div className="flex items-center justify-between w-full">
-              <span className="font-medium text-sm">Your Cart</span>
-              {cartCount > 0 && (
-                <span className="bg-fuchsia-600 text-white text-xs rounded-full px-2.5 py-1 font-bold">
-                  {cartCount}
-                </span>
-              )}
-            </div>
-          </button>
-        </div>
-        <div className="border-t border-fuchsia-100 pt-2">
-          {/* Sign Out */}
-          <button
-            onClick={handleLogout}
-            className="w-full px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-4 group"
-          >
-            <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-200">
-              <LogOut size={18} className="text-red-600" />
-            </div>
-            <span className="font-medium text-sm">Sign Out</span>
-          </button>
-        </div>
-        {/* Close button for mobile */}
-        <button
-          className="absolute top-2 right-2 lg:hidden p-2 rounded-full hover:bg-gray-100 text-gray-500"
-          onClick={() => setShowUserMenu(false)}
-        >
-          <X size={18} />
-        </button>
-      </div>
-    </div>
-  </>
-)}
+                {showUserMenu && user && (
+                  <div className="user-menu absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 z-50 animate-fade-in-up">
+                    {/* User Header */}
+                    <div className="px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center">
+                          <User size={20} className="text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{user.email}</p>
+                          <p className="text-sm text-fuchsia-600">Welcome back!</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="py-2">
+                      {/* Profile Information */}
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          navigate("/user");
+                        }}
+                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
+                      >
+                        <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors duration-200">
+                          <Settings size={18} className="text-blue-600" />
+                        </div>
+                        <span className="font-medium">Profile Information</span>
+                      </button>
+
+                      {/* Your Orders */}
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          navigate("/orders");
+                        }}
+                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
+                      >
+                        <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors duration-200">
+                          <ShoppingBag size={18} className="text-purple-600" />
+                        </div>
+                        <span className="font-medium">Your Orders</span>
+                      </button>
+
+                      {/* Your Cart */}
+                      <button
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          navigate("/cart");
+                        }}
+                        className="w-full px-6 py-3 text-left text-gray-800 hover:bg-fuchsia-50 hover:text-fuchsia-600 transition-all duration-200 flex items-center space-x-4 group"
+                      >
+                        <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors duration-200">
+                          <ShoppingCart size={18} className="text-green-600" />
+                        </div>
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-medium">Your Cart</span>
+                          {cartCount > 0 && (
+                            <span className="bg-fuchsia-600 text-white text-xs rounded-full px-2.5 py-1 font-bold">
+                              {cartCount}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+
+                    <div className="border-t border-fuchsia-100 pt-2">
+                      {/* Sign Out */}
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-all duration-200 flex items-center space-x-4 group"
+                      >
+                        <div className="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors duration-200">
+                          <LogOut size={18} className="text-red-600" />
+                        </div>
+                        <span className="font-medium">Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Enhanced Cart Icon */}
