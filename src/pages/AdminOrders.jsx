@@ -76,15 +76,19 @@ const AdminOrders = () => {
                           ? `${order.address}, ${order.city}, ${order.state}, ${order.pincode}`
                           : "-"}
                       </td>
-                      <td className="px-4 py-2 border">
-                        <ul>
-                          {order.items && order.items.map((item, idx) => (
-                            <li key={idx}>
-                              {item.title} x {item.quantity}
-                            </li>
-                          ))}
-                        </ul>
-                      </td>
+                     <td className="px-4 py-2 border">
+  <ul>
+    {Array.isArray(order.items) && order.items.length > 0 ? (
+      order.items.map((item, idx) => (
+        <li key={idx}>
+          {item.title} x {item.quantity}
+        </li>
+      ))
+    ) : (
+      <li>-</li>
+    )}
+  </ul>
+</td>
                       <td className="px-4 py-2 border">₹{order.total}</td>
                       <td className="px-4 py-2 border">{order.status}</td>
                       <td className="px-4 py-2 border">{new Date(order.created_at).toLocaleString()}</td>
