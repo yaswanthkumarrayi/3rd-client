@@ -46,20 +46,20 @@ const AdminOrders = () => {
   }
 
   // ✅ Helper to color statuses
-  function getStatusColor(status) {
+    function getStatusColor(status) {
     switch (status?.toLowerCase()) {
       case "pending":
-        return "bg-yellow-100 text-yellow-700 px-2 py-1 rounded";
+        return "bg-yellow-50 text-yellow-900 font-semibold px-2 py-1 rounded border border-yellow-200";
       case "completed":
-        return "bg-green-100 text-green-700 px-2 py-1 rounded";
+        return "bg-green-50 text-green-900 font-semibold px-2 py-1 rounded border border-green-200";
       case "cancelled":
-        return "bg-red-100 text-red-700 px-2 py-1 rounded";
+        return "bg-red-50 text-red-900 font-semibold px-2 py-1 rounded border border-red-200";
       default:
-        return "bg-gray-100 text-gray-700 px-2 py-1 rounded";
+        return "bg-gray-50 text-gray-900 font-semibold px-2 py-1 rounded border border-gray-200";
     }
   }
 
-  return (
+return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-slate-200">
@@ -99,30 +99,30 @@ const AdminOrders = () => {
               <table className="min-w-full bg-white border">
                 <thead>
                   <tr className="bg-slate-100">
-                    <th className="px-4 py-2 border">Order ID</th>
-                    <th className="px-4 py-2 border">User Email</th>
-                    <th className="px-4 py-2 border">Phone</th>
-                    <th className="px-4 py-2 border">Address</th>
-                    <th className="px-4 py-2 border">Items</th>
-                    <th className="px-4 py-2 border">Total</th>
-                    <th className="px-4 py-2 border">Status</th>
-                    <th className="px-4 py-2 border">Date</th>
+                    <th className="px-4 py-2 border text-slate-800">Order ID</th>
+                    <th className="px-4 py-2 border text-slate-800">User Email</th>
+                    <th className="px-4 py-2 border text-slate-800">Phone</th>
+                    <th className="px-4 py-2 border text-slate-800">Address</th>
+                    <th className="px-4 py-2 border text-slate-800">Items</th>
+                    <th className="px-4 py-2 border text-slate-800">Total</th>
+                    <th className="px-4 py-2 border text-slate-800">Status</th>
+                    <th className="px-4 py-2 border text-slate-800">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order) => (
                     <tr key={order.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-2 border">{order.id}</td>
-                      <td className="px-4 py-2 border">{order.user_email}</td>
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-slate-900">{order.id}</td>
+                      <td className="px-4 py-2 border text-slate-900">{order.user_email}</td>
+                      <td className="px-4 py-2 border text-slate-900">
                         {order.phone || "-"}
                       </td>
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-slate-900">
                         {order.address
                           ? `${order.address}, ${order.city || ""}, ${order.state || ""}, ${order.pincode || ""}`
                           : "-"}
                       </td>
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-slate-900">
                         <ul className="list-disc pl-4">
                           {Array.isArray(order.items) && order.items.length > 0 ? (
                             order.items.map((item, idx) => (
@@ -135,7 +135,7 @@ const AdminOrders = () => {
                           )}
                         </ul>
                       </td>
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-slate-900">
                         ₹{order.total ?? 0}
                       </td>
                       <td className="px-4 py-2 border">
@@ -143,7 +143,7 @@ const AdminOrders = () => {
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-4 py-2 border">
+                      <td className="px-4 py-2 border text-slate-900">
                         {order.created_at
                           ? new Date(order.created_at).toLocaleString()
                           : "-"}
