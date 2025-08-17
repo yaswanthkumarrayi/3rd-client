@@ -148,19 +148,26 @@ const Header = () => {
 
                 {/* Enhanced User Dropdown */}
                 {showUserMenu && user && (
-                  <div className="user-menu absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 z-50 animate-fade-in-up">
-                    {/* User Header */}
-                    <div className="px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center">
-                          <User size={20} className="text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{user.email}</p>
-                          <p className="text-sm text-fuchsia-600">Welcome back!</p>
-                        </div>
-                      </div>
-                    </div>
+  <div
+    className="
+      user-menu absolute mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-fuchsia-100 py-2 z-50 animate-fade-in-up
+      lg:right-0 lg:left-auto
+      left-1/2 -translate-x-1/2
+      max-w-[90%]
+    "
+  >
+
+                   <div className="px-6 py-4 bg-gradient-to-r from-fuchsia-50 to-pink-50 border-b border-fuchsia-100 rounded-t-2xl">
+      <div className="flex items-center space-x-4">
+        <div className="w-12 h-12 bg-gradient-to-r from-fuchsia-600 to-pink-600 rounded-full flex items-center justify-center">
+          <User size={20} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-gray-900 truncate">{user.email}</p>
+          <p className="text-sm text-fuchsia-600">Welcome back!</p>
+        </div>
+      </div>
+    </div>
 
                     <div className="py-2">
                       {/* Profile Information */}
