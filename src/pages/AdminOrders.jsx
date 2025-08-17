@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { ShoppingBag, User, CreditCard } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -11,13 +11,40 @@ const AdminOrders = () => {
   }, []);
 
   async function fetchAllOrders() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setOrders(data);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching orders:", error);
+      } else {
+        // Parse items JSON properly
+        const parsedOrders = data.map((order) => {
+          let parsedItems = [];
+          try {
+            if (Array.isArray(order.items)) {
+              parsedItems = order.items; // already array
+            } else if (typeof order.items === "string") {
+              parsedItems = JSON.parse(order.items);
+            } else if (order.items && typeof order.items === "object") {
+              parsedItems = order.items; // jsonb returns object
+            }
+          } catch (err) {
+            console.error("Error parsing items for order", order.id, err);
+          }
+          return { ...order, items: parsedItems };
+        });
+
+        setOrders(parsedOrders);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -31,11 +58,14 @@ const AdminOrders = () => {
                 <ShoppingBag className="h-8 w-8 text-blue-600" />
                 Admin Orders
               </h1>
-              <p className="mt-2 text-slate-600">View and manage all placed orders</p>
+              <p className="mt-2 text-slate-600">
+                View and manage all placed orders
+              </p>
             </div>
           </div>
         </div>
       </div>
+
       {/* Orders List */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <section>
@@ -49,7 +79,9 @@ const AdminOrders = () => {
             ) : orders.length === 0 ? (
               <div className="p-8 text-center text-slate-600">
                 <div className="text-6xl mb-6">📦</div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-4">No orders found</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">
+                  No orders found
+                </h3>
               </div>
             ) : (
               <table className="min-w-full bg-white border">
@@ -66,32 +98,36 @@ const AdminOrders = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(order => (
+                  {orders.map((order) => (
                     <tr key={order.id}>
                       <td className="px-4 py-2 border">{order.id}</td>
                       <td className="px-4 py-2 border">{order.user_email}</td>
-                      <td className="px-4 py-2 border">{order.phone || "-"}</td>
+                      <td className="px-4 py-2 border">
+                        {order.phone || "-"}
+                      </td>
                       <td className="px-4 py-2 border">
                         {order.address
                           ? `${order.address}, ${order.city}, ${order.state}, ${order.pincode}`
                           : "-"}
                       </td>
-                     <td className="px-4 py-2 border">
-  <ul>
-    {Array.isArray(order.items) && order.items.length > 0 ? (
-      order.items.map((item, idx) => (
-        <li key={idx}>
-          {item.title} x {item.quantity}
-        </li>
-      ))
-    ) : (
-      <li>-</li>
-    )}
-  </ul>
-</td>
+                      <td className="px-4 py-2 border">
+                        <ul className="list-disc pl-4">
+                          {Array.isArray(order.items) && order.items.length > 0 ? (
+                            order.items.map((item, idx) => (
+                              <li key={idx}>
+                                {item.title} x {item.quantity}
+                              </li>
+                            ))
+                          ) : (
+                            <li>-</li>
+                          )}
+                        </ul>
+                      </td>
                       <td className="px-4 py-2 border">₹{order.total}</td>
                       <td className="px-4 py-2 border">{order.status}</td>
-                      <td className="px-4 py-2 border">{new Date(order.created_at).toLocaleString()}</td>
+                      <td className="px-4 py-2 border">
+                        {new Date(order.created_at).toLocaleString()}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
