@@ -80,7 +80,8 @@ const Cart = () => {
       setIsLoading(false);
       return;
     }
-
+    setIsLoading(false);
+  navigate("/payment");
     // Prepare order data
     const order = {
       user_email: user.email,
