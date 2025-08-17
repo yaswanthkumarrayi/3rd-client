@@ -35,7 +35,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [orders, setOrders] = useState([]);
-
+  const navigate = useNavigate();
   // Fetch products
   useEffect(() => {
     fetchProducts();
@@ -52,7 +52,7 @@ const Admin = () => {
     setLoading(false);
   }
   async function fetchOrders() {
-    const { data, error } = await supabase.from("orders").select("*, users(*)");
+const { data, error } = await supabase.from("orders").select("*");
     if (!error) setOrders(data || []);
   }
 
