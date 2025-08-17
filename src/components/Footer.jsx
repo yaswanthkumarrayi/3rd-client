@@ -9,7 +9,8 @@ import {
   Award,
   Facebook,
   Instagram,
-  Youtube
+  Youtube,
+  DollarSign
 } from 'lucide-react';
 
 
@@ -167,9 +168,9 @@ const Footer = () => {
             {/* Free Shipping */}
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-fuchsia-800 rounded-full mb-4">
-                <Truck className="w-8 h-8 text-yellow-500" />
+                <DollarSign className="w-8 h-8 text-yellow-500" />
               </div>
-              <h5 className="text-lg font-semibold mb-2">Free Shipping</h5>
+              <h5 className="text-lg font-semibold mb-2">Affordable Prices</h5>
               <p className="text-fuchsia-200">All over India</p>
             </div>
 

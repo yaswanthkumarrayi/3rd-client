@@ -48,11 +48,11 @@ const features = [
     title: "Premium Quality",
     description: "Handpicked fabrics and materials"
   },
-  {
-    icon: Truck,
-    title: "Fast Delivery",
-    description: "Quick and secure shipping"
-  },
+{
+  icon: DollarSign,
+  title: "Affordable Prices",
+  description: "Quality service at the best rates"
+},
   {
     icon: Shield,
     title: "Quality Assured",

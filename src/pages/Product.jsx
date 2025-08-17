@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
-import { ArrowLeft, Star, Heart, Share2, Truck, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
+import { ArrowLeft, Star, Heart, Share2, DollarSign, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -29,6 +29,7 @@ const Product = () => {
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 3000);
   }
+  const SHIPPING_CHARGE = 100;
 
   function handleShare() {
     navigator.clipboard.writeText(window.location.href)
@@ -329,22 +330,25 @@ const Product = () => {
 
               {/* Pricing */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-4 mb-2">
-                  <span className="text-3xl font-bold text-green-600">
-                    ₹{product.discount_price.toLocaleString()}
-                  </span>
-                  {discountPercentage > 0 && (
-                    <span className="text-xl text-gray-500 line-through">
-                      ₹{product.original_price.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-                {discountPercentage > 0 && (
-                  <p className="text-green-600 font-medium">
-                    You save ₹{(product.original_price - product.discount_price).toLocaleString()}!
-                  </p>
-                )}
-              </div>
+  <div className="flex items-center gap-4 mb-2">
+    <span className="text-3xl font-bold text-green-600">
+      ₹{(product.discount_price + SHIPPING_CHARGE).toLocaleString()}
+    </span>
+    {discountPercentage > 0 && (
+      <span className="text-xl text-gray-500 line-through">
+        ₹{(product.original_price + SHIPPING_CHARGE).toLocaleString()}
+      </span>
+    )}
+  </div>
+  <div className="text-sm text-gray-600">
+    <span className="font-semibold">₹{product.discount_price.toLocaleString()}</span> + <span className="font-semibold">₹{SHIPPING_CHARGE}</span> shipping
+  </div>
+  {discountPercentage > 0 && (
+    <p className="text-green-600 font-medium">
+      You save ₹{(product.original_price - product.discount_price).toLocaleString()}!
+    </p>
+  )}
+</div>
 
               {/* Product Info */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
@@ -441,11 +445,11 @@ const Product = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Truck className="w-5 h-5 text-green-600" />
+                      <DollarSign className="w-5 h-5 text-green-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">Free Delivery</div>
-                      <div className="text-sm text-gray-600">On all orders above ₹999</div>
+                      <div className="font-medium text-gray-900">Affordable Prices</div>
+                      <div className="text-sm text-gray-600">Quality service at the best rates</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

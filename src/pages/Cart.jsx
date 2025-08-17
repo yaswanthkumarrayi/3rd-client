@@ -38,12 +38,13 @@ const Cart = () => {
     if (!error && data) setProfile(data);
   }
 
-  function getTotal() {
-    return cartItems.reduce(
-      (sum, item) => sum + item.discount_price * item.quantity,
-      0
-    );
-  }
+function getTotal() {
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.discount_price * item.quantity,
+    0
+  );
+  return subtotal + 100; // Add shipping
+}
 
   function getTotalSavings() {
     return cartItems.reduce(
@@ -322,7 +323,7 @@ function handleQuantityChange(index, newQuantity) {
                     
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Shipping</span>
-                      <span className="font-medium text-green-600">FREE</span>
+                      <span className="font-medium text-green-600">₹100</span>
                     </div>
                     
                     {getTotalSavings() > 0 && (
@@ -363,7 +364,7 @@ function handleQuantityChange(index, newQuantity) {
                         <span>Secure Checkout</span>
                       </div>
                       <p className="text-xs text-gray-500">
-                        Free delivery • Quality assured • Easy returns
+                        Affordable Prices • Quality assured • Easy returns
                       </p>
                     </div>
                   </div>

@@ -68,12 +68,12 @@ const Payment = () => {
     }
   }
 
-  function getTotal() {
-    return cartItems.reduce(
-      (sum, item) => sum + item.discount_price * item.quantity,
-      0
-    );
-  }
+function getTotal() {
+  return cartItems.reduce(
+    (sum, item) => sum + item.discount_price * item.quantity,
+    0
+  ) + 100; // Add shipping
+}
 
   function getItemCount() {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -122,6 +122,7 @@ const Payment = () => {
         city: profile?.city,
         state: profile?.state,
         pincode: profile?.pincode,
+        shipping: 100,
         items: cartItems,
         total: getTotal(),
         status: "Paid",
@@ -412,7 +413,7 @@ const Payment = () => {
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Shipping</span>
-                        <span className="text-green-600 font-medium">FREE</span>
+<span className="text-green-600 font-medium">₹100</span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Tax</span>
