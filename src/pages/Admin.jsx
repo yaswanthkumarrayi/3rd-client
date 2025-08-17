@@ -193,7 +193,30 @@ async function handleDelete(id) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-           <section className="mt-12">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6 md:py-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
+                  <ShoppingBag className="h-8 w-8 text-blue-600" />
+                  Admin Dashboard
+                </h1>
+                <p className="mt-2 text-slate-600">Manage your product inventory</p>
+              </div>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+              >
+                <Plus className="h-5 w-5" />
+                Add Product
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section className="mt-12">
   <h2 className="text-xl font-bold mb-4">Orders</h2>
   <div className="overflow-x-auto">
     <table className="min-w-full bg-white border">
@@ -238,30 +261,6 @@ async function handleDelete(id) {
     </table>
   </div>
 </section>
-
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6 md:py-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
-                  <ShoppingBag className="h-8 w-8 text-blue-600" />
-                  Admin Dashboard
-                </h1>
-                <p className="mt-2 text-slate-600">Manage your product inventory</p>
-              </div>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
-              >
-                <Plus className="h-5 w-5" />
-                Add Product
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Add Product Form */}
