@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, Truck, Shield, Award, Check } from "lucide-react";
+import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award, Check } from "lucide-react";
 
 const testimonials = [
   {
