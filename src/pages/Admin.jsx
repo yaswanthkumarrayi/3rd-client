@@ -27,8 +27,13 @@ const initialProduct = {
   featured_images: [],
 };
 
-const categories = ["Saree", "Lehenga", "Gown", "Kidswear", "Blouse", "Other"];
-
+const categories = [
+  "Mangalagiri",
+  "Kanchi",
+  "Banarasi",
+  "Mysore Silk",
+  "Designer"
+];
 const Admin = () => {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(initialProduct);
