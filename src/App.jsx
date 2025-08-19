@@ -20,34 +20,24 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Payment from "./pages/Payment";
 import Category from "./pages/Category";
-import { supabase } from "./supabaseClient";
 
 // WhatsApp phone number (replace with your actual number in international format, without +)
 const WHATSAPP_NUMBER = "9704447158";
 
-// Protected Route for Admin
+// Protected Route for Admin using localStorage flag
 const ProtectedAdminRoute = ({ children }) => {
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    // You can adjust this logic based on your admin authentication
-    supabase.auth.getUser().then(({ data }) => {
-      // Example: check if user is logged in and has admin email or role
-      if (data.user && data.user.email && data.user.email.endsWith("@admin.com")) {
-        setAdmin(data.user);
-      } else {
-        setAdmin(null);
-      }
-      setLoading(false);
-    });
+    setIsAdmin(localStorage.getItem("isAdmin") === "true");
+    setLoading(false);
   }, []);
 
   if (loading) return null;
 
-  if (!admin) {
-    // Redirect to admin login, preserve intended path
+  if (!isAdmin) {
     return <Navigate to="/adminlogin" state={{ from: location }} replace />;
   }
 

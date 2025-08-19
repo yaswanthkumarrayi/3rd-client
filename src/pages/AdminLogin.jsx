@@ -14,21 +14,22 @@ export default function AdminLogin() {
   const correctPhone = '9704447536';
   const correctPassword = 'ashok@123';
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Simulate API call
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (phone === correctPhone && password === correctPassword) {
-      navigate('/admin');
-    } else {
-      setError('Invalid phone number or password');
-    }
-    setIsLoading(false);
-  };
+  if (phone === correctPhone && password === correctPassword) {
+    localStorage.setItem("isAdmin", "true"); // <-- Add this line
+    navigate('/admin');
+  } else {
+    setError('Invalid phone number or password');
+  }
+  setIsLoading(false);
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-white to-fuchsia-100 flex items-center justify-center p-4 relative overflow-hidden">
