@@ -19,6 +19,7 @@ import User from "./pages/User";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Payment from "./pages/Payment";
+import Category from "./pages/Category";
 
 
 // WhatsApp phone number (replace with your actual number in international format, without +)
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/category/:name" element={<Category />} />
         <Route path="/footer" element={<Footer />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />

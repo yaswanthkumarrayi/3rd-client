@@ -89,7 +89,13 @@ const menuItems = [
   { name: 'Contact Us', href: '/contact' },
   { name: 'About Us', href: '/about' }
 ];
-
+const categories = [
+  "Mangalagiri",
+  "Kanchi",
+  "Banarasi",
+  "Mysore Silk",
+  "Designer"
+];
   return (
     <>
       <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
@@ -290,6 +296,7 @@ const menuItems = [
 
 {/* Enhanced Mobile Menu */}
 {showMobileMenu && (
+  
   <div 
     className="mobile-menu lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
     onClick={() => setShowMobileMenu(false)}
@@ -323,9 +330,25 @@ const menuItems = [
             {item.name}
           </button>
         ))}
+        {/* Categories Section */}
+  <div className="space-y-2 mt-6 border-t pt-4">
+    <div className="text-xs font-semibold text-fuchsia-700 uppercase mb-2 tracking-wider">Categories</div>
+    {categories.map((cat) => (
+      <button
+        key={cat}
+        onClick={() => {
+          setShowMobileMenu(false);
+          navigate(`/category/${encodeURIComponent(cat)}`);
+        }}
+        className="block w-full text-left px-4 py-2 text-fuchsia-700 hover:bg-fuchsia-50 rounded"
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
+</div>
       </div>
     </div>
-  </div>
 )}
       </header>
 

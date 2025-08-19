@@ -64,6 +64,13 @@ const features = [
     description: "Traditional meets modern"
   }
 ];
+const categories = [
+  "Mangalagiri",
+  "Kanchi",
+  "Banarasi",
+  "Mysore Silk",
+  "Designer"
+];
 
 const Home = () => {
   const [products, setProducts] = useState([]);
@@ -325,6 +332,21 @@ const Home = () => {
             ))}
           </div>
         )}
+      </section>
+      {/* Search by Categories Section */}
+      <section className="my-12 max-w-5xl mx-auto px-4">
+        <h2 className="text-2xl font-bold mb-6 text-center">Search by Categories</h2>
+        <div className="flex flex-wrap gap-4 justify-center">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => navigate(`/category/${encodeURIComponent(cat)}`)}
+              className="px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-lg font-medium shadow transition"
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* Testimonials */}
