@@ -1,6 +1,6 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { FaWhatsapp } from "react-icons/fa";  // ✅ Import WhatsApp icon
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,10 +20,39 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Payment from "./pages/Payment";
 import Category from "./pages/Category";
-
+import { supabase } from "./supabaseClient";
 
 // WhatsApp phone number (replace with your actual number in international format, without +)
-const WHATSAPP_NUMBER = "9704447158";  
+const WHATSAPP_NUMBER = "9704447158";
+
+// Protected Route for Admin
+const ProtectedAdminRoute = ({ children }) => {
+  const [admin, setAdmin] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    // You can adjust this logic based on your admin authentication
+    supabase.auth.getUser().then(({ data }) => {
+      // Example: check if user is logged in and has admin email or role
+      if (data.user && data.user.email && data.user.email.endsWith("@admin.com")) {
+        setAdmin(data.user);
+      } else {
+        setAdmin(null);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return null;
+
+  if (!admin) {
+    // Redirect to admin login, preserve intended path
+    return <Navigate to="/adminlogin" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
 
 const App = () => {
   return (
@@ -38,8 +67,22 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/adminlogin" element={<AdminLogin />} />
-        <Route path="/adminorders" element={<AdminOrders />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route
+          path="/adminorders"
+          element={
+            <ProtectedAdminRoute>
+              <AdminOrders />
+            </ProtectedAdminRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedAdminRoute>
+              <Admin />
+            </ProtectedAdminRoute>
+          }
+        />
         <Route path="/payment" element={<Payment />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/user" element={<User />} />

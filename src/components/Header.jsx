@@ -122,17 +122,17 @@ const categories = [
 
             {/* Desktop Navigation */}
 <nav className="hidden lg:flex items-center space-x-8">
-  {menuItems.map((item) => (
-    <button
-      key={item.name}
-      onClick={() => navigate(item.href)}
-      className="text-gray-700 hover:text-fuchsia-600 font-medium transition-all duration-300 relative group py-2 bg-transparent"
-      style={{ background: "none", border: "none" }}
-    >
-      {item.name}
-      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-fuchsia-600 to-pink-600 group-hover:w-full transition-all duration-300"></span>
-    </button>
-  ))}
+  {/* Categories as links */}
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => navigate(`/category/${encodeURIComponent(cat)}`)}
+                className="text-fuchsia-700 hover:text-fuchsia-900 font-semibold transition-all duration-300 px-2 py-2 rounded hover:bg-fuchsia-50"
+                style={{ background: "none", border: "none" }}
+              >
+                {cat}
+              </button>
+            ))}
 </nav>
 
             {/* Actions Section */}
