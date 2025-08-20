@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-const BACKEND_URL = "https://threerd-client-2.onrender.com/"; // <-- Replace with your backend URL
+const BACKEND_URL = "https://threerd-client-2.onrender.com"; // <-- Replace with your backend URL
 
 const Payment = () => {
   const [cartItems, setCartItems] = useState([]);
