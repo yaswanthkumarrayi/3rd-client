@@ -119,7 +119,7 @@ async function handlePayment() {
         }
       }
     };
-
+    console.log("Razorpay options:", options);
     const rzp = new window.Razorpay(options);
     rzp.open();
   } catch (error) {
