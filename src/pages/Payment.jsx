@@ -81,8 +81,8 @@ function getTotal() {
   }
 
 async function handlePayment() {
+  console.log("Pay button clicked");
   setIsPaying(true);
-
   try {
     // 1. Create order on backend
     const res = await fetch(`${BACKEND_URL}/api/create-order`, {
