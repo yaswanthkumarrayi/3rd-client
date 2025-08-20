@@ -99,6 +99,11 @@ async function handlePayment() {
     }
 
     // 2. Use order_id in Razorpay options (amount comes from order)
+    const sanitizePhone = (value) => {
+      const digits = (value || '').toString().replace(/\D/g, '');
+      return digits.length >= 10 ? digits.slice(-10) : undefined;
+    };
+
     const options = {
       key: RAZORPAY_KEY_ID,
       currency: order.currency,
@@ -106,12 +111,35 @@ async function handlePayment() {
       name: "Ashok Kumar Textiles",
       description: "Order Payment",
       handler: async function (response) {
-        await placeOrder(response.razorpay_payment_id);
+        try {
+          // Verify signature on backend before saving order
+          const verifyRes = await fetch(`${BACKEND_URL}/api/verify-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const verifyJson = await verifyRes.json();
+          if (!verifyRes.ok || !verifyJson.valid) {
+            console.error('Signature verification failed:', verifyJson);
+            alert('Payment could not be verified. No amount will be captured. Please try again.');
+            setIsPaying(false);
+            return;
+          }
+          await placeOrder(response.razorpay_payment_id, response.razorpay_order_id);
+        } catch (e) {
+          console.error('Verification error:', e);
+          alert('Payment verification failed. Please try again.');
+          setIsPaying(false);
+        }
       },
       prefill: {
         name: profile?.full_name,
         email: profile?.email,
-        contact: profile?.phone,
+        contact: sanitizePhone(profile?.phone),
       },
       theme: { color: "#3b82f6" },
       modal: {
@@ -140,7 +168,7 @@ async function handlePayment() {
   }
 }
 
-  async function placeOrder(paymentId) {
+  async function placeOrder(paymentId, orderId) {
     try {
       const order = {
         user_email: profile?.email,
@@ -155,6 +183,7 @@ async function handlePayment() {
         status: "Paid",
         created_at: new Date().toISOString(),
         payment_id: paymentId,
+        razorpay_order_id: orderId,
       };
 
       const { error } = await supabase.from("orders").insert([order]);
