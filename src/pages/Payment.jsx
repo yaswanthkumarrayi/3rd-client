@@ -111,28 +111,39 @@ async function handlePayment() {
       name: "Ashok Kumar Textiles",
       description: "Order Payment",
       handler: async function (response) {
+        console.log('Payment success response:', response);
+        
         try {
           // Verify signature on backend before saving order
+          const verifyData = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          };
+          
+          console.log('Sending verification data:', verifyData);
+          
           const verifyRes = await fetch(`${BACKEND_URL}/api/verify-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
+            body: JSON.stringify(verifyData),
           });
+          
           const verifyJson = await verifyRes.json();
+          console.log('Verification response:', verifyJson);
+          
           if (!verifyRes.ok || !verifyJson.valid) {
             console.error('Signature verification failed:', verifyJson);
-            alert('Payment could not be verified. No amount will be captured. Please try again.');
+            alert(`Payment verification failed!\n\nError: ${verifyJson.error}\nDetails: ${verifyJson.details || 'Unknown error'}\n\nOrder ID: ${response.razorpay_order_id}\n\nPlease contact support with these details.`);
             setIsPaying(false);
             return;
           }
+          
+          console.log('Signature verified successfully, placing order...');
           await placeOrder(response.razorpay_payment_id, response.razorpay_order_id);
         } catch (e) {
           console.error('Verification error:', e);
-          alert('Payment verification failed. Please try again.');
+          alert(`Payment verification failed!\n\nError: ${e.message}\n\nOrder ID: ${response.razorpay_order_id}\n\nPlease contact support.`);
           setIsPaying(false);
         }
       },
@@ -156,7 +167,37 @@ async function handlePayment() {
       console.error('Razorpay payment failed:', response?.error || response);
       const code = response?.error?.code || 'UNKNOWN_ERROR';
       const description = response?.error?.description || 'Payment failed. Please try again.';
-      alert(`${code}: ${description}`);
+      
+      // Handle specific risk check failure with detailed guidance
+      if (code === 'BAD_REQUEST_ERROR' && response?.reason === 'payment_risk_check_failed') {
+        const riskMessage = `🚨 Payment Risk Check Failed
+
+This is a common issue with new Razorpay accounts.
+
+🔍 What happened:
+• Razorpay's risk system flagged this transaction
+• Common for new business accounts
+• UPI method has stricter risk checks
+
+✅ Immediate solutions:
+1. Try Credit/Debit Card instead of UPI
+2. Use Net Banking or Wallets
+3. Test with smaller amount (₹1-10)
+
+📞 Contact Razorpay Support:
+• Email: support@razorpay.com
+• Include Order ID: ${order.id}
+• Reference: payment_risk_check_failed
+
+⏰ Expected resolution: 24-48 hours
+
+Order ID: ${order.id}`;
+        alert(riskMessage);
+      } else if (code === 'BAD_REQUEST_ERROR') {
+        alert(`Payment Failed: ${code}\n\nDescription: ${description}\n\nOrder ID: ${order.id}\n\nPlease try a different payment method or contact support.`);
+      } else {
+        alert(`${code}: ${description}\n\nOrder ID: ${order.id}`);
+      }
       setIsPaying(false);
     });
 
@@ -364,12 +405,23 @@ async function handlePayment() {
                 </div>
               </div>
 
-              {/* Payment Method */}
-              <div className="bg-white rounded-lg shadow-sm p-6 border">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-green-600" />
-                  Secure Payment
-                </h3>
+                              {/* Payment Method */}
+                <div className="bg-white rounded-lg shadow-sm p-6 border">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-green-600" />
+                    Secure Payment
+                  </h3>
+                  
+                  {/* Payment Method Tips */}
+                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-900 mb-2">💡 Payment Tips for New Accounts</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>• <strong>Credit/Debit Cards</strong> - Most likely to work</p>
+                      <p>• <strong>Net Banking</strong> - Good alternative</p>
+                      <p>• <strong>UPI</strong> - May have restrictions initially</p>
+                      <p>• <strong>Wallets</strong> - Paytm, PhonePe</p>
+                    </div>
+                  </div>
                 
                 <div className="mb-6">
                   <div className="flex items-center justify-center space-x-6 py-4 bg-gray-50 rounded-lg">
