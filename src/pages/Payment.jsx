@@ -20,7 +20,7 @@ import {
   Edit3
 } from "lucide-react";
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-const BACKEND_URL= "https://threerd-client-2.onrender.com";
+const BACKEND_URL= " https://threerd-client-5u38.onrender.com";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -83,6 +83,16 @@ async function handlePayment() {
   console.log("Pay button clicked");
   setIsPaying(true);
   try {
+    if (!RAZORPAY_KEY_ID) {
+      alert('Razorpay key is not configured. Please set VITE_RAZORPAY_KEY_ID in your environment.');
+      setIsPaying(false);
+      return;
+    }
+    if (!window || !window.Razorpay) {
+      alert('Razorpay SDK not loaded. Make sure you included the Razorpay script in index.html.');
+      setIsPaying(false);
+      return;
+    }
     // Calculate amount in paise from cart total
     const amountPaise = Math.max(100, Math.round(getTotal() * 100));
 
@@ -92,16 +102,42 @@ async function handlePayment() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount: amountPaise, currency: "INR" })
     });
-    const order = await res.json();
+
+    // Surface backend errors clearly
+    if (!res.ok) {
+      let bodyText;
+      try {
+        bodyText = JSON.stringify(await res.json());
+      } catch {
+        bodyText = await res.text();
+      }
+      console.error('Create order failed', res.status, bodyText);
+      alert(`Create order failed (status ${res.status}). Response: ${bodyText}`);
+      setIsPaying(false);
+      return;
+    }
+
+    let order;
+    try {
+      order = await res.json();
+    } catch {
+      console.error('Invalid JSON from create-order');
+      alert('Create order failed: invalid response from server');
+      setIsPaying(false);
+      return;
+    }
     console.log("Order from backend:", order);
-    if (!order.id) {
-      throw new Error("Order creation failed");
+    if (!order || !order.id) {
+      console.error('Order missing id', order);
+      alert('Order creation failed: missing order id from backend');
+      setIsPaying(false);
+      return;
     }
 
     // 2. Use order_id in Razorpay options (amount comes from order)
     const sanitizePhone = (value) => {
       const digits = (value || '').toString().replace(/\D/g, '');
-      return digits.length >= 10 ? digits.slice(-10) : undefined;
+      return digits.length >= 10 ? digits.slice(-10) : '';
     };
 
     const options = {
@@ -124,21 +160,30 @@ async function handlePayment() {
           
           console.log('Sending verification data:', verifyData);
           
-          const verifyRes = await fetch(`${BACKEND_URL}/api/verify-payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(verifyData),
-          });
-          
-          const verifyJson = await verifyRes.json();
-          console.log('Verification response:', verifyJson);
-          
-          if (!verifyRes.ok || !verifyJson.valid) {
-            console.error('Signature verification failed:', verifyJson);
-            alert(`Payment verification failed!\n\nError: ${verifyJson.error}\nDetails: ${verifyJson.details || 'Unknown error'}\n\nOrder ID: ${response.razorpay_order_id}\n\nPlease contact support with these details.`);
-            setIsPaying(false);
-            return;
-          }
+                const verifyRes = await fetch(`${BACKEND_URL}/api/verify-payment`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(verifyData),
+                });
+
+                if (!verifyRes.ok) {
+                  let body;
+                  try { body = JSON.stringify(await verifyRes.json()); } catch { body = await verifyRes.text(); }
+                  console.error('Verify payment failed', verifyRes.status, body);
+                  alert(`Payment verification failed (status ${verifyRes.status}). Response: ${body}`);
+                  setIsPaying(false);
+                  return;
+                }
+
+                const verifyJson = await verifyRes.json();
+                console.log('Verification response:', verifyJson);
+
+                if (!verifyJson || !verifyJson.valid) {
+                  console.error('Signature verification failed:', verifyJson);
+                  alert(`Payment verification failed!\n\nError: ${verifyJson?.error || 'Invalid signature'}\nDetails: ${verifyJson?.details || 'Unknown error'}\n\nOrder ID: ${response?.razorpay_order_id || 'N/A'}`);
+                  setIsPaying(false);
+                  return;
+                }
           
           console.log('Signature verified successfully, placing order...');
           await placeOrder(response.razorpay_payment_id, response.razorpay_order_id);
