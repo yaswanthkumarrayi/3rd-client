@@ -15,9 +15,10 @@ app.post('/api/create-order', async (req, res) => {
   const { amount, currency = "INR" } = req.body;
   try {
     const order = await razorpay.orders.create({
-      amount, // amount in paise (e.g., 50000 for ₹500)
+      amount,
       currency,
     });
+    console.log("Created Razorpay order:", order); // <-- Add this
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: err.message });

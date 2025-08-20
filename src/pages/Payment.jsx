@@ -91,7 +91,7 @@ async function handlePayment() {
       body: JSON.stringify({ amount: getTotal() * 100, currency: "INR" }),
     });
     const order = await res.json();
-
+    console.log("Order from backend:", order);
     if (!order.id) {
       throw new Error("Order creation failed");
     }
