@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
+const BACKEND_URL= "https://threerd-client.onrender.com";
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -80,38 +81,53 @@ function getTotal() {
   }
 
 async function handlePayment() {
-    setIsPaying(true);
+  setIsPaying(true);
 
-    try {
-      const options = {
-        key: RAZORPAY_KEY_ID, // Use imported key
-        amount: getTotal() * 100, // in paise
-        currency: "INR",
-        name: "Ashok Kumar Textiles",
-        description: "Order Payment",
-        handler: async function (response) {
-          await placeOrder(response.razorpay_payment_id);
-        },
-        prefill: {
-          name: profile?.full_name,
-          email: profile?.email,
-          contact: profile?.phone,
-        },
-        theme: { color: "#3b82f6" },
-        modal: {
-          ondismiss: function() {
-            setIsPaying(false);
-          }
-        }
-      };
+  try {
+    // 1. Create order on backend
+    const res = await fetch(`${BACKEND_URL}/api/create-order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: getTotal() * 100, currency: "INR" }),
+    });
+    const order = await res.json();
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error("Payment initiation error:", error);
-      setIsPaying(false);
+    if (!order.id) {
+      throw new Error("Order creation failed");
     }
+
+    // 2. Use order_id in Razorpay options
+    const options = {
+      key: RAZORPAY_KEY_ID,
+      amount: getTotal() * 100,
+      currency: "INR",
+      order_id: order.id, // <-- use this!
+      name: "Ashok Kumar Textiles",
+      description: "Order Payment",
+      handler: async function (response) {
+        await placeOrder(response.razorpay_payment_id);
+      },
+      prefill: {
+        name: profile?.full_name,
+        email: profile?.email,
+        contact: profile?.phone,
+      },
+      theme: { color: "#3b82f6" },
+      modal: {
+        ondismiss: function() {
+          setIsPaying(false);
+        }
+      }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  } catch (error) {
+    console.error("Payment initiation error:", error);
+    alert("Payment initiation failed. Please try again.");
+    setIsPaying(false);
   }
+}
 
   async function placeOrder(paymentId) {
     try {
