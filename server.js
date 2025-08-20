@@ -1,15 +1,14 @@
-// server.js
-const express = require('express');
-const Razorpay = require('razorpay');
-const cors = require('cors');
+import express from 'express';
+import Razorpay from 'razorpay';
+import cors from 'cors';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const razorpay = new Razorpay({
-  key_id: 'rzp_live_R7aFZXp7D1g5yb', // your live key id
-  key_secret: 'S8HlKsJ19MM8Rg1VNbpenc84', // your live secret
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 app.post('/api/create-order', async (req, res) => {
