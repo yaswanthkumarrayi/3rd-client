@@ -83,12 +83,11 @@ async function handlePayment() {
   console.log("Pay button clicked");
   setIsPaying(true);
   try {
-    // 1. Create order on backend
+    // 1. Create order on backend with fixed ₹10 (1000 paise)
     const res = await fetch(`${BACKEND_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: Math.round(getTotal() * 100), currency: "INR" })
-
+      body: JSON.stringify({ amount: 1000, currency: "INR" }) // <-- Fixed ₹10
     });
     const order = await res.json();
     console.log("Order from backend:", order);
@@ -99,9 +98,9 @@ async function handlePayment() {
     // 2. Use order_id in Razorpay options
     const options = {
       key: RAZORPAY_KEY_ID,
-      amount: order.amount,
+      amount: order.amount, // always use backend amount
       currency: order.currency,
-      order_id: order.id, // <-- use this!
+      order_id: order.id,
       name: "Ashok Kumar Textiles",
       description: "Order Payment",
       handler: async function (response) {
