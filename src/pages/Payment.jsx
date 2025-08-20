@@ -106,6 +106,7 @@ async function handlePayment() {
 
     const options = {
       key: RAZORPAY_KEY_ID,
+      amount: order.amount, 
       currency: order.currency,
       order_id: order.id,
       name: "Ashok Kumar Textiles",
