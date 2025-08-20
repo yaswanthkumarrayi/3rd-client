@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { RAZORPAY_KEY_ID } from "../config/razorpay";
 import { 
   ShoppingBag, 
   CreditCard, 
@@ -20,7 +21,7 @@ import {
   Edit3
 } from "lucide-react";
 
-const RAZORPAY_KEY_ID = "rzp_test_R6NmIHLl4TZltu"; // Replace with your key
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
 const Payment = () => {
   const navigate = useNavigate();
@@ -79,12 +80,12 @@ function getTotal() {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }
 
-  async function handlePayment() {
+async function handlePayment() {
     setIsPaying(true);
 
     try {
       const options = {
-        key: "rzp_test_R6NmIHLl4TZltu",
+        key: RAZORPAY_KEY_ID, // Use imported key
         amount: getTotal() * 100, // in paise
         currency: "INR",
         name: "Ashok Kumar Textiles",
