@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { RAZORPAY_KEY_ID } from "../config/razorpay";
 import { 
   ShoppingBag, 
   CreditCard, 
