@@ -124,6 +124,14 @@ const Footer = () => {
       Shipping Policy
     </Link>
   </li>
+    <li>
+    <Link
+      to="/refund-policy"
+      className="text-fuchsia-200 hover:text-white transition-colors duration-300"
+    >
+      Refund Policy
+    </Link>
+  </li>
 </ul>
           </div>
 

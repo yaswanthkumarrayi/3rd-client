@@ -8,6 +8,7 @@ import Cart from "./pages/Cart";
 import Footer from "./components/Footer";
 import TermsAndConditions from "./documents/TermsAndConditions";
 import PrivacyPolicy from "./documents/PrivacyPolicy";
+import RefundPolicy from "./documents/RefundPolicy";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import ShippingPolicy from "./documents/ShippingPolicy";
@@ -80,6 +81,7 @@ const App = () => {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
         <Route path="/shipping" element={<ShippingPolicy />} />
       </Routes>
 
