@@ -97,19 +97,30 @@ async function handlePayment() {
 
     // 2. Use order_id in Razorpay options
     const options = {
-  key: RAZORPAY_KEY_ID,
-  amount: order.amount,
-  currency: order.currency,
-  order_id: order.id,
-  name: "Test",
-  description: "Test Payment",
-  handler: async function (response) {
-    alert("Payment Success: " + response.razorpay_payment_id);
-  }
-};
-console.log("Razorpay options:", options);
-const rzp = new window.Razorpay(options);
-rzp.open();
+      key: RAZORPAY_KEY_ID,
+      amount: order.amount, // always use backend amount
+      currency: order.currency,
+      order_id: order.id,
+      name: "Ashok Kumar Textiles",
+      description: "Order Payment",
+      handler: async function (response) {
+        await placeOrder(response.razorpay_payment_id);
+      },
+      prefill: {
+        name: profile?.full_name,
+        email: profile?.email,
+        contact: profile?.phone,
+      },
+      theme: { color: "#3b82f6" },
+      modal: {
+        ondismiss: function() {
+          setIsPaying(false);
+        }
+      }
+    };
+    console.log("Razorpay options:", options);
+    const rzp = new window.Razorpay(options);
+    rzp.open();
   } catch (error) {
     console.error("Payment initiation error:", error);
     alert("Payment initiation failed. Please try again.");
