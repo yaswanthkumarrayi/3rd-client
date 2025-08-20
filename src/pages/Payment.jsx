@@ -83,11 +83,14 @@ async function handlePayment() {
   console.log("Pay button clicked");
   setIsPaying(true);
   try {
-    // 1. Create order on backend with fixed ₹10 (1000 paise)
+    // Calculate amount in paise from cart total
+    const amountPaise = Math.max(100, Math.round(getTotal() * 100));
+
+    // 1. Create order on backend with real amount
     const res = await fetch(`${BACKEND_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: 1000, currency: "INR" }) // <-- Fixed ₹10
+      body: JSON.stringify({ amount: amountPaise, currency: "INR" })
     });
     const order = await res.json();
     console.log("Order from backend:", order);
@@ -95,10 +98,9 @@ async function handlePayment() {
       throw new Error("Order creation failed");
     }
 
-    // 2. Use order_id in Razorpay options
+    // 2. Use order_id in Razorpay options (amount comes from order)
     const options = {
       key: RAZORPAY_KEY_ID,
-      amount: order.amount, // always use backend amount
       currency: order.currency,
       order_id: order.id,
       name: "Ashok Kumar Textiles",
@@ -120,6 +122,16 @@ async function handlePayment() {
     };
     console.log("Razorpay options:", options);
     const rzp = new window.Razorpay(options);
+
+    // Capture and surface detailed failure info
+    rzp.on('payment.failed', function (response) {
+      console.error('Razorpay payment failed:', response?.error || response);
+      const code = response?.error?.code || 'UNKNOWN_ERROR';
+      const description = response?.error?.description || 'Payment failed. Please try again.';
+      alert(`${code}: ${description}`);
+      setIsPaying(false);
+    });
+
     rzp.open();
   } catch (error) {
     console.error("Payment initiation error:", error);
