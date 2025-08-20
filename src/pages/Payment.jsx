@@ -19,7 +19,6 @@ import {
   Truck,
   Edit3
 } from "lucide-react";
-
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 const BACKEND_URL= "https://threerd-client-2.onrender.com";
 
@@ -88,7 +87,8 @@ async function handlePayment() {
     const res = await fetch(`${BACKEND_URL}/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: getTotal() * 100, currency: "INR" }),
+      body: JSON.stringify({ amount: Math.round(getTotal() * 100), currency: "INR" })
+
     });
     const order = await res.json();
     console.log("Order from backend:", order);
