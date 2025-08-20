@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
-const BACKEND_URL= "https://threerd-client-2.onrender.com/";
+const BACKEND_URL= "https://threerd-client-2.onrender.com";
 
 const Payment = () => {
   const navigate = useNavigate();
