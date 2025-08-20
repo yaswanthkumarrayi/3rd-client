@@ -84,7 +84,7 @@ function getTotal() {
 
     try {
       const options = {
-        key: RAZORPAY_KEY_ID,
+        key: "rzp_test_R6NmIHLl4TZltu",
         amount: getTotal() * 100, // in paise
         currency: "INR",
         name: "Ashok Kumar Textiles",
