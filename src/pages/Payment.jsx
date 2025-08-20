@@ -99,8 +99,8 @@ async function handlePayment() {
     // 2. Use order_id in Razorpay options
     const options = {
       key: RAZORPAY_KEY_ID,
-      amount: getTotal() * 100,
-      currency: "INR",
+      amount: order.amount,
+      currency: order.currency,
       order_id: order.id, // <-- use this!
       name: "Ashok Kumar Textiles",
       description: "Order Payment",
