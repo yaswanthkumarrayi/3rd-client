@@ -12,6 +12,9 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const currentMode = (process.env.RAZORPAY_KEY_ID || '').startsWith('rzp_live') ? 'LIVE' : 'TEST';
+console.log(`Razorpay mode: ${currentMode}`);
+
 app.post('/api/create-order', async (req, res) => {
   const { amount, currency = "INR" } = req.body;
   try {
