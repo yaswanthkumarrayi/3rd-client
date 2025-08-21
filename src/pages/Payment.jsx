@@ -153,7 +153,7 @@ const Payment = () => {
 
       // Prepare Razorpay options
       const options = {
-        key: "rzp_live_R7aFZXp7D1g5yb", // Replace with your live key
+        key: "rzp_live_R7aFZXp7D1g5yb",
         amount: getTotal() * 100, // Amount in paise
         currency: "INR",
         name: "3rd Client",
@@ -199,7 +199,7 @@ const Payment = () => {
           }
         },
         prefill: {
-          name: profile.full_name || user.email,
+          name: user.email,
           email: user.email,
           contact: profile.phone
         },
@@ -214,16 +214,56 @@ const Payment = () => {
           ondismiss: function() {
             setProcessing(false);
           }
+        },
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: "Pay using UPI",
+                instruments: [
+                  {
+                    method: "card"
+                  },
+                  {
+                    method: "netbanking"
+                  },
+                  {
+                    method: "wallet"
+                  }
+                ]
+              }
+            }
+          }
         }
       };
 
       // Initialize Razorpay
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
-      paymentObject.on('payment.failed', function (response) {
-        setError("Payment failed. Please try again.");
+      try {
+        const paymentObject = new window.Razorpay(options);
+        paymentObject.open();
+        
+        paymentObject.on('payment.failed', function (response) {
+          console.error('Payment failed:', response);
+          setError("Payment failed. Please try again.");
+          setProcessing(false);
+        });
+
+        paymentObject.on('payment.cancelled', function (response) {
+          console.log('Payment cancelled:', response);
+          setError("Payment was cancelled.");
+          setProcessing(false);
+        });
+
+        paymentObject.on('error', function (response) {
+          console.error('Razorpay error:', response);
+          setError("Payment gateway error. Please try again.");
+          setProcessing(false);
+        });
+      } catch (error) {
+        console.error('Razorpay initialization error:', error);
+        setError("Failed to initialize payment gateway. Please try again.");
         setProcessing(false);
-      });
+      }
 
     } catch (error) {
       console.error("Payment error:", error);
