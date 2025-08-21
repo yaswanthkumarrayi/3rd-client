@@ -1,5 +1,17 @@
 {
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/" }
-  ]
+  ],
+  "functions": {
+    "api/create-order.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/verify-payment.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/razorpay-status.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
 }

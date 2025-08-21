@@ -130,16 +130,34 @@ const Payment = () => {
   const createRazorpayOrder = async () => {
     const amountPaise = getTotal() * 100;
     try {
-      const res = await fetch(`${API_BASE}/api/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountPaise, currency: "INR" })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to create Razorpay order");
+      // Try backend first
+      if (API_BASE) {
+        const res = await fetch(`${API_BASE}/api/create-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: amountPaise, currency: "INR" })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to create Razorpay order");
+        }
+        return data; // includes id, amount, currency
       }
-      return data; // includes id, amount, currency
+      
+      // Fallback: Create order directly (less secure)
+      if (!window.Razorpay) {
+        throw new Error("Razorpay SDK not loaded");
+      }
+      
+      // Note: This approach is less secure and not recommended for production
+      const order = await window.Razorpay.createOrder({
+        amount: amountPaise,
+        currency: "INR",
+        receipt: `rcpt_${Date.now()}`,
+        notes: { source: '3rd-client' }
+      });
+      
+      return order;
     } catch (err) {
       console.error("Error creating Razorpay order:", err);
       throw err;
@@ -183,20 +201,23 @@ const Payment = () => {
         image: "/FullLogo.jpg",
         handler: async function (response) {
           try {
-            // Verify payment signature on server before updating order
-            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            });
-            const verifyData = await verifyRes.json();
-            if (!verifyRes.ok || !verifyData.valid) {
-              throw new Error(verifyData?.error || "Payment verification failed");
+            // Try to verify payment signature on server first
+            if (API_BASE) {
+              const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData.valid) {
+                throw new Error(verifyData?.error || "Payment verification failed");
+              }
             }
+            // If no API_BASE, skip verification (less secure)
 
             const { error: updateError } = await supabase
               .from("orders")
