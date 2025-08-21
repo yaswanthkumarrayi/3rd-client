@@ -55,7 +55,7 @@ const Payment = () => {
     if (!error && data) {
       setProfile(data);
       // Check if profile is complete
-      if (!data.full_name || !data.phone || !data.city || !data.state || !data.pincode || !data.address) {
+      if (!data.phone || !data.city || !data.state || !data.pincode || !data.address) {
         setError("Please complete your profile information to proceed with payment.");
         setTimeout(() => navigate("/user"), 2000);
       }
@@ -99,15 +99,12 @@ const Payment = () => {
     try {
       const orderData = {
         user_email: user.email,
-        full_name: profile.full_name,
         phone: profile.phone,
         address: profile.address,
         city: profile.city,
         state: profile.state,
         pincode: profile.pincode,
         items: cartItems,
-        subtotal: getSubtotal(),
-        shipping: getShipping(),
         total: getTotal(),
         status: "placed",
         created_at: new Date().toISOString()
@@ -162,7 +159,6 @@ const Payment = () => {
         name: "3rd Client",
         description: `Order #${order.id} - ${cartItems.length} item(s)`,
         image: "/FullLogo.jpg",
-        order_id: order.id,
         handler: async function (response) {
           try {
             // Update order with payment details
@@ -203,12 +199,13 @@ const Payment = () => {
           }
         },
         prefill: {
-          name: profile.full_name,
+          name: profile.full_name || user.email,
           email: user.email,
           contact: profile.phone
         },
         notes: {
-          address: `${profile.address}, ${profile.city}, ${profile.state} - ${profile.pincode}`
+          address: `${profile.address}, ${profile.city}, ${profile.state} - ${profile.pincode}`,
+          customer: user.email
         },
         theme: {
           color: "#C026D3"
@@ -348,9 +345,9 @@ const Payment = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span className="text-gray-900">{profile?.full_name}</span>
+                        <span className="text-gray-900">{user?.email}</span>
                       </div>
                     </div>
                     <div>
