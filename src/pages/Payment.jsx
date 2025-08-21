@@ -156,7 +156,7 @@ const Payment = () => {
 
       // Prepare Razorpay options
       const options = {
-        key: "rzp_live_YOUR_RAZORPAY_KEY_HERE", // Replace with your live key
+        key: "rzp_live_R7aFZXp7D1g5yb", // Replace with your live key
         amount: getTotal() * 100, // Amount in paise
         currency: "INR",
         name: "3rd Client",
