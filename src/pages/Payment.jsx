@@ -131,7 +131,8 @@ const Payment = () => {
       return data;
     } catch (error) {
       console.error("Error creating order:", error);
-      throw new Error(error.message || "Failed to create order");
+      const errorMessage = error?.message || "Failed to create order";
+      throw new Error(errorMessage);
     }
   };
 
@@ -182,7 +183,8 @@ const Payment = () => {
       return data;
     } catch (err) {
       console.error("Error creating Razorpay order:", err);
-      throw new Error(err.message || "Failed to initialize payment");
+      const errorMessage = err?.message || "Failed to initialize payment";
+      throw new Error(errorMessage);
     }
   };
 
@@ -307,7 +309,8 @@ const Payment = () => {
             setProcessing(false);
           } catch (error) {
             console.error("Error processing successful payment:", error);
-            setError(`Payment completed but order update failed: ${error.message}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
+            const errorMessage = error?.message || "Unknown error occurred";
+            setError(`Payment completed but order update failed: ${errorMessage}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
             setProcessing(false);
           }
         },
@@ -392,7 +395,8 @@ const Payment = () => {
 
     } catch (error) {
       console.error("Payment error:", error);
-      setError("Failed to process payment. Please try again.");
+      const errorMessage = error.message || "Failed to process payment. Please try again.";
+      setError(errorMessage);
       setProcessing(false);
     }
   };

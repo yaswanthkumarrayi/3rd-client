@@ -2,6 +2,12 @@
 import Razorpay from 'razorpay';
 
 export default async function handler(req, res) {
+  console.log('📦 API Create order request:', {
+    method: req.method,
+    timestamp: new Date().toISOString(),
+    hasBody: !!req.body
+  });
+
   // Set CORS headers for all requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -15,36 +21,51 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  console.log('📦 Create order request received:', {
-    timestamp: new Date().toISOString(),
-    method: req.method
-  });
-
   try {
-    // Get environment variables - Vercel automatically provides these
+    // Get environment variables - check both possible names
     const keyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
     
+    console.log('🔑 Environment check:', {
+      hasKeyId: !!keyId,
+      hasKeySecret: !!keySecret,
+      keyIdPrefix: keyId ? keyId.substring(0, 8) + '...' : 'NOT_SET'
+    });
+    
     if (!keyId || !keySecret) {
-      console.error('❌ Razorpay credentials not found in environment variables');
+      console.error('❌ Razorpay credentials missing:', {
+        keyId: !!keyId,
+        keySecret: !!keySecret
+      });
       return res.status(500).json({ 
         error: 'Payment gateway not configured. Please contact support.',
         code: 'MISSING_CREDENTIALS'
       });
     }
 
-    // Initialize Razorpay
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
+    // Initialize Razorpay with error handling
+    let razorpay;
+    try {
+      razorpay = new Razorpay({
+        key_id: keyId,
+        key_secret: keySecret,
+      });
+      console.log('✅ Razorpay initialized successfully');
+    } catch (initError) {
+      console.error('❌ Razorpay initialization failed:', initError);
+      return res.status(500).json({ 
+        error: 'Payment gateway initialization failed',
+        code: 'RAZORPAY_INIT_FAILED'
+      });
+    }
 
     const { amount, currency = 'INR', customer_details, order_metadata, receipt, notes } = req.body || {};
 
     console.log('📋 Order request details:', {
       amount,
       currency,
-      hasCustomerDetails: !!customer_details
+      hasCustomerDetails: !!customer_details,
+      hasOrderMetadata: !!order_metadata
     });
 
     // Validate required fields
@@ -95,46 +116,69 @@ export default async function handler(req, res) {
     console.log('🏗️ Creating Razorpay order with options:', {
       amount: orderOptions.amount,
       currency: orderOptions.currency,
-      receipt: orderOptions.receipt
+      receipt: orderOptions.receipt,
+      notesCount: Object.keys(orderOptions.notes).length
     });
 
-    const order = await razorpay.orders.create(orderOptions);
+    // Create the order
+    let order;
+    try {
+      order = await razorpay.orders.create(orderOptions);
+      console.log('✅ Razorpay order created successfully:', {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        status: order.status
+      });
+    } catch (razorpayError) {
+      console.error('❌ Razorpay order creation failed:', {
+        message: razorpayError.message,
+        statusCode: razorpayError.statusCode,
+        error: razorpayError.error
+      });
+      
+      let statusCode = 500;
+      let errorMessage = 'Failed to create payment order';
 
-    console.log('✅ Razorpay order created successfully:', {
-      id: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      status: order.status
-    });
+      if (razorpayError.statusCode) {
+        statusCode = razorpayError.statusCode;
+      }
+      
+      if (razorpayError.error && razorpayError.error.description) {
+        errorMessage = razorpayError.error.description;
+      } else if (razorpayError.message) {
+        errorMessage = razorpayError.message;
+      }
 
-    return res.status(200).json({
+      return res.status(statusCode).json({ 
+        error: errorMessage,
+        code: razorpayError.error?.code || 'RAZORPAY_ORDER_FAILED'
+      });
+    }
+
+    const response = {
       id: order.id,
       amount: order.amount,
       currency: order.currency,
       receipt: order.receipt,
       status: order.status,
       created_at: order.created_at
-    });
+    };
+
+    console.log('📤 Sending response:', response);
+    return res.status(200).json(response);
 
   } catch (error) {
-    console.error('❌ Error creating Razorpay order:', error);
-    
-    let statusCode = 500;
-    let errorMessage = 'Failed to create payment order';
+    console.error('❌ Unexpected error in create-order:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
 
-    if (error.statusCode) {
-      statusCode = error.statusCode;
-    }
-    
-    if (error.error && error.error.description) {
-      errorMessage = error.error.description;
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    return res.status(statusCode).json({ 
-      error: errorMessage,
-      code: error.error?.code || 'CREATE_ORDER_FAILED'
+    return res.status(500).json({ 
+      error: 'Internal server error',
+      code: 'UNEXPECTED_ERROR',
+      message: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
     });
   }
 }
