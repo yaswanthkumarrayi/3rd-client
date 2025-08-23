@@ -1,11 +1,8 @@
+// Secure Razorpay order creation endpoint
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
+// Utility functions
 function setJson(res) {
   res.setHeader('Content-Type', 'application/json');
 }
@@ -42,28 +39,56 @@ function generateSecureReceipt() {
 }
 
 export default async function handler(req, res) {
-  // Set security headers
+  // Set CORS and security headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
   if (req.method !== 'POST') {
     setJson(res);
     return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
+  console.log('📦 Create order request received:', {
+    timestamp: new Date().toISOString(),
+    method: req.method
+  });
+
   try {
-    // Check if Razorpay is properly configured
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-      console.error('Razorpay credentials not configured');
+    // Check environment variables - use the correct variable names
+    const keyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    
+    if (!keyId || !keySecret) {
+      console.error('❌ Razorpay credentials not found in environment variables');
       setJson(res);
       return res.status(500).end(JSON.stringify({ 
-        error: 'Payment gateway not configured. Please contact support.' 
+        error: 'Payment gateway not configured. Please contact support.',
+        code: 'MISSING_CREDENTIALS'
       }));
     }
 
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+
     const body = await parseBody(req);
-    const { amount, currency = 'INR', customer_details, order_metadata } = body || {};
+    const { amount, currency = 'INR', customer_details, order_metadata, receipt, notes } = body || {};
+
+    console.log('📋 Order request details:', {
+      amount,
+      currency,
+      hasCustomerDetails: !!customer_details
+    });
 
     // Validate required fields
     if (!amount) {
@@ -91,13 +116,15 @@ export default async function handler(req, res) {
 
     // Prepare order data
     const orderData = {
-      amount: parseInt(amount),
+      amount: Math.round(parseInt(amount)), // Ensure it's an integer
       currency: currency.toUpperCase(),
-      receipt: generateSecureReceipt(),
+      receipt: receipt || generateSecureReceipt(),
+      payment_capture: 1, // Auto capture payment
       notes: {
         source: '3rd-client',
-        environment: process.env.NODE_ENV || 'development',
+        environment: keyId?.startsWith('rzp_live') ? 'LIVE' : 'TEST',
         created_at: new Date().toISOString(),
+        ...notes,
         ...order_metadata
       },
     };
@@ -112,7 +139,7 @@ export default async function handler(req, res) {
       }
     }
 
-    console.log('Creating Razorpay order with data:', {
+    console.log('🏗️ Creating Razorpay order with data:', {
       amount: orderData.amount,
       currency: orderData.currency,
       receipt: orderData.receipt,
@@ -121,7 +148,7 @@ export default async function handler(req, res) {
 
     const order = await razorpay.orders.create(orderData);
 
-    console.log('Created Razorpay order successfully:', {
+    console.log('✅ Razorpay order created successfully:', {
       id: order.id,
       amount: order.amount,
       currency: order.currency,
@@ -141,10 +168,11 @@ export default async function handler(req, res) {
 
     setJson(res);
     return res.status(200).end(JSON.stringify(response));
-  } catch (err) {
-    console.error('Error creating Razorpay order:', {
-      message: err.message,
-      stack: err.stack,
+
+  } catch (error) {
+    console.error('❌ Error creating Razorpay order:', {
+      message: error.message,
+      stack: error.stack,
       timestamp: new Date().toISOString()
     });
 
@@ -152,17 +180,19 @@ export default async function handler(req, res) {
     let errorMessage = 'Failed to create payment order';
     let statusCode = 500;
 
-    if (err.statusCode) {
-      statusCode = err.statusCode;
-      if (err.error && err.error.description) {
-        errorMessage = err.error.description;
+    if (error.statusCode) {
+      statusCode = error.statusCode;
+      if (error.error && error.error.description) {
+        errorMessage = error.error.description;
       }
+    } else if (error.message) {
+      errorMessage = error.message;
     }
 
     setJson(res);
     return res.status(statusCode).end(JSON.stringify({ 
       error: errorMessage,
-      code: err.error?.code || 'UNKNOWN_ERROR'
+      code: error.error?.code || 'CREATE_ORDER_FAILED'
     }));
   }
 }
