@@ -220,18 +220,23 @@ function Payment() {
         console.error("❌ Failed to parse JSON response:", jsonError);
         throw new Error(`Invalid JSON response from server`);
       }
-      
-      if (!orderData.id) {
-        console.error("❌ Order creation failed - No order ID:", orderData);
+
+      // Handle different response structures
+      let orderId;
+      if (orderData.id) {
+        orderId = orderData.id;
+      } else if (orderData.order && orderData.order.id) {
+        orderId = orderData.order.id;
+        orderData = orderData.order; // Use the nested order object
+      } else {
+        console.error("❌ Order creation failed - No order ID found:", orderData);
         setError(orderData.error || "Failed to create payment order");
         setProcessing(false);
         return;
-      }
-      
-      // Prepare Razorpay options
+      }      // Prepare Razorpay options
       const options = {
         key: RAZORPAY_KEY_ID,
-        order_id: orderData.id,
+        order_id: orderId,
         name: "3rd Client",
         description: `Order Payment`,
         handler: async function (response) {
