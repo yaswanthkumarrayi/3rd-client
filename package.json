@@ -17,7 +17,7 @@
     "dotenv": "^16.4.5",
     "express": "^5.1.0",
     "firebase": "^12.1.0",
-    "lucide-react": "^0.539.0",
+        "lucide-react": "^0.400.0",
     "razorpay": "^2.9.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

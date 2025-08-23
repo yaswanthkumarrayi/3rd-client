@@ -108,8 +108,16 @@ const Payment = () => {
         pincode: profile.pincode,
         items: cartItems,
         total: getTotal(),
+        subtotal: getSubtotal(),
+        shipping: getShipping(),
         status: "placed",
-        created_at: new Date().toISOString()
+        payment_status: "pending",
+        created_at: new Date().toISOString(),
+        order_metadata: {
+          cart_items_count: cartItems.length,
+          total_savings: getTotalSavings(),
+          user_agent: navigator.userAgent
+        }
       };
 
       const { data, error } = await supabase
@@ -118,36 +126,71 @@ const Payment = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error creating order:', error);
+        throw new Error(`Failed to create order: ${error.message}`);
+      }
+      
+      if (!data) {
+        throw new Error("Order creation returned no data");
+      }
+      
+      console.log('Order created in database:', data.id);
       return data;
     } catch (error) {
       console.error("Error creating order:", error);
-      throw error;
+      throw new Error(error.message || "Failed to create order");
     }
   };
 
   const createRazorpayOrder = async () => {
     const amountPaise = getTotal() * 100;
     try {
+      const orderData = {
+        amount: amountPaise, 
+        currency: "INR",
+        customer_details: {
+          email: user.email,
+          phone: profile.phone
+        },
+        order_metadata: {
+          user_id: user.id,
+          cart_items_count: cartItems.length,
+          source: 'web_app'
+        }
+      };
+
       const res = await fetch(`/api/create-order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountPaise, currency: "INR" })
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(orderData)
       });
+      
       const text = await res.text();
       let data;
       try {
         data = text ? JSON.parse(text) : {};
       } catch (e) {
-        throw new Error("Invalid JSON from create-order endpoint");
+        console.error('Failed to parse create-order response:', text);
+        throw new Error("Invalid response from payment service");
       }
+      
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to create Razorpay order");
+        throw new Error(data?.error || `Payment service error: ${res.status}`);
       }
-      return data; // includes id, amount, currency
+      
+      if (!data.id) {
+        throw new Error("Invalid order response: missing order ID");
+      }
+      
+      console.log('Razorpay order created successfully:', data.id);
+      return data;
     } catch (err) {
       console.error("Error creating Razorpay order:", err);
-      throw err;
+      throw new Error(err.message || "Failed to initialize payment");
     }
   };
 
@@ -187,62 +230,97 @@ const Payment = () => {
         description: `Order #${order.id} - ${cartItems.length} item(s)`,
         image: "/FullLogo.jpg",
         handler: async function (response) {
+          console.log('Payment successful, verifying...', {
+            order_id: response.razorpay_order_id,
+            payment_id: response.razorpay_payment_id
+          });
+          
           try {
-            // Verify payment signature on server (same origin)
+            // Verify payment signature on server
             const verifyRes = await fetch(`/api/verify-payment`, {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: { 
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest"
+              },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature
               })
             });
+            
             const verifyText = await verifyRes.text();
             let verifyData;
             try {
               verifyData = verifyText ? JSON.parse(verifyText) : {};
             } catch (e) {
-              throw new Error("Invalid JSON from verify-payment endpoint");
+              console.error('Failed to parse verify-payment response:', verifyText);
+              throw new Error("Invalid response from verification service");
             }
+            
             if (!verifyRes.ok || !verifyData.valid) {
+              console.error('Payment verification failed:', verifyData);
               throw new Error(verifyData?.error || "Payment verification failed");
             }
 
+            console.log('Payment verified successfully, updating order...');
+
+            // Update order with payment details
             const { error: updateError } = await supabase
               .from("orders")
               .update({
                 payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
                 payment_status: "completed",
-                status: "processing"
+                status: "processing",
+                payment_verified_at: new Date().toISOString(),
+                razorpay_signature: response.razorpay_signature
               })
               .eq("id", order.id);
 
-            if (updateError) throw updateError;
+            if (updateError) {
+              console.error('Error updating order:', updateError);
+              throw new Error(`Failed to update order: ${updateError.message}`);
+            }
 
-            // Success - clear cart and redirect
+            console.log('Order updated successfully, processing success...');
+
+            // Clear cart and show success
             localStorage.removeItem("cartItems");
             localStorage.setItem("cartCount", "0");
             
+            // Dispatch custom event for cart update
+            window.dispatchEvent(new CustomEvent('cartUpdated'));
+            
             // Show success notification
             const successNotification = document.createElement('div');
-            successNotification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+            successNotification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-pulse';
             successNotification.innerHTML = `
               <div class="flex items-center gap-3">
                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
                 </svg>
-                <span class="font-medium">Payment successful! Order placed.</span>
+                <div>
+                  <div class="font-medium">Payment Successful!</div>
+                  <div class="text-sm opacity-90">Order placed successfully</div>
+                </div>
               </div>
             `;
             document.body.appendChild(successNotification);
-            setTimeout(() => document.body.removeChild(successNotification), 3000);
+            setTimeout(() => {
+              if (document.body.contains(successNotification)) {
+                document.body.removeChild(successNotification);
+              }
+            }, 5000);
 
             // Redirect to orders page
-            setTimeout(() => navigate("/orders"), 1500);
+            setTimeout(() => navigate("/orders"), 2000);
+            setProcessing(false);
           } catch (error) {
-            console.error("Error updating order:", error);
-            setError("Payment successful but order update failed. Please contact support.");
+            console.error("Error processing successful payment:", error);
+            setError(`Payment completed but order update failed: ${error.message}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
+            setProcessing(false);
           }
         },
         prefill: {
@@ -259,24 +337,27 @@ const Payment = () => {
         },
         modal: {
           ondismiss: function() {
+            console.log('Payment modal dismissed by user');
             setProcessing(false);
+            setError("Payment was cancelled by user");
           }
         },
+        retry: {
+          enabled: true,
+          max_count: 3
+        },
+        timeout: 300, // 5 minutes timeout
         config: {
           display: {
+            language: 'en',
             blocks: {
               banks: {
-                name: "Pay using UPI",
+                name: "Pay using UPI/Card/Netbanking",
                 instruments: [
-                  {
-                    method: "card"
-                  },
-                  {
-                    method: "netbanking"
-                  },
-                  {
-                    method: "wallet"
-                  }
+                  { method: "card" },
+                  { method: "netbanking" },
+                  { method: "wallet" },
+                  { method: "upi" }
                 ]
               }
             }
@@ -284,31 +365,40 @@ const Payment = () => {
         }
       };
 
-      // Initialize Razorpay
+      // Initialize Razorpay with error handling
       try {
+        if (!window.Razorpay) {
+          throw new Error("Razorpay SDK not loaded properly");
+        }
+
         const paymentObject = new window.Razorpay(options);
-        paymentObject.open();
         
+        // Set up event listeners for better error handling
         paymentObject.on('payment.failed', function (response) {
           console.error('Payment failed:', response);
-          setError("Payment failed. Please try again.");
+          const errorMsg = response.error?.description || "Payment failed. Please try again.";
+          setError(errorMsg);
           setProcessing(false);
         });
 
         paymentObject.on('payment.cancelled', function (response) {
-          console.log('Payment cancelled:', response);
+          console.log('Payment cancelled by user:', response);
           setError("Payment was cancelled.");
           setProcessing(false);
         });
 
         paymentObject.on('error', function (response) {
           console.error('Razorpay error:', response);
-          setError("Payment gateway error. Please try again.");
+          setError("Payment gateway error. Please try again or contact support.");
           setProcessing(false);
         });
+
+        // Open payment dialog
+        paymentObject.open();
+        
       } catch (error) {
         console.error('Razorpay initialization error:', error);
-        setError("Failed to initialize payment gateway. Please try again.");
+        setError(`Failed to initialize payment: ${error.message}`);
         setProcessing(false);
       }
 
