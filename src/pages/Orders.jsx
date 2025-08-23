@@ -11,6 +11,25 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Helper function to safely parse items
+  const parseOrderItems = (itemsData) => {
+    try {
+      // If it's already an array, return it
+      if (Array.isArray(itemsData)) {
+        return itemsData;
+      }
+      // If it's a string, try to parse it as JSON
+      if (typeof itemsData === 'string') {
+        return JSON.parse(itemsData);
+      }
+      // If it's neither, return empty array
+      return [];
+    } catch (error) {
+      console.error('Error parsing order items:', error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -183,83 +202,70 @@ const Orders = () => {
 
                   {/* Order Items */}
                   <div className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <ShoppingBag className="w-4 h-4 text-gray-600" />
-                      <h4 className="font-medium text-gray-900">
-                        Items ({order.items.length})
-                      </h4>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                          {/* Product Image */}
-                          <div className="flex-shrink-0">
-                            <img
-                              src={item.hero_image_url}
-                              alt={item.title}
-                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
-                            />
+                    {(() => {
+                      const orderItems = parseOrderItems(order.items);
+                      return (
+                        <>
+                          <div className="flex items-center gap-2 mb-4">
+                            <ShoppingBag className="w-4 h-4 text-gray-600" />
+                            <h4 className="font-medium text-gray-900">
+                              Items ({orderItems.length})
+                            </h4>
                           </div>
                           
-                          {/* Product Details */}
-                          <div className="flex-1 min-w-0">
-                            <h5 className="font-medium text-gray-900 text-sm sm:text-base mb-2 line-clamp-2">
-                              {item.title}
-                            </h5>
-                            
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
-                                {item.fabric}
-                              </span>
-                              <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
-                                {item.category}
-                              </span>
-                            </div>
-                            
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                              <div className="flex items-center gap-3">
-                                <span className="font-semibold text-gray-900">₹{item.discount_price}</span>
-                                {item.original_price > item.discount_price && (
-                                  <span className="text-gray-500 line-through text-sm">₹{item.original_price}</span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <span className="bg-fuchsia-50 text-fuchsia-700 px-2 py-1 rounded text-sm font-medium border border-fuchsia-200">
-                                  Qty: {item.quantity}
-                                </span>
-                                <div className="text-right">
-                                  <div className="font-semibold text-gray-900">
-                                    ₹{item.discount_price * item.quantity}
+                          <div className="space-y-4">
+                            {orderItems.map((item, idx) => (
+                              <div key={idx} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                                {/* Product Image */}
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={item.hero_image_url}
+                                    alt={item.title}
+                                    className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200"
+                                  />
+                                </div>
+                                
+                                {/* Product Details */}
+                                <div className="flex-1 min-w-0">
+                                  <h5 className="font-medium text-gray-900 text-sm sm:text-base mb-2 line-clamp-2">
+                                    {item.title}
+                                  </h5>
+                                  
+                                  <div className="flex flex-wrap gap-2 mb-3">
+                                    <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
+                                      {item.fabric}
+                                    </span>
+                                    <span className="inline-block bg-white px-2 py-1 rounded text-xs font-medium text-gray-700 border border-gray-200">
+                                      {item.category}
+                                    </span>
                                   </div>
-                                  <p className="text-xs text-gray-500">Subtotal</p>
+                                  
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div className="flex items-center gap-3">
+                                      <span className="font-semibold text-gray-900">₹{item.discount_price}</span>
+                                      {item.original_price > item.discount_price && (
+                                        <span className="text-gray-500 line-through text-sm">₹{item.original_price}</span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <span className="bg-fuchsia-50 text-fuchsia-700 px-2 py-1 rounded text-sm font-medium border border-fuchsia-200">
+                                        Qty: {item.quantity}
+                                      </span>
+                                      <div className="text-right">
+                                        <div className="font-semibold text-gray-900">
+                                          ₹{item.discount_price * item.quantity}
+                                        </div>
+                                        <p className="text-xs text-gray-500">Subtotal</p>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ))}
                           </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Order Summary */}
-                    <div className="mt-6 pt-4 border-t border-gray-200">
-                      <div className="bg-fuchsia-50 rounded-lg p-4 border border-fuchsia-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-fuchsia-600" />
-                            <span className="font-medium text-gray-900">Order Total</span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-xl font-bold text-fuchsia-600">
-                              ₹{order.total}
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              {order.items.reduce((sum, item) => sum + item.quantity, 0)} items
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

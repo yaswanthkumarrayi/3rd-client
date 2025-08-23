@@ -83,31 +83,9 @@ function getTotal() {
     }
     setIsLoading(false);
     navigate("/payment");
+  };
 
-    // Success notification
-    const successNotification = document.createElement('div');
-    successNotification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
-    successNotification.innerHTML = `
-      <div class="flex items-center gap-3">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-        </svg>
-        <span class="font-medium">Order placed successfully!</span>
-      </div>
-    `;
-    document.body.appendChild(successNotification);
-    setTimeout(() => document.body.removeChild(successNotification), 3000);
-
-    localStorage.removeItem("cartItems");
-    localStorage.setItem("cartCount", "0");
-    setCartItems([]);
-    setIsLoading(false);
-    
-    setTimeout(() => {
-      navigate("/orders");
-    }, 1500);
-  }
-function handleQuantityChange(index, newQuantity) {
+  function handleQuantityChange(index, newQuantity) {
   const item = cartItems[index];
   if (newQuantity < 1) return;
 
