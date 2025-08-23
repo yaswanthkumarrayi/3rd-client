@@ -108,16 +108,8 @@ const Payment = () => {
         pincode: profile.pincode,
         items: cartItems,
         total: getTotal(),
-        subtotal: getSubtotal(),
-        shipping: getShipping(),
         status: "placed",
-        payment_status: "pending",
-        created_at: new Date().toISOString(),
-        order_metadata: {
-          cart_items_count: cartItems.length,
-          total_savings: getTotalSavings(),
-          user_agent: navigator.userAgent
-        }
+        created_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
@@ -271,11 +263,7 @@ const Payment = () => {
               .from("orders")
               .update({
                 payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                payment_status: "completed",
-                status: "processing",
-                payment_verified_at: new Date().toISOString(),
-                razorpay_signature: response.razorpay_signature
+                status: "processing"
               })
               .eq("id", order.id);
 
