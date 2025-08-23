@@ -175,12 +175,14 @@ const Payment = () => {
         throw new Error(data?.error || `Payment service error: ${res.status}`);
       }
       
-      if (!data.id) {
+      // Handle response format: { order: {...} }
+      const razorpayOrderData = data.order || data;
+      if (!razorpayOrderData.id) {
         throw new Error("Invalid order response: missing order ID");
       }
       
-      console.log('Razorpay order created successfully:', data.id);
-      return data;
+      console.log('Razorpay order created successfully:', razorpayOrderData.id);
+      return razorpayOrderData;
     } catch (err) {
       console.error("Error creating Razorpay order:", err);
       const errorMessage = err?.message || "Failed to initialize payment";
@@ -214,7 +216,7 @@ const Payment = () => {
       // Create order in database and Razorpay order on server
       const order = await createOrder();
       setOrderDetails(order);
-      const razorpayOrder = await createRazorpayOrder();
+      const razorpayOrder = await createRazorpayOrder(order);
 
       // Prepare Razorpay options
       const options = {
