@@ -82,13 +82,7 @@ function getTotal() {
       return;
     }
     setIsLoading(false);
-  navigate("/payment");
-
-    if (orderError) {
-      setError("Failed to place order. Please try again.");
-      setIsLoading(false);
-      return;
-    }
+    navigate("/payment");
 
     // Success notification
     const successNotification = document.createElement('div');

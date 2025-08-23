@@ -107,9 +107,10 @@ const Payment = () => {
         state: profile.state,
         pincode: profile.pincode,
         items: cartItems,
-        total: getTotal(),
+        amount: getTotal(),
         status: "placed",
-        created_at: new Date().toISOString()
+        shipping: getShipping() // Add shipping field to match schema
+        // removed created_at as it's auto-generated in schema
       };
 
       const { data, error } = await supabase
