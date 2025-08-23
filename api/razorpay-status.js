@@ -1,6 +1,11 @@
+function setJson(res) {
+  res.setHeader('Content-Type', 'application/json');
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    setJson(res);
+    return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
   try {
@@ -8,14 +13,16 @@ export default async function handler(req, res) {
     const hasSecret = !!process.env.RAZORPAY_KEY_SECRET;
     const currentMode = (keyId || '').startsWith('rzp_live') ? 'LIVE' : 'TEST';
     
-    res.status(200).json({
+    setJson(res);
+    return res.status(200).end(JSON.stringify({
       mode: currentMode,
       keyIdPrefix: keyId ? keyId.substring(0, 8) + '...' : 'NOT_SET',
       hasSecret: hasSecret,
       status: keyId && hasSecret ? 'CONFIGURED' : 'MISCONFIGURED'
-    });
+    }));
   } catch (error) {
     console.error('Status check error:', error);
-    res.status(500).json({ error: error.message });
+    setJson(res);
+    return res.status(500).end(JSON.stringify({ error: error.message }));
   }
 }

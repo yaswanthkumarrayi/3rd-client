@@ -1,12 +1,34 @@
 import crypto from 'crypto';
 
+function setJson(res) {
+  res.setHeader('Content-Type', 'application/json');
+}
+
+async function parseBody(req) {
+  if (req.body) return req.body;
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    setJson(res);
+    return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }));
   }
 
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+    const body = await parseBody(req);
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body || {};
     
     console.log('Verification request:', { 
       razorpay_order_id, 
@@ -15,7 +37,8 @@ export default async function handler(req, res) {
     });
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ 
+      setJson(res);
+      return res.status(400).end(JSON.stringify({ 
         valid: false, 
         error: 'Missing fields for verification',
         received: { 
@@ -23,7 +46,7 @@ export default async function handler(req, res) {
           razorpay_payment_id: !!razorpay_payment_id, 
           razorpay_signature: !!razorpay_signature 
         }
-      });
+      }));
     }
 
     // Create HMAC SHA256 hash
@@ -42,25 +65,28 @@ export default async function handler(req, res) {
     const isValid = expectedSignature === razorpay_signature;
     
     if (!isValid) {
-      return res.status(400).json({ 
+      setJson(res);
+      return res.status(400).end(JSON.stringify({ 
         valid: false, 
         error: 'Invalid signature',
         details: 'Signature verification failed. This could be due to tampering or incorrect secret key.'
-      });
+      }));
     }
 
-    return res.json({ 
+    setJson(res);
+    return res.status(200).end(JSON.stringify({ 
       valid: true, 
       message: 'Signature verified successfully',
       order_id: razorpay_order_id,
       payment_id: razorpay_payment_id
-    });
+    }));
   } catch (error) {
     console.error('Signature verification error:', error);
-    return res.status(500).json({ 
+    setJson(res);
+    return res.status(500).end(JSON.stringify({ 
       valid: false, 
       error: 'Signature verification failed',
       details: error.message 
-    });
+    }));
   }
 }
