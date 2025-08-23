@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { Mail, Lock, Eye, EyeOff, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import getAuthConfig from "../utils/authConfig";
 
 const Login = ({ onClose, onSwitchToRegister  }) => {
   const [email, setEmail] = useState("");
@@ -27,26 +28,30 @@ const Login = ({ onClose, onSwitchToRegister  }) => {
     }
   };
   const handleForgotPassword = async () => {
-  if (!email) {
-    alert("Please enter your email address above first.");
-    return;
-  }
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + "/reset-password",
-  });
-  if (error) {
-    alert(error.message);
-  } else {
-    alert("Password reset email sent! Please check your inbox.");
-  }
-};
+    if (!email) {
+      alert("Please enter your email address above first.");
+      return;
+    }
+    
+    const authConfig = getAuthConfig();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: authConfig.redirectUrls.resetPassword,
+    });
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Password reset email sent! Please check your inbox.");
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
+    
+    const authConfig = getAuthConfig();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: authConfig.redirectUrls.afterLogin,
       },
     });
     setIsLoading(false);
