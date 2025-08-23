@@ -1,41 +1,142 @@
-// Secure Razorpay order creation endpoint
+// Secure Razorpay order creation endpoint for Vercel
 import Razorpay from 'razorpay';
-import crypto from 'crypto';
 
-// Utility functions
-function setJson(res) {
-  res.setHeader('Content-Type', 'application/json');
-}
+export default async function handler(req, res) {
+  // Set CORS headers for all requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-async function parseBody(req) {
-  if (req.body) return req.body;
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
-    req.on('end', () => {
-      try {
-        resolve(data ? JSON.parse(data) : {});
-      } catch (e) {
-        reject(e);
-      }
-    });
-    req.on('error', reject);
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  console.log('📦 Create order request received:', {
+    timestamp: new Date().toISOString(),
+    method: req.method
   });
-}
 
-function validateAmount(amount) {
-  return Number.isInteger(amount) && amount >= 100 && amount <= 15000000; // Max 1.5 lakh INR
-}
+  try {
+    // Get environment variables - Vercel automatically provides these
+    const keyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    
+    if (!keyId || !keySecret) {
+      console.error('❌ Razorpay credentials not found in environment variables');
+      return res.status(500).json({ 
+        error: 'Payment gateway not configured. Please contact support.',
+        code: 'MISSING_CREDENTIALS'
+      });
+    }
 
-function validateCurrency(currency) {
-  const supportedCurrencies = ['INR', 'USD', 'EUR'];
-  return supportedCurrencies.includes(currency);
-}
+    // Initialize Razorpay
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
 
-function generateSecureReceipt() {
-  const timestamp = Date.now();
-  const randomBytes = crypto.randomBytes(8).toString('hex');
-  return `rcpt_${timestamp}_${randomBytes}`;
+    const { amount, currency = 'INR', customer_details, order_metadata, receipt, notes } = req.body || {};
+
+    console.log('📋 Order request details:', {
+      amount,
+      currency,
+      hasCustomerDetails: !!customer_details
+    });
+
+    // Validate required fields
+    if (!amount) {
+      return res.status(400).json({ error: 'Amount is required' });
+    }
+
+    // Validate amount
+    if (!Number.isInteger(amount) || amount < 100 || amount > 15000000) {
+      return res.status(400).json({ 
+        error: 'Invalid amount. Must be between ₹1 and ₹1,50,000 (in paise: 100-15000000)' 
+      });
+    }
+
+    // Validate currency
+    const supportedCurrencies = ['INR', 'USD', 'EUR'];
+    if (!supportedCurrencies.includes(currency)) {
+      return res.status(400).json({ 
+        error: 'Unsupported currency. Supported: INR, USD, EUR' 
+      });
+    }
+
+    // Prepare order data
+    const orderOptions = {
+      amount: Math.round(amount), // amount in paise
+      currency: currency.toUpperCase(),
+      receipt: receipt || `rcpt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      payment_capture: 1, // Auto capture payment
+      notes: {
+        source: '3rd-client',
+        environment: keyId?.startsWith('rzp_live') ? 'LIVE' : 'TEST',
+        created_at: new Date().toISOString(),
+        ...notes,
+        ...order_metadata
+      },
+    };
+
+    // Add customer details if provided
+    if (customer_details) {
+      if (customer_details.email) {
+        orderOptions.notes.customer_email = customer_details.email;
+      }
+      if (customer_details.phone) {
+        orderOptions.notes.customer_phone = customer_details.phone;
+      }
+    }
+
+    console.log('🏗️ Creating Razorpay order with options:', {
+      amount: orderOptions.amount,
+      currency: orderOptions.currency,
+      receipt: orderOptions.receipt
+    });
+
+    const order = await razorpay.orders.create(orderOptions);
+
+    console.log('✅ Razorpay order created successfully:', {
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      status: order.status
+    });
+
+    return res.status(200).json({
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      receipt: order.receipt,
+      status: order.status,
+      created_at: order.created_at
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating Razorpay order:', error);
+    
+    let statusCode = 500;
+    let errorMessage = 'Failed to create payment order';
+
+    if (error.statusCode) {
+      statusCode = error.statusCode;
+    }
+    
+    if (error.error && error.error.description) {
+      errorMessage = error.error.description;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    return res.status(statusCode).json({ 
+      error: errorMessage,
+      code: error.error?.code || 'CREATE_ORDER_FAILED'
+    });
+  }
 }
 
 export default async function handler(req, res) {

@@ -1,86 +1,56 @@
-function setJson(res) {
-  res.setHeader('Content-Type', 'application/json');
-}
+// Razorpay configuration status endpoint for Vercel
+export default function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-async function testRazorpayConnection() {
-  try {
-    // Simple test to check if Razorpay SDK can be imported
-    const Razorpay = await import('razorpay');
-    return true;
-  } catch (error) {
-    return false;
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
-}
-
-export default async function handler(req, res) {
-  // Set security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
 
   if (req.method !== 'GET') {
-    setJson(res);
-    return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }));
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const keyId = process.env.RAZORPAY_KEY_ID;
+    // Check environment variables
+    const keyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
     const hasSecret = !!process.env.RAZORPAY_KEY_SECRET;
-    const hasWebhookSecret = !!process.env.RAZORPAY_WEBHOOK_SECRET;
-    const sdkAvailable = await testRazorpayConnection();
     
-    // Determine mode based on key prefix
-    let mode = 'UNKNOWN';
-    if (keyId) {
-      mode = keyId.startsWith('rzp_live') ? 'LIVE' : 'TEST';
-    }
+    // Determine mode
+    const currentMode = keyId?.startsWith('rzp_live') ? 'LIVE' : 'TEST';
     
-    // Determine overall status
+    // Determine status
     let status = 'MISCONFIGURED';
-    let issues = [];
-    
-    if (!keyId) {
-      issues.push('RAZORPAY_KEY_ID not configured');
-    }
-    if (!hasSecret) {
-      issues.push('RAZORPAY_KEY_SECRET not configured');
-    }
-    if (!hasWebhookSecret) {
-      issues.push('RAZORPAY_WEBHOOK_SECRET not configured');
-    }
-    if (!sdkAvailable) {
-      issues.push('Razorpay SDK not available');
-    }
-    
-    if (issues.length === 0) {
+    if (keyId && hasSecret) {
       status = 'CONFIGURED';
-    } else if (keyId && hasSecret) {
-      status = 'PARTIALLY_CONFIGURED';
     }
-    
+
     const response = {
-      status,
-      mode,
-      checks: {
-        keyId: !!keyId,
-        keySecret: hasSecret,
-        webhookSecret: hasWebhookSecret,
-        sdkAvailable
-      },
+      mode: currentMode,
       keyIdPrefix: keyId ? keyId.substring(0, 8) + '...' : 'NOT_SET',
+      hasSecret: hasSecret,
+      status: status,
       timestamp: new Date().toISOString(),
-      issues: issues.length > 0 ? issues : undefined
+      service: 'razorpay-payment-gateway',
+      version: '1.0.0',
+      environment: 'vercel'
     };
-    
-    setJson(res);
-    return res.status(200).end(JSON.stringify(response));
+
+    console.log('🔍 Razorpay status check:', {
+      mode: currentMode,
+      status: status,
+      timestamp: response.timestamp
+    });
+
+    return res.status(200).json(response);
   } catch (error) {
-    console.error('Status check error:', error);
-    setJson(res);
-    return res.status(500).end(JSON.stringify({ 
+    console.error('❌ Error checking Razorpay status:', error);
+    
+    return res.status(500).json({ 
       error: 'Status check failed',
-      status: 'ERROR',
       timestamp: new Date().toISOString()
-    }));
+    });
   }
 }
