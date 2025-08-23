@@ -229,7 +229,7 @@ function Payment() {
         orderId = orderData.order.id;
         orderData = orderData.order; // Use the nested order object
       } else {
-        console.error("❌ Order creation failed - No order ID found:", orderData);
+        console.error("❌ Orr creation failed - No order ID found:", orderData);
         setError(orderData.error || "Failed to create payment order");
         setProcessing(false);
         return;
