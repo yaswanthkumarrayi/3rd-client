@@ -16,15 +16,19 @@ import {
 } from "lucide-react";
 
 const initialProduct = {
+  id: null,
   title: "",
   description: "",
-  quantity: 1,
+  quantity: "",
   fabric: "",
   original_price: "",
   discount_price: "",
   category: "",
   hero_image: null,
+  hero_image_url: "",
   featured_images: [],
+  existingFeaturedImages: [],
+  isEditing: false
 };
 
 const categories = [
@@ -34,6 +38,7 @@ const categories = [
   "Mysore Silk",
   "Designer"
 ];
+
 const Admin = () => {
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(initialProduct);
@@ -42,12 +47,13 @@ const Admin = () => {
   const [showForm, setShowForm] = useState(false);
   const [orders, setOrders] = useState([]);
   const navigate = useNavigate();
+
   // Fetch products
   useEffect(() => {
     fetchProducts();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     fetchOrders();
   }, []);
 
@@ -57,20 +63,22 @@ const Admin = () => {
     if (!error) setProducts(data || []);
     setLoading(false);
   }
+
   async function fetchOrders() {
-const { data, error } = await supabase.from("orders").select("*");
+    const { data, error } = await supabase.from("orders").select("*");
     if (!error) setOrders(data || []);
   }
 
   // Handle input change
   const handleChange = (e) => {
     const { name, value, files } = e.target;
+    
     if (name === "hero_image") {
-      setForm({ ...form, hero_image: files[0] });
+      setForm(prevForm => ({ ...prevForm, hero_image: files[0] }));
     } else if (name === "featured_images") {
-      setForm({ ...form, featured_images: Array.from(files) });
+      setForm(prevForm => ({ ...prevForm, featured_images: Array.from(files) }));
     } else {
-      setForm({ ...form, [name]: value });
+      setForm(prevForm => ({ ...prevForm, [name]: value }));
     }
   };
 
@@ -84,117 +92,187 @@ const { data, error } = await supabase.from("orders").select("*");
     return supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
   }
 
-  // Add product
+  // Handle edit click - FIXED
+  const handleEdit = (product) => {
+    console.log("Editing product:", product); // Debug log
+    
+    setForm({
+      id: product.id,
+      title: product.title || "",
+      description: product.description || "",
+      quantity: product.quantity?.toString() || "1",
+      fabric: product.fabric || "",
+      original_price: product.original_price?.toString() || "",
+      discount_price: product.discount_price?.toString() || "",
+      category: product.category || "",
+      hero_image: null,
+      hero_image_url: product.hero_image_url || "",
+      existingFeaturedImages: product.featured_images || [],
+      featured_images: [],
+      isEditing: true
+    });
+    setShowForm(true);
+  };
+
+  // Add or update product - FIXED
   async function handleSubmit(e) {
     e.preventDefault();
     setUploading(true);
 
+    console.log("Submitting form:", form); // Debug log
+
     try {
-      // Upload hero image
-      let heroImageUrl = "";
+      // Upload hero image only if a new one is selected
+      let heroImageUrl = form.hero_image_url;
       if (form.hero_image) {
         heroImageUrl = await uploadImage(form.hero_image);
       }
 
       // Upload featured images
       let featuredImageUrls = [];
-      if (form.featured_images.length) {
+      if (form.featured_images.length > 0) {
         featuredImageUrls = await Promise.all(
           form.featured_images.map(uploadImage)
         );
       }
 
-      // Insert product
-      const { error } = await supabase.from("products").insert([
-        {
-          title: form.title,
-          description: form.description,
-          quantity: form.quantity,
-          fabric: form.fabric,
-          original_price: form.original_price,
-          discount_price: form.discount_price,
-          category: form.category,
-          hero_image_url: heroImageUrl,
-          featured_images: featuredImageUrls,
-        },
-      ]);
+      // Prepare the final featured images array
+      let finalFeaturedImages = form.existingFeaturedImages || [];
+      if (featuredImageUrls.length > 0) {
+        // If new images were uploaded, they replace the existing ones
+        finalFeaturedImages = featuredImageUrls;
+      }
+
+      const productData = {
+        title: form.title,
+        description: form.description,
+        quantity: parseInt(form.quantity) || 1,
+        fabric: form.fabric,
+        original_price: parseFloat(form.original_price) || 0,
+        discount_price: parseFloat(form.discount_price) || 0,
+        category: form.category,
+        hero_image_url: heroImageUrl,
+        featured_images: finalFeaturedImages,
+      };
+
+      console.log("Product data to save:", productData); // Debug log
+
+      let error;
+      if (form.isEditing && form.id) {
+        // Update existing product
+        const { error: updateError } = await supabase
+          .from("products")
+          .update(productData)
+          .eq("id", form.id);
+        error = updateError;
+      } else {
+        // Insert new product
+        const { error: insertError } = await supabase
+          .from("products")
+          .insert([productData]);
+        error = insertError;
+      }
+      
       if (error) throw error;
 
+      // Reset form and refresh
       setForm(initialProduct);
       setShowForm(false);
-      fetchProducts();
+      await fetchProducts(); // Wait for refresh to complete
       
       // Success notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-      notification.textContent = 'Product added successfully!';
+      notification.textContent = form.isEditing ? 'Product updated successfully!' : 'Product added successfully!';
       document.body.appendChild(notification);
-      setTimeout(() => document.body.removeChild(notification), 3000);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
     } catch (err) {
+      console.error("Submit error:", err);
       // Error notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
       notification.textContent = 'Error: ' + err.message;
       document.body.appendChild(notification);
-      setTimeout(() => document.body.removeChild(notification), 3000);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
     }
     setUploading(false);
   }
 
-async function handleDelete(id) {
-  if (!window.confirm("Are you sure you want to delete this product?")) return;
+  async function handleDelete(id) {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
 
-  // Find the product to get image URLs
-  const product = products.find((p) => p.id === id);
-  if (!product) return;
+    // Find the product to get image URLs
+    const product = products.find((p) => p.id === id);
+    if (!product) return;
 
-  // Helper to extract file name from Supabase public URL
-  const getFileName = (url) => {
-    const parts = url.split("/product-images/");
-    return parts.length > 1 ? parts[1] : null;
+    // Helper to extract file name from Supabase public URL
+    const getFileName = (url) => {
+      const parts = url.split("/product-images/");
+      return parts.length > 1 ? parts[1] : null;
+    };
+
+    // Gather all image file names to delete
+    const heroImageFile = product.hero_image_url ? getFileName(product.hero_image_url) : null;
+    const featuredImageFiles = Array.isArray(product.featured_images)
+      ? product.featured_images.map(getFileName).filter(Boolean)
+      : [];
+
+    // Delete images from Supabase Storage
+    try {
+      if (heroImageFile) {
+        const { error: heroError } = await supabase.storage.from("product-images").remove([heroImageFile]);
+        if (heroError) console.error("Error deleting hero image:", heroError);
+      }
+      if (featuredImageFiles.length > 0) {
+        const { error: featuredError } = await supabase.storage.from("product-images").remove(featuredImageFiles);
+        if (featuredError) console.error("Error deleting featured images:", featuredError);
+      }
+    } catch (imgErr) {
+      console.error("Error deleting images from storage:", imgErr);
+    }
+
+    // Delete product from Supabase DB
+    const { error } = await supabase.from("products").delete().eq("id", id);
+
+    if (!error) {
+      setProducts((prev) => prev.filter((product) => product.id !== id));
+      // Success notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Product and images deleted successfully!';
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } else {
+      // Error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Error deleting product!';
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+      console.error("Delete error:", error);
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setForm(initialProduct);
+    setShowForm(false);
   };
-
-  // Gather all image file names to delete
-  const heroImageFile = product.hero_image_url ? getFileName(product.hero_image_url) : null;
-  const featuredImageFiles = Array.isArray(product.featured_images)
-    ? product.featured_images.map(getFileName).filter(Boolean)
-    : [];
-
-  // Delete images from Supabase Storage
-  try {
-    if (heroImageFile) {
-      const { error: heroError } = await supabase.storage.from("product-images").remove([heroImageFile]);
-      if (heroError) console.error("Error deleting hero image:", heroError);
-    }
-    if (featuredImageFiles.length > 0) {
-      const { error: featuredError } = await supabase.storage.from("product-images").remove(featuredImageFiles);
-      if (featuredError) console.error("Error deleting featured images:", featuredError);
-    }
-  } catch (imgErr) {
-    console.error("Error deleting images from storage:", imgErr);
-  }
-
-  // Delete product from Supabase DB
-  const { error } = await supabase.from("products").delete().eq("id", id);
-
-  if (!error) {
-    setProducts((prev) => prev.filter((product) => product.id !== id));
-    // Success notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = 'Product and images deleted successfully!';
-    document.body.appendChild(notification);
-    setTimeout(() => document.body.removeChild(notification), 3000);
-  } else {
-    // Error notification
-    const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-    notification.textContent = 'Error deleting product!';
-    document.body.appendChild(notification);
-    setTimeout(() => document.body.removeChild(notification), 3000);
-    console.error("Delete error:", error);
-  }
-}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -210,24 +288,30 @@ async function handleDelete(id) {
                 </h1>
                 <p className="mt-2 text-slate-600">Manage your product inventory</p>
               </div>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
-              >
-                <Plus className="h-5 w-5" />
-                Add Product
-              </button>
-                              <button
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setForm(initialProduct);
+                    setShowForm(!showForm);
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                >
+                  <Plus className="h-5 w-5" />
+                  Add Product
+                </button>
+                <button
                   onClick={() => navigate("/adminorders")}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-medium rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
                 >
                   <ShoppingBag className="h-5 w-5" />
                   Admin Orders
                 </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Add Product Form */}
         {showForm && (
@@ -236,10 +320,10 @@ async function handleDelete(id) {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                   <Package className="h-5 w-5 text-blue-600" />
-                  Add New Product
+                  {form.isEditing ? 'Edit Product' : 'Add New Product'}
                 </h2>
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={handleCancelEdit}
                   className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <X className="h-5 w-5" />
@@ -294,6 +378,8 @@ async function handleDelete(id) {
                         placeholder="0"
                         required
                         type="number"
+                        step="0.01"
+                        min="0"
                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-slate-900"
                       />
                     </div>
@@ -309,6 +395,8 @@ async function handleDelete(id) {
                         placeholder="0"
                         required
                         type="number"
+                        step="0.01"
+                        min="0"
                         className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-slate-900"
                       />
                     </div>
@@ -385,17 +473,30 @@ async function handleDelete(id) {
                     </label>
                     <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 hover:border-blue-500 transition-colors bg-blue-50/30">
                       <div className="text-center">
-                        <ImageIcon className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                        <div className="space-y-2">
+                        {form.isEditing && form.hero_image_url ? (
+                          <div className="space-y-4">
+                            <img 
+                              src={form.hero_image_url} 
+                              alt="Current hero" 
+                              className="w-48 h-48 object-cover rounded-lg border border-slate-200 mx-auto"
+                            />
+                            <p className="text-sm text-slate-600">Current Hero Image</p>
+                          </div>
+                        ) : (
+                          <ImageIcon className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+                        )}
+                        <div className="space-y-2 mt-4">
                           <input
                             type="file"
                             name="hero_image"
                             accept="image/*"
                             onChange={handleChange}
-                            required
+                            required={!form.isEditing}
                             className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 file:cursor-pointer"
                           />
-                          <p className="text-sm text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                          <p className="text-sm text-slate-500">
+                            {form.isEditing ? 'Upload new hero image (optional)' : 'PNG, JPG, GIF up to 10MB'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -416,7 +517,23 @@ async function handleDelete(id) {
                     </label>
                     <div className="border-2 border-dashed border-green-300 rounded-lg p-8 hover:border-green-500 transition-colors bg-green-50/30">
                       <div className="text-center">
-                        <Upload className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                        {form.isEditing && form.existingFeaturedImages && form.existingFeaturedImages.length > 0 ? (
+                          <div className="space-y-4 mb-6">
+                            <p className="text-sm font-medium text-slate-700">Current Featured Images</p>
+                            <div className="flex flex-wrap gap-4 justify-center">
+                              {form.existingFeaturedImages.map((img, i) => (
+                                <img
+                                  key={i}
+                                  src={img}
+                                  alt={`Featured ${i + 1}`}
+                                  className="w-24 h-24 object-cover rounded-lg border border-slate-200"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <Upload className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                        )}
                         <div className="space-y-2">
                           <input
                             type="file"
@@ -426,7 +543,11 @@ async function handleDelete(id) {
                             onChange={handleChange}
                             className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-600 file:text-white hover:file:bg-green-700 file:cursor-pointer"
                           />
-                          <p className="text-sm text-slate-500">Select multiple images - PNG, JPG, GIF up to 10MB each</p>
+                          <p className="text-sm text-slate-500">
+                            {form.isEditing 
+                              ? 'Upload new featured images (will replace existing ones)'
+                              : 'Select multiple images - PNG, JPG, GIF up to 10MB each'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -451,7 +572,7 @@ async function handleDelete(id) {
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-end">
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={handleCancelEdit}
                   className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
                 >
                   Cancel
@@ -468,8 +589,19 @@ async function handleDelete(id) {
                     </>
                   ) : (
                     <>
-                      <Plus className="h-4 w-4" />
-                      Add Product
+                      {form.isEditing ? (
+                        <>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Save Changes
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          Add Product
+                        </>
+                      )}
                     </>
                   )}
                 </button>
@@ -565,10 +697,19 @@ async function handleDelete(id) {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 space-y-2">
+                          <button
+                            onClick={() => handleEdit(product)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium w-full"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                          </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium w-full"
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
