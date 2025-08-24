@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, ShoppingCart, Menu, X, LogOut, Settings, ShoppingBag, Bell } from 'lucide-react';
+import { User, ShoppingCart,Search, Menu, X, LogOut, Settings, ShoppingBag, Bell } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Register from '../pages/Register';
 import { useNavigate } from "react-router-dom";
@@ -15,7 +15,6 @@ const Header = () => {
   const [cartCount, setCartCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
-  
   useEffect(() => {
     // Handle scroll effect
     const handleScroll = () => {
@@ -42,7 +41,7 @@ const Header = () => {
       const updatedCount = updatedItems.reduce((sum, item) => sum + item.quantity, 0);
       setCartCount(updatedCount);
     };
-
+    
     window.addEventListener("storage", handleStorage);
     window.addEventListener("cartUpdated", handleCartUpdate);
 
@@ -97,6 +96,7 @@ const categories = [
   "Mysore Silk",
   "Designer"
 ];
+
   return (
     <>
       <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
@@ -138,6 +138,15 @@ const categories = [
 
             {/* Actions Section */}
             <div className="flex items-center space-x-2 lg:space-x-3">
+              <div className='relative'>
+                           <button
+                onClick={() => navigate("/search")}
+                className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 text-gray-700 hover:text-fuchsia-600 hover:bg-fuchsia-50 rounded-xl transition-all duration-300 transform hover:scale-105 group"
+                title="Search"
+            >
+              <Search size={20} />
+            </button>
+                  </div>
               {/* User Menu */}
               <div className="relative">
                 <button
@@ -247,10 +256,10 @@ const categories = [
                         </button>
                       </div>
                     </div>
+                    
                   </>
                 )}
-              </div>
-
+              </div> 
               {/* Enhanced Cart Icon */}
               <div className="relative">
                 <button
@@ -267,6 +276,7 @@ const categories = [
                     </>
                   )}
                 </button>
+                
               </div>
                   <div className="relative">
                     <button
@@ -283,7 +293,9 @@ const categories = [
                           </span>
                         )}
                     </button>
+             
                   </div>
+                  
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}

@@ -422,7 +422,29 @@ const Product = () => {
                     `Add ${quantity > 1 ? `${quantity} Items` : ''} to Cart`
                   )}
                 </button>
-                
+                {/* 🚀 Buy Now Button */}
+  <button
+    onClick={() => {
+      const buyNowItem = {
+        id: product.id,
+        title: product.title,
+        hero_image_url: product.hero_image_url,
+        original_price: product.original_price,
+        discount_price: product.discount_price,
+        quantity: quantity,
+        fabric: product.fabric,
+        category: product.category,
+        availableQuantity: product.quantity,
+      };
+      localStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+      navigate("/payment"); // ✅ Redirect to payment page
+    }}
+    disabled={product.quantity === 0}
+    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+  >
+    Buy Now
+  </button>
+
                 <div className="flex gap-3">
                   <button
                     onClick={handleShare}

@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,6 +19,7 @@ import Product from "./pages/Product";
 import User from "./pages/User";
 import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
+import Search from "./pages/Search";
 import Payment from "./pages/Payment";
 import Category from "./pages/Category";
 
@@ -56,6 +56,7 @@ const App = () => {
         <Route path="/user" element={<User />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/search" element={<Search />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/refund-policy" element={<RefundPolicy />} />

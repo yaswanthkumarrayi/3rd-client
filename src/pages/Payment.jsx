@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 
 function Payment() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
-  const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [orderDetails, setOrderDetails] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [userDetails, setUserDetails] = useState({
     full_name: "",
@@ -26,8 +28,12 @@ function Payment() {
   const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
   useEffect(() => {
-    checkAuth();
-    loadCartItems();
+    const init = async () => {
+      await checkAuth();
+      loadCartItems();
+      setLoading(false);
+    };
+    init();
   }, []);
 
   const checkAuth = async () => {
@@ -120,10 +126,21 @@ function Payment() {
 
   const loadCartItems = () => {
     try {
-      const saved = localStorage.getItem("cartItems");
-      if (saved) {
-        const items = JSON.parse(saved);
-        setCartItems(Array.isArray(items) ? items : []);
+      // First check for a buy now item
+      const buyNowItem = localStorage.getItem("buyNowItem");
+      if (buyNowItem) {
+        const parsedItem = JSON.parse(buyNowItem);
+        setCartItems([parsedItem]);
+        // Don't remove the buyNowItem yet, wait for successful order
+      } else {
+        // If no buy now item, load cart items
+        const cartData = localStorage.getItem("cartItems");
+        if (cartData) {
+          const items = JSON.parse(cartData);
+          setCartItems(Array.isArray(items) ? items : []);
+        } else {
+          setCartItems([]);
+        }
       }
     } catch (error) {
       console.error("Error loading cart items:", error);
@@ -172,7 +189,7 @@ function Payment() {
     }
     
     if (cartItems.length === 0) {
-      setError("Your cart is empty.");
+      setError("No items found for checkout.");
       return;
     }
     
@@ -387,6 +404,15 @@ function Payment() {
 
   const createOrder = async (payment_id) => {
     try {
+      // Clear localStorage based on order source
+      if (localStorage.getItem("buyNowItem")) {
+        localStorage.removeItem("buyNowItem");
+      } else {
+        localStorage.removeItem("cartItems");
+        localStorage.setItem("cartCount", "0");
+        window.dispatchEvent(new Event("cartUpdated"));
+      }
+
       // Check current auth session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
