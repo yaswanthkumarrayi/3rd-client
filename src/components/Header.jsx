@@ -87,7 +87,8 @@ const Header = () => {
 
 const menuItems = [
   { name: 'Contact Us', href: '/contact' },
-  { name: 'About Us', href: '/about' }
+  { name: 'About Us', href: '/about' },
+  { name: 'Home', href: '/home' }
 ];
 const categories = [
   "Mangalagiri",

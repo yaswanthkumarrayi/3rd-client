@@ -108,6 +108,28 @@ const Category = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-50 to-white">
       <Header />
       
+      {/* Back to Home Button */}
+      <div className="fixed top-20 left-4 z-10">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white shadow-lg rounded-full border border-fuchsia-200 text-fuchsia-600 hover:text-fuchsia-700 transition-all duration-300 backdrop-blur-sm"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span className="font-medium">Back to Home</span>
+        </button>
+      </div>
+
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 pt-24 pb-12">
         <div className="absolute inset-0 bg-white/40 backdrop-blur-sm"></div>
