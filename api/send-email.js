@@ -1,5 +1,5 @@
 // Backend API for sending emails using Gmail + Nodemailer
-import nodemailer from 'nodemailer';
+import { createTransporter } from 'nodemailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     }
 
     // Gmail SMTP configuration
-    const transporter = nodemailer.createTransporter({
+    const transporter = createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER, // Your Gmail address
