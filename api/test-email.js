@@ -1,5 +1,5 @@
 // Test email API using Gmail + Nodemailer
-import { createTransporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     }
 
     // Gmail SMTP configuration
-    const transporter = createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,

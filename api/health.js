@@ -1,5 +1,5 @@
 // Health check API for Gmail email service
-import { createTransporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     }
 
     // Create transporter and verify connection
-    const transporter = createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
