@@ -1,0 +1,22 @@
+{
+  "name": "Ashok Kumar Textiles",
+  "short_name": "AKT Store",
+  "description": "Premium sarees and textiles for every occasion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c026d3",
+  "icons": [
+    {
+      "src": "/FullLogo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }
+  ],
+  "serviceworker": {
+    "src": "/service-worker.js",
+    "scope": "/",
+    "type": "module",
+    "update_via_cache": "none"
+  }
+}

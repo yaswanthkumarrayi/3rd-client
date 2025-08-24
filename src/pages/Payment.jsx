@@ -468,16 +468,28 @@ function Payment() {
       // Try a fallback method with minimal data
       try {
         const fallbackOrderData = {
-          user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
-          amount: Number(getTotal()),
-          status: "processing",
-          payment_id: String(payment_id),
-          items: JSON.stringify(cartItems.map(item => ({
-            title: item.title,
-            quantity: item.quantity,
-            price: item.discount_price
-          })))
-        };
+  user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
+  user_name: String(userDetails.full_name || ''),
+  phone: String(userDetails.phone || ''),
+  address: String(userDetails.address || ''),
+  city: String(userDetails.city || ''),
+  state: String(userDetails.state || ''),
+  pincode: String(userDetails.pincode || ''),
+  amount: Number(getTotal()),
+  status: "paid",
+  payment_id: String(payment_id),
+  items: JSON.stringify(cartItems.map(item => ({
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    fabric: item.fabric,
+    quantity: item.quantity,
+    discount_price: item.discount_price,
+    original_price: item.original_price,
+    hero_image_url: item.hero_image_url
+  })))
+};
+
         
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("orders")

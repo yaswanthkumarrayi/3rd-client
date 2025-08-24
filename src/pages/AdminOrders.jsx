@@ -10,62 +10,94 @@ const AdminOrders = () => {
     fetchAllOrders();
   }, []);
 
-  async function fetchAllOrders() {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(`
-          *,
-          user_details:user_email (
-            full_name,
-            phone,
-            address,
-            city,
-            state,
-            pincode
-          )
-        `)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      
-      // Format the data to include user details
-      const formattedData = data.map(order => ({
-        ...order,
-        user_details: order.user_details || {
-          full_name: "N/A",
-          phone: order.phone || "N/A",
-          address: order.address || "N/A",
-          city: order.city || "N/A",
-          state: order.state || "N/A",
-          pincode: order.pincode || "N/A"
-        }
-      }));
-      
-      setOrders(formattedData || []);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      setOrders([]);
-    }
-    setLoading(false);
-  }
+async function fetchAllOrders() {
+  setLoading(true);
+  try {
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("*")
+      .order('created_at', { ascending: false });
 
+    if (ordersError) throw ordersError;
+
+    // Format and validate the orders data
+    const formattedOrders = orders.map(order => {
+      // Parse items safely
+      let parsedItems = [];
+      try {
+        const items = typeof order.items === 'string' 
+          ? JSON.parse(order.items) 
+          : order.items;
+
+        // Validate and format each item
+        parsedItems = Array.isArray(items) ? items.map(item => ({
+          id: item?.id || '',
+          title: item?.title || 'Unknown Product',
+          category: item?.category || '',
+          fabric: item?.fabric || '',
+          quantity: Number(item?.quantity) || 1,
+          discount_price: Number(item?.discount_price) || 0,
+          original_price: Number(item?.original_price) || 0,
+          hero_image_url: item?.hero_image_url || '', 
+          total: (Number(item?.discount_price) || 0) * (Number(item?.quantity) || 1)
+        })) : [];
+      } catch (e) {
+        console.error('Error parsing items for order:', order.id, e);
+      }
+
+      // Calculate totals
+      const subtotal = parsedItems.reduce((sum, item) => sum + (item.total || 0), 0);
+      const shipping = 100; // Fixed shipping cost
+      const total = subtotal + shipping;
+
+      // Format user details with fallbacks
+      return {
+        ...order,
+        items: parsedItems,
+        total: total || 0,
+        subtotal: subtotal || 0,
+        shipping: shipping,
+        created_at: order.created_at || new Date().toISOString(),
+        updated_at: order.updated_at || order.created_at || new Date().toISOString(),
+        status: order.status || 'paid',
+        user_details: {
+          full_name: order.user_name || order.full_name || '',
+          email: order.user_email || '',
+          phone: order.phone || '',
+          address: order.address || '',
+          city: order.city || '',
+          state: order.state || '',
+          pincode: order.pincode || ''
+        },
+        payment_id: order.payment_id || '',
+        razorpay_order_id: order.razorpay_order_id || '',
+        tracking_id: order.tracking_id || ''
+      };
+    });
+
+    setOrders(formattedOrders);
+  } catch (err) {
+    console.error("Error fetching orders:", err.message);
+    setOrders([]);
+  }
+  setLoading(false);
+}
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'delivered':
         return 'bg-green-100 text-green-800';
       case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'processing':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-blue-100 text-blue-800 font-semibold';
       case 'shipped':
         return 'bg-indigo-100 text-indigo-800';
+      case 'processing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'placed':
+        return 'bg-blue-100 text-blue-800';
       case 'cancelled':
         return 'bg-red-100 text-red-800';
-      case 'refunded':
-        return 'bg-orange-100 text-orange-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-blue-100 text-blue-800';
     }
   };
 
@@ -144,35 +176,66 @@ const AdminOrders = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium text-gray-900">
-                              {order.user_details.full_name}
-                            </div>
-                            <div className="text-sm text-gray-600">{order.user_email}</div>
-                            <div className="text-sm text-gray-600">{order.user_details.phone}</div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              {order.user_details.address}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="space-y-2">
-                            {Array.isArray(order.items) && order.items.length > 0 ? (
-                              order.items.map((item, idx) => (
-                                <div key={idx} className="flex flex-col">
-                                  <span className="text-sm font-medium text-gray-900">{item.title}</span>
-                                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                                    <span>Qty: {item.quantity}</span>
-                                    <span>₹{item.discount_price}/item</span>
-                                  </div>
-                                  <span className="text-xs text-gray-500">{item.fabric} | {item.category}</span>
-                                </div>
-                              ))
-                            ) : (
-                              "No items"
-                            )}
-                          </div>
-                        </td>
+  <div className="space-y-2">
+    <div className="text-sm font-medium text-gray-900">
+      {order.user_details.full_name}
+    </div>
+    <div className="text-sm text-gray-600">
+      {order.user_details.email}
+    </div>
+    <div className="text-sm text-gray-600">
+      📞 {order.user_details.phone}
+    </div>
+    <div className="text-xs text-gray-500 mt-2">
+      <p className="font-medium">Shipping Address:</p>
+      <p>{order.user_details.address}</p>
+      <p>{order.user_details.city}, {order.user_details.state}</p>
+      <p>PIN: {order.user_details.pincode}</p>
+    </div>
+  </div>
+</td>
+                        {/* //orders items */}
+<td className="px-6 py-4">
+  <div className="space-y-3">
+    {Array.isArray(order.items) && order.items.map((item, idx) => (
+      <div key={idx} className="bg-gray-50 rounded-lg p-3">
+        <div className="flex items-start space-x-3">
+          <img 
+            src={item.hero_image_url} 
+            alt={item.title} 
+            className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+          />
+          <div className="flex-1">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                <p className="text-xs text-gray-500">Product ID: {item.id}</p>
+                <p className="text-xs text-gray-500">Category: {item.category}</p>
+                <p className="text-xs text-gray-500">Fabric: {item.fabric}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">
+                  ₹{item.discount_price?.toLocaleString()}
+                </p>
+                {item.original_price > item.discount_price && (
+                  <p className="text-xs text-gray-500 line-through">
+                    ₹{item.original_price?.toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="mt-2 flex justify-between items-center text-sm">
+              <span className="text-gray-600">Qty: {item.quantity}</span>
+              <span className="font-medium text-gray-900">
+                Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</td>
                         <td className="px-6 py-4">
                           <div className="space-y-1">
                             <div className="text-sm font-medium text-gray-900">
@@ -264,29 +327,42 @@ const AdminOrders = () => {
                     </div>
 
                     {/* Order Items */}
-                    <div className="border-b pb-4">
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Order Items</h4>
-                      <div className="space-y-3">
-                        {Array.isArray(order.items) && order.items.length > 0 ? (
-                          order.items.map((item, idx) => (
-                            <div key={idx} className="bg-gray-50 rounded-lg p-3">
-                              <div className="text-sm font-medium text-gray-900">{item.title}</div>
-                              <div className="flex items-center gap-4 mt-1">
-                                <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                                <span className="text-sm text-gray-600">₹{item.discount_price}/item</span>
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {item.fabric} | {item.category}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500">No items</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Payment Details */}
+<div className="border-b pb-4">
+  <h4 className="text-sm font-medium text-gray-900 mb-3">Order Items</h4>
+  <div className="space-y-3">
+    {Array.isArray(order.items) && order.items.map((item, idx) => (
+      <div key={idx} className="bg-gray-50 rounded-lg p-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="text-sm font-medium text-gray-900">{item.title}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Product ID: {item.id}
+            </div>
+            <div className="text-xs text-gray-500">
+              {item.fabric} | {item.category}
+            </div>
+            <div className="mt-2 text-sm text-gray-600">
+              Quantity: {item.quantity}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm font-medium text-gray-900">
+              ₹{item.discount_price?.toLocaleString()}
+            </div>
+            {item.original_price > item.discount_price && (
+              <div className="text-xs text-gray-500 line-through">
+                ₹{item.original_price?.toLocaleString()}
+              </div>
+            )}
+            <div className="text-sm font-medium text-gray-900 mt-2">
+              Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>                    {/* Payment Details */}
                     <div className="border-b pb-4">
                       <h4 className="text-sm font-medium text-gray-900 mb-3">Payment Information</h4>
                       <div className="space-y-2">
