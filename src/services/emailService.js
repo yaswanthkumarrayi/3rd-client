@@ -269,6 +269,12 @@ class EmailService {
 
   async sendEmailToBackend(emailData) {
     try {
+      console.log('📧 Sending email request to backend:', {
+        url: `${this.emailServerUrl}/api/send-email`,
+        to: emailData.to,
+        subject: emailData.subject
+      });
+      
       const response = await fetch(`${this.emailServerUrl}/api/send-email`, {
         method: 'POST',
         headers: {
@@ -322,7 +328,16 @@ class EmailService {
 
   async sendOrderNotificationToAdmin(orderData) {
     try {
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'admin@ashokkumartextiles.com';
+      // Hardcode the admin email to ensure it works
+      const adminEmail = 'yash.freelancer17@gmail.com';
+      
+      console.log('📧 Sending admin notification to:', adminEmail);
+      console.log('📦 Order data:', {
+        orderNumber: orderData.orderNumber,
+        customerName: orderData.customerName,
+        totalAmount: orderData.totalAmount,
+        itemsCount: orderData.items?.length
+      });
       
       return await this.sendEmailToBackend({
         to: adminEmail,
