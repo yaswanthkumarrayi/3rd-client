@@ -1,7 +1,7 @@
 // Secure Razorpay order creation endpoint for Vercel
-const Razorpay = require('razorpay');
+import Razorpay from 'razorpay';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
