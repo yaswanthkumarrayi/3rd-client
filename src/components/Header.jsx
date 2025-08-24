@@ -114,7 +114,7 @@ const categories = [
     <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-fuchsia-900 via-fuchsia-800 to-fuchsia-600 bg-clip-text text-transparent font-heading leading-tight">
       Ashok Kumar
     </h1>
-    <p className="text-xs sm:text-sm md:text-base text-fuchsia-600/80 font-medium -mt-0.5">
+    <p className="text-xs sm:text-sm md:text-base text-fuchsia-600/80 font-medium -mt-0.5 font-inter">
       Textiles
     </p>
   </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
+import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 
 function Payment() {
   const [user, setUser] = useState(null);
@@ -11,6 +12,7 @@ function Payment() {
   const [error, setError] = useState("");
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1);
   const [userDetails, setUserDetails] = useState({
     full_name: "",
     email: "",
@@ -237,7 +239,8 @@ function Payment() {
       const options = {
         key: RAZORPAY_KEY_ID,
         order_id: orderId,
-        name: "3rd Client",
+        name: "Ashok Kumar Textiles",
+        image: "FullLogo.jpg",
         description: `Order Payment`,
         handler: async function (response) {
           try {
@@ -278,6 +281,23 @@ function Payment() {
               setError(`Payment successful but order recording failed: ${orderError.message}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
             }
             
+            // Update product quantities in database
+            for (const item of cartItems) {
+              const { data: productData, error: productError } = await supabase
+                .from('products')
+                .select('quantity')
+                .eq('id', item.id)
+                .single();
+
+              if (!productError && productData) {
+                const newQuantity = Math.max(0, productData.quantity - item.quantity);
+                await supabase
+                  .from('products')
+                  .update({ quantity: newQuantity })
+                  .eq('id', item.id);
+              }
+            }
+
             // Clear cart
             localStorage.removeItem("cartItems");
             localStorage.setItem("cartCount", "0");
@@ -370,19 +390,43 @@ function Payment() {
       // Check current auth session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
+      // Format cart items with essential details
+      const formattedItems = cartItems.map(item => ({
+        id: item.id,
+        title: item.title || item.name,
+        quantity: item.quantity,
+        price: item.discount_price || item.price,
+        original_price: item.original_price || item.price,
+        image_url: item.hero_image_url || item.image,
+        sku: item.sku || '',
+        category: item.category || ''
+      }));
+
       // Prepare order data with proper data types
       const orderData = {
         user_email: String(user?.email || userDetails.email || ''),
+        user_name: String(userDetails.full_name || ''),
         phone: String(userDetails.phone || profile?.phone || ''),
         address: String(userDetails.address || profile?.address || ''),
         city: String(userDetails.city || profile?.city || ''),
         state: String(userDetails.state || profile?.state || ''),
         pincode: String(userDetails.pincode || profile?.pincode || ''),
-        items: JSON.stringify(cartItems), // Convert to JSON string
-        amount: Number(getTotal()),
-        status: "processing", // Set to processing after successful payment
+        items: JSON.stringify(formattedItems), // Structured item data
+        subtotal: Number(getSubtotal()),
+        shipping_fee: Number(getShipping()),
+        total: Number(getTotal()),
+        status: "paid", // Initial status after successful payment
         payment_id: String(payment_id),
-        shipping: Number(getShipping())
+        payment_status: "completed",
+        payment_method: "razorpay",
+        order_date: new Date().toISOString(),
+        savings: Number(getTotalSavings()),
+        delivery_notes: "",
+        metadata: JSON.stringify({
+          browser: navigator.userAgent,
+          platform: navigator.platform,
+          payment_gateway: "razorpay"
+        })
       };
       
       // Test connectivity first
@@ -453,15 +497,67 @@ function Payment() {
     }
   };
 
+  const steps = [
+    { number: 1, title: "Order Review", icon: ShoppingCart },
+    { number: 2, title: "Details", icon: User },
+    { number: 3, title: "Payment", icon: CreditCard }
+  ];
+
+  const StepIndicator = () => (
+    <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
+      <div className="flex items-center justify-between">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isActive = currentStep === step.number;
+          const isCompleted = currentStep > step.number;
+          
+          return (
+            <div key={step.number} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div className={`
+                  w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-300
+                  ${isCompleted ? 'bg-fuchsia-600 text-white shadow-lg' : 
+                    isActive ? 'bg-fuchsia-100 border-2 border-fuchsia-600 text-fuchsia-600' : 
+                    'bg-gray-100 text-gray-400'}
+                `}>
+                  {isCompleted ? (
+                    <Check className="w-5 h-5 sm:w-6 sm:h-6" />
+                  ) : (
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                  )}
+                </div>
+                <span className={`
+                  text-xs sm:text-sm font-medium mt-2 text-center
+                  ${isActive || isCompleted ? 'text-fuchsia-600' : 'text-gray-500'}
+                `}>
+                  {step.title}
+                </span>
+              </div>
+              {index < steps.length - 1 && (
+                <div className={`
+                  flex-1 h-0.5 mx-2 sm:mx-4 transition-all duration-300
+                  ${currentStep > step.number ? 'bg-fuchsia-600' : 'bg-gray-200'}
+                `} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-white to-fuchsia-100">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h2>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent"></div>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading Payment</h2>
+              <p className="text-gray-600">Please wait while we prepare your checkout...</p>
             </div>
           </div>
         </div>
@@ -473,31 +569,30 @@ function Payment() {
   // Show success state
   if (orderDetails && orderDetails.status === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-green-100">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                </svg>
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Check className="w-10 h-10 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Payment Successful!</h2>
-              <p className="text-gray-600 mb-4">Your order has been placed successfully.</p>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h2>
+              <p className="text-gray-600 mb-6">Your order has been placed successfully and is being processed.</p>
               {orderDetails.payment_id && (
-                <p className="text-sm text-gray-500 mb-4">
-                  Payment ID: {orderDetails.payment_id}
-                </p>
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <p className="text-sm text-gray-500 font-medium">Payment Reference</p>
+                  <p className="text-gray-800 font-mono text-sm">{orderDetails.payment_id}</p>
+                </div>
               )}
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-                You will be redirected to your orders page in a few seconds...
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl mb-6">
+                <p className="font-medium">Redirecting to your orders...</p>
               </div>
               <button
                 onClick={() => window.location.href = '/orders'}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded transition duration-200"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                View Orders
+                View My Orders
               </button>
             </div>
           </div>
@@ -509,18 +604,23 @@ function Payment() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-white to-fuchsia-100">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Empty Cart</h2>
-            <p className="text-gray-600 mb-4">Your cart is empty. Please add items to proceed.</p>
-            <a 
-              href="/" 
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200 inline-block text-center"
-            >
-              Continue Shopping
-            </a>
+        <div className="container mx-auto px-4 py-6 sm:py-8">
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <ShoppingCart className="w-10 h-10 text-gray-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">Empty Cart</h2>
+              <p className="text-gray-600 mb-6">Your cart is empty. Add some items to continue with checkout.</p>
+              <a 
+                href="/" 
+                className="w-full bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 hover:from-fuchsia-700 hover:to-fuchsia-800 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 inline-block"
+              >
+                Continue Shopping
+              </a>
+            </div>
           </div>
         </div>
         <Footer />
@@ -529,105 +629,263 @@ function Payment() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-fuchsia-50 via-white to-fuchsia-100">
       <Header />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Payment</h1>
-          
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Order Summary */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Order Summary</h2>
-              <div className="space-y-4">
-                {cartItems.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center border-b pb-2">
-                    <div className="flex items-center space-x-3">
-                      <img 
-                        src={item.hero_image_url || item.image} 
-                        alt={item.title || item.name} 
-                        className="w-12 h-12 object-cover rounded"
-                      />
-                      <div>
-                        <h3 className="font-medium text-gray-800">{item.title || item.name}</h3>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                      </div>
-                    </div>
-                    <span className="font-semibold text-gray-800">
-                      ₹{((item.discount_price || item.price || 0) * item.quantity).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span>Subtotal:</span>
-                    <span>₹{getSubtotal().toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span>Shipping:</span>
-                    <span>₹{getShipping().toLocaleString()}</span>
-                  </div>
-                  {getTotalSavings() > 0 && (
-                    <div className="flex justify-between items-center mb-2 text-green-600">
-                      <span>You Save:</span>
-                      <span>₹{getTotalSavings().toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
-                    <span>Total:</span>
-                    <span>₹{getTotal().toLocaleString()}</span>
-                  </div>
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Secure Checkout</h1>
+            <p className="text-gray-600">Complete your order in 3 simple steps</p>
+          </div>
+
+          {/* Step Indicator */}
+          <StepIndicator />
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-red-800 font-medium">{error}</p>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Payment Details */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Payment Details</h2>
+          <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+            {/* Main Content Area */}
+            <div className="lg:col-span-2 space-y-6">
               
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                  {error}
+              {/* Step 1: Order Summary */}
+              {currentStep >= 1 && (
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 px-6 py-4">
+                    <div className="flex items-center text-white">
+                      <ShoppingCart className="w-6 h-6 mr-3" />
+                      <h2 className="text-xl font-bold">Order Summary</h2>
+                      <span className="ml-auto bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                        {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="space-y-4 max-h-64 overflow-y-auto">
+                      {cartItems.map((item, index) => (
+                        <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
+                          <div className="flex-shrink-0">
+                            <img 
+                              src={item.hero_image_url || item.image} 
+                              alt={item.title || item.name} 
+                              className="w-16 h-16 object-cover rounded-lg shadow-sm"
+                            />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <h3 className="font-semibold text-gray-800 truncate">{item.title || item.name}</h3>
+                            <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                            <p className="text-fuchsia-600 font-bold">₹{((item.discount_price || item.price || 0) * item.quantity).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {currentStep === 1 && (
+                      <div className="mt-6">
+                        <button
+                          onClick={() => setCurrentStep(2)}
+                          className="w-full bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 hover:from-fuchsia-700 hover:to-fuchsia-800 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          Continue to Details
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <p className="text-gray-800">{userDetails.full_name || 'Not provided'}</p>
+              {/* Step 2: User Details */}
+              {currentStep >= 2 && (
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 px-6 py-4">
+                    <div className="flex items-center text-white">
+                      <User className="w-6 h-6 mr-3" />
+                      <h2 className="text-xl font-bold">Shipping & Contact Details</h2>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <User className="w-5 h-5 text-fuchsia-600 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700">Full Name</p>
+                            <p className="text-gray-800 font-semibold truncate">{userDetails.full_name || 'Not provided'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <Mail className="w-5 h-5 text-fuchsia-600 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700">Email</p>
+                            <p className="text-gray-800 font-semibold truncate">{userDetails.email || 'Not provided'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <Phone className="w-5 h-5 text-fuchsia-600 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700">Phone</p>
+                            <p className="text-gray-800 font-semibold">{userDetails.phone || 'Not provided'}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <MapPin className="w-5 h-5 text-fuchsia-600 flex-shrink-0 mt-0.5" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-700 mb-1">Shipping Address</p>
+                            <div className="text-gray-800">
+                              <p className="font-semibold">{userDetails.address || 'Not provided'}</p>
+                              <p>{userDetails.city || ''}, {userDetails.state || ''}</p>
+                              <p className="font-medium">{userDetails.pincode || ''}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {currentStep === 2 && (
+                      <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                        <button
+                          onClick={() => setCurrentStep(1)}
+                          className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-200"
+                        >
+                          Back to Order
+                        </button>
+                        <button
+                          onClick={() => setCurrentStep(3)}
+                          className="flex-1 bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 hover:from-fuchsia-700 hover:to-fuchsia-800 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        >
+                          Proceed to Payment
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <p className="text-gray-800">{userDetails.email || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                  <p className="text-gray-800">{userDetails.phone || 'Not provided'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                  <p className="text-gray-800">
-                    {userDetails.address || 'Not provided'}, {userDetails.city || ''}, {userDetails.state || ''} - {userDetails.pincode || ''}
-                  </p>
-                </div>
-              </div>
+              )}
 
-              <button
-                onClick={handlePayment}
-                disabled={processing}
-                className={`w-full py-3 px-4 rounded-md font-medium transition duration-200 ${
-                  processing
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                } text-white`}
-              >
-                {processing ? "Processing..." : `Pay ₹${getTotal().toLocaleString()}`}
-              </button>
+              {/* Step 3: Payment */}
+              {currentStep >= 3 && (
+                <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 px-6 py-4">
+                    <div className="flex items-center text-white">
+                      <CreditCard className="w-6 h-6 mr-3" />
+                      <h2 className="text-xl font-bold">Secure Payment</h2>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="bg-gradient-to-r from-fuchsia-50 to-fuchsia-100 rounded-xl p-6 mb-6">
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="flex space-x-3">
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-gray-700 font-medium">🔒 SSL Secured Payment Gateway</p>
+                        <p className="text-sm text-gray-600 mt-1">Your payment information is encrypted and secure</p>
+                      </div>
+                    </div>
 
-              <div className="mt-4 text-center">
-                <p className="text-xs text-gray-500">
-                  Powered by Razorpay | Secure Payment Gateway
-                </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => setCurrentStep(2)}
+                        className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-200"
+                        disabled={processing}
+                      >
+                        Back to Details
+                      </button>
+                      <button
+                        onClick={handlePayment}
+                        disabled={processing}
+                        className={`flex-1 font-medium py-4 px-6 rounded-xl transition-all duration-200 ${
+                          processing
+                            ? "bg-gray-300 cursor-not-allowed text-gray-500"
+                            : "bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 hover:from-fuchsia-700 hover:to-fuchsia-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        }`}
+                      >
+                        {processing ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-400 border-t-transparent mr-3"></div>
+                            Processing Payment...
+                          </div>
+                        ) : (
+                          `Pay ₹${getTotal().toFixed(2)}`
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="mt-6 text-center">
+                      <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                        <span>Powered by</span>
+                        <div className="font-bold text-blue-600">Razorpay</div>
+                        <span>•</span>
+                        <span>UPI, Cards, Wallets</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order Total Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl shadow-xl p-6 sticky top-6">
+                <h3 className="text-xl font-bold text-gray-800 mb-6">Order Total</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-semibold text-gray-800">₹{getSubtotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className="font-semibold text-gray-800">₹{getShipping().toFixed(2)}</span>
+                  </div>
+                  {getTotalSavings() > 0 && (
+                    <div className="flex justify-between items-center py-2 border-b border-green-100 bg-green-50 -mx-4 px-4 rounded-lg">
+                      <span className="text-green-700 font-medium">You Save</span>
+                      <span className="font-bold text-green-700">-₹{getTotalSavings().toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center py-4 border-t-2 border-fuchsia-100">
+                    <span className="text-xl font-bold text-gray-800">Total</span>
+                    <span className="text-xl font-bold text-fuchsia-600">₹{getTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Security Badges */}
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-700 mb-3">Secure Checkout Guaranteed</p>
+                    <div className="flex justify-center items-center space-x-3 text-xs text-gray-500">
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>SSL Secured</span>
+                      </div>
+                      <div className="flex items-center">
+                        <svg className="w-4 h-4 text-blue-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/>
+                          <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                        </svg>
+                        <span>PCI Compliant</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

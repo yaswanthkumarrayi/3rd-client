@@ -181,11 +181,11 @@ const Home = () => {
                 </div>
                 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  <span className="block animate-fade-in-up">Timeless</span>
-                  <span className="block bg-gradient-to-r from-fuchsia-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-fade-in-up animation-delay-200">
-                    Elegance
+                  <span className="block animate-fade-in-up font-heading">Classic</span>
+                  <span className="block bg-gradient-to-r from-fuchsia-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-fade-in-up animation-delay-200 font-heading">
+                    Meets
                   </span>
-                  <span className="block animate-fade-in-up animation-delay-400">Redefined</span>
+                  <span className="block animate-fade-in-up animation-delay-400 font-heading">Elegance</span>
                 </h1>
               </div>
               

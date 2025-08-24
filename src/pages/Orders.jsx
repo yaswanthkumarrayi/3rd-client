@@ -191,7 +191,7 @@ const Orders = () => {
                           <span>{order.status}</span>
                         </div>
                         <div className="text-right">
-                          <div className="flex items-center gap-1 text-xl font-bold text-gray-900">
+                          <div className="flex items-center gap-1 text-xl font-bold text-gray-1000">
                             <span>₹{order.total}</span>
                           </div>
                           <p className="text-sm text-gray-500">Total</p>

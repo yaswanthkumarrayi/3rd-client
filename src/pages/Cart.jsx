@@ -16,9 +16,35 @@ const Cart = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load cart items from localStorage
-    const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
-    setCartItems(items);
+    // Load and validate cart items from localStorage
+    const loadCartItems = () => {
+      const items = JSON.parse(localStorage.getItem("cartItems") || "[]");
+      
+      // Filter out any invalid items and ensure proper structure
+      const validItems = items.filter(item => {
+        return item && 
+               item.id && 
+               item.quantity > 0 && 
+               item.availableQuantity >= 0 && 
+               item.discount_price && 
+               item.title;
+      });
+
+      // Update localStorage if invalid items were removed
+      if (validItems.length !== items.length) {
+        localStorage.setItem("cartItems", JSON.stringify(validItems));
+        localStorage.setItem("cartCount", validItems.length.toString());
+        window.dispatchEvent(new Event("cartUpdated"));
+      }
+
+      setCartItems(validItems);
+    };
+
+    // Load cart items initially
+    loadCartItems();
+
+    // Add event listener for cart updates
+    window.addEventListener("cartUpdated", loadCartItems);
 
     // Check Supabase Auth
     supabase.auth.getUser().then(({ data }) => {
@@ -27,6 +53,11 @@ const Cart = () => {
         fetchProfile(data.user.email);
       }
     });
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener("cartUpdated", loadCartItems);
+    };
   }, []);
 
   async function fetchProfile(email) {

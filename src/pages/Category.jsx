@@ -60,8 +60,48 @@ const Category = () => {
       }
     });
 
-  const handleProductClick = (productId) => {
+    const handleProductClick = (productId) => {
     navigate(`/product/${productId}`);
+  };
+
+  const ProductCard = ({ product }) => {
+    const isSoldOut = product.quantity === 0;
+    
+    return (
+      <div 
+        onClick={() => handleProductClick(product.id)}
+        className="relative group cursor-pointer"
+      >
+        <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200">
+          <img
+            src={product.hero_image_url}
+            alt={product.title}
+            className="h-full w-full object-cover object-center group-hover:opacity-75"
+          />
+          {isSoldOut && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <span className="bg-red-500 text-white px-4 py-2 rounded-full font-bold">
+                Sold Out
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="mt-4">
+          <h3 className="text-sm text-gray-700">{product.title}</h3>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-lg font-medium text-gray-900">₹{product.discount_price}</p>
+            {product.original_price > product.discount_price && (
+              <p className="text-sm text-gray-500 line-through">₹{product.original_price}</p>
+            )}
+          </div>
+          {!isSoldOut && product.quantity <= 5 && (
+            <p className="text-sm text-red-600 mt-1">
+              Only {product.quantity} left!
+            </p>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -351,5 +391,4 @@ const Category = () => {
     </div>
   );
 };
-
 export default Category;

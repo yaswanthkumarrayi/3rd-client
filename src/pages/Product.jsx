@@ -70,34 +70,44 @@ const Product = () => {
     : [];
 
   function addToCart() {
-  const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
-  const existingIndex = cart.findIndex(item => item.id === product.id);
+    if (!product) return;
+    
+    const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    const existingIndex = cart.findIndex(item => item.id === product.id);
 
-  if (existingIndex !== -1) {
-    const currentQty = cart[existingIndex].quantity;
-    const newQty = currentQty + quantity;
-    if (newQty > product.quantity) {
-      showToast(`Only ${product.quantity} items available in stock`, "error");
-      return;
+    // Check if item is already in cart
+    if (existingIndex !== -1) {
+      const currentQty = cart[existingIndex].quantity;
+      const newQty = currentQty + quantity;
+      
+      // Validate against available stock
+      if (newQty > product.quantity) {
+        showToast(`Only ${product.quantity} items available in stock`, "error");
+        return;
+      }
+      cart[existingIndex].quantity = newQty;
+      cart[existingIndex].availableQuantity = product.quantity; // Update available quantity
+    } else {
+      // Validate quantity before adding new item
+      if (quantity > product.quantity) {
+        showToast(`Only ${product.quantity} items available in stock`, "error");
+        return;
+      }
+      
+      // Add new item to cart
+      cart.push({
+        id: product.id,
+        title: product.title,
+        hero_image_url: product.hero_image_url,
+        original_price: product.original_price,
+        discount_price: product.discount_price,
+        quantity: quantity,
+        availableQuantity: product.quantity,
+        fabric: product.fabric,
+        category: product.category,
+        addedAt: new Date().toISOString() // Add timestamp to track when item was added
+      });
     }
-    cart[existingIndex].quantity = newQty;
-  } else {
-    if (quantity > product.quantity) {
-      showToast(`Only ${product.quantity} items available in stock`, "error");
-      return;
-    }
-    cart.push({
-      id: product.id,
-      title: product.title,
-      hero_image_url: product.hero_image_url,
-      original_price: product.original_price,
-      discount_price: product.discount_price,
-      quantity: quantity,
-      availableQuantity: product.quantity, // Store max available
-      fabric: product.fabric,
-      category: product.category,
-    });
-  }
 
   localStorage.setItem("cartItems", JSON.stringify(cart));
   localStorage.setItem("cartCount", cart.length);
