@@ -15,10 +15,34 @@ const AdminOrders = () => {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select(`
+          *,
+          user_details:user_email (
+            full_name,
+            phone,
+            address,
+            city,
+            state,
+            pincode
+          )
+        `)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      setOrders(data || []);
+      
+      // Format the data to include user details
+      const formattedData = data.map(order => ({
+        ...order,
+        user_details: order.user_details || {
+          full_name: "N/A",
+          phone: order.phone || "N/A",
+          address: order.address || "N/A",
+          city: order.city || "N/A",
+          state: order.state || "N/A",
+          pincode: order.pincode || "N/A"
+        }
+      }));
+      
+      setOrders(formattedData || []);
     } catch (error) {
       console.error("Error fetching orders:", error);
       setOrders([]);
@@ -95,35 +119,53 @@ const AdminOrders = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Details</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer Info</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Info</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery Info</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {orders.map((order) => (
                       <tr key={order.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{order.id}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{order.user_email}</div>
-                            <div className="text-sm text-gray-500">{order.phone}</div>
-                            <div className="text-sm text-gray-500">{order.city}, {order.state}</div>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-gray-900">Order #{order.id}</div>
+                            <div className="text-xs text-gray-500">
+                              {new Date(order.created_at).toLocaleString()}
+                            </div>
+                            {order.razorpay_order_id && (
+                              <div className="text-xs text-gray-500">
+                                RazorPay ID: {order.razorpay_order_id}
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-gray-900">
+                              {order.user_details.full_name}
+                            </div>
+                            <div className="text-sm text-gray-600">{order.user_email}</div>
+                            <div className="text-sm text-gray-600">{order.user_details.phone}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {order.user_details.address}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-2">
                             {Array.isArray(order.items) && order.items.length > 0 ? (
                               order.items.map((item, idx) => (
-                                <div key={idx} className="mb-1">
-                                  {item.title} × {item.quantity}
+                                <div key={idx} className="flex flex-col">
+                                  <span className="text-sm font-medium text-gray-900">{item.title}</span>
+                                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                                    <span>Qty: {item.quantity}</span>
+                                    <span>₹{item.discount_price}/item</span>
+                                  </div>
+                                  <span className="text-xs text-gray-500">{item.fabric} | {item.category}</span>
                                 </div>
                               ))
                             ) : (
@@ -131,16 +173,35 @@ const AdminOrders = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-semibold text-gray-900">₹{order.total?.toLocaleString()}</div>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium text-gray-900">
+                              Total: ₹{order.total?.toLocaleString()}
+                            </div>
+                            {order.payment_id && (
+                              <div className="text-xs text-gray-600">
+                                Payment ID: {order.payment_id}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-500">
+                              Shipping: ₹100
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm text-gray-900">{order.user_details.city}</div>
+                            <div className="text-sm text-gray-600">{order.user_details.state}</div>
+                            <div className="text-sm text-gray-600">PIN: {order.user_details.pincode}</div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {order.tracking_id ? `Tracking: ${order.tracking_id}` : 'No tracking info'}
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -153,42 +214,70 @@ const AdminOrders = () => {
             <div className="lg:hidden space-y-4">
               {orders.map((order) => (
                 <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{order.id}</h3>
-                      <p className="text-sm text-gray-500">{order.created_at ? new Date(order.created_at).toLocaleDateString() : "-"}</p>
+                      <h3 className="text-lg font-semibold text-gray-900">Order #{order.id}</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(order.created_at).toLocaleString()}
+                      </p>
+                      {order.razorpay_order_id && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          RazorPay ID: {order.razorpay_order_id}
+                        </p>
+                      )}
                     </div>
                     <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{order.user_email}</span>
+                  <div className="space-y-4">
+                    {/* Customer Information */}
+                    <div className="border-b pb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Customer Details</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-gray-400" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{order.user_details.full_name}</p>
+                            <p className="text-sm text-gray-600">{order.user_email}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">{order.user_details.phone}</span>
+                        </div>
+
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-600">
+                              {order.user_details.address}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {order.user_details.city}, {order.user_details.state} - {order.user_details.pincode}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{order.phone}</span>
-                    </div>
-
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <span className="text-sm text-gray-600">
-                        {order.address}, {order.city}, {order.state} - {order.pincode}
-                      </span>
-                    </div>
-
-                    <div className="border-t pt-3">
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">Items:</h4>
-                      <div className="space-y-1">
+                    {/* Order Items */}
+                    <div className="border-b pb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Order Items</h4>
+                      <div className="space-y-3">
                         {Array.isArray(order.items) && order.items.length > 0 ? (
                           order.items.map((item, idx) => (
-                            <div key={idx} className="text-sm text-gray-600 flex justify-between">
-                              <span>{item.title}</span>
-                              <span>× {item.quantity}</span>
+                            <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                              <div className="text-sm font-medium text-gray-900">{item.title}</div>
+                              <div className="flex items-center gap-4 mt-1">
+                                <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
+                                <span className="text-sm text-gray-600">₹{item.discount_price}/item</span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {item.fabric} | {item.category}
+                              </div>
                             </div>
                           ))
                         ) : (
@@ -197,12 +286,44 @@ const AdminOrders = () => {
                       </div>
                     </div>
 
-                    <div className="border-t pt-3 flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <DollarSign className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">Total:</span>
+                    {/* Payment Details */}
+                    <div className="border-b pb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Payment Information</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Subtotal:</span>
+                          <span className="text-sm font-medium text-gray-900">₹{(order.total - 100)?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Shipping:</span>
+                          <span className="text-sm font-medium text-gray-900">₹100</span>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-sm font-medium text-gray-900">Total Amount:</span>
+                          <span className="text-lg font-bold text-gray-900">₹{order.total?.toLocaleString()}</span>
+                        </div>
+                        {order.payment_id && (
+                          <div className="text-xs text-gray-500 mt-2">
+                            Payment ID: {order.payment_id}
+                          </div>
+                        )}
                       </div>
-                      <span className="text-lg font-bold text-gray-900">₹{order.total?.toLocaleString()}</span>
+                    </div>
+
+                    {/* Shipping Status */}
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Shipping Status</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {order.tracking_id ? `Tracking ID: ${order.tracking_id}` : 'No tracking information'}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Last Updated: {new Date(order.updated_at || order.created_at).toLocaleString()}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

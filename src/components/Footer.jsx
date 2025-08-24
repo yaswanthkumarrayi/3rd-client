@@ -12,6 +12,7 @@ import {
   Youtube,
   DollarSign
 } from 'lucide-react';
+import SubFooter from './SubFooter';
 
 
 const Footer = () => {
@@ -215,6 +216,11 @@ const Footer = () => {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Developer Credit */}
+      <div className="mt-auto">
+        <SubFooter />
       </div>
     </footer>
   );
