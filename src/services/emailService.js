@@ -328,10 +328,7 @@ class EmailService {
 
   async sendOrderNotificationToAdmin(orderData) {
     try {
-      // Hardcode the admin email to ensure it works
-      const adminEmail = 'yash.freelancer17@gmail.com';
-      
-      console.log('📧 Sending admin notification to:', adminEmail);
+      console.log('📧 Sending admin notification via direct API...');
       console.log('📦 Order data:', {
         orderNumber: orderData.orderNumber,
         customerName: orderData.customerName,
@@ -339,14 +336,54 @@ class EmailService {
         itemsCount: orderData.items?.length
       });
       
-      return await this.sendEmailToBackend({
-        to: adminEmail,
-        subject: `🛒 New Order #${orderData.orderNumber} - ${orderData.customerName} (${this.formatPrice(orderData.totalAmount)})`,
-        html: this.generateOrderEmailHTML(orderData),
-        text: this.generateOrderEmailText(orderData)
+      // Use the direct admin email API that works like test email
+      const response = await fetch(`${this.emailServerUrl}/api/send-admin-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderData })
       });
+
+      if (!response.ok) {
+        console.error(`❌ Admin email HTTP Error: ${response.status} ${response.statusText}`);
+        
+        try {
+          const errorText = await response.text();
+          console.error('❌ Admin email error response:', errorText);
+          
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+            console.error('❌ Admin email error details:', errorData);
+          } catch (parseError) {
+            console.error('❌ Admin email response is not JSON:', errorText);
+            errorData = { error: errorText || `HTTP ${response.status}: ${response.statusText}` };
+          }
+          
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        } catch (responseError) {
+          console.error('❌ Failed to read admin email error response:', responseError);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('❌ Failed to parse admin email response as JSON:', parseError);
+        throw new Error('Invalid response format from admin email service');
+      }
+
+      if (result.success) {
+        console.log('📧 Admin email sent successfully via direct API:', result.messageId);
+        return true;
+      } else {
+        throw new Error(result.error || 'Admin email sending failed');
+      }
     } catch (error) {
-      console.error('Failed to send admin notification email:', error);
+      console.error('❌ Failed to send admin notification email:', error);
       return false;
     }
   }
