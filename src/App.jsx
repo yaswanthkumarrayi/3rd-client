@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -22,21 +23,13 @@ import Wishlist from "./pages/Wishlist";
 import Payment from "./pages/Payment";
 import Category from "./pages/Category";
 
-// WhatsApp phone number (replace with your actual number in international format, without +)
+// WhatsApp phone number
 const WHATSAPP_NUMBER = "9704447158";
 
-// Protected Route for Admin using localStorage flag
+// Protected Route for Admin
 const ProtectedAdminRoute = ({ children }) => {
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    setIsAdmin(localStorage.getItem("isAdmin") === "true");
-    setLoading(false);
-  }, []);
-
-  if (loading) return null;
+  const isAdmin = sessionStorage.getItem("isAdmin") === "true";
 
   if (!isAdmin) {
     return <Navigate to="/adminlogin" state={{ from: location }} replace />;
@@ -49,6 +42,7 @@ const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -57,7 +51,20 @@ const App = () => {
         <Route path="/footer" element={<Footer />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/payment" element={<Payment />} />
+        <Route path="/product/:id" element={<Product />} />
+        <Route path="/user" element={<User />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/shipping" element={<ShippingPolicy />} />
+
+        {/* Admin Login */}
         <Route path="/adminlogin" element={<AdminLogin />} />
+
+        {/* Protected Admin Routes */}
         <Route
           path="/adminorders"
           element={
@@ -74,15 +81,6 @@ const App = () => {
             </ProtectedAdminRoute>
           }
         />
-        <Route path="/payment" element={<Payment />} />
-        <Route path="/product/:id" element={<Product />} />
-        <Route path="/user" element={<User />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/terms" element={<TermsAndConditions />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/shipping" element={<ShippingPolicy />} />
       </Routes>
 
       {/* Floating WhatsApp Button */}

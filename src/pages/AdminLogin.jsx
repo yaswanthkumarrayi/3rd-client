@@ -23,7 +23,7 @@ const handleLogin = async (e) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   if (phone === correctPhone && password === correctPassword) {
-    localStorage.setItem("isAdmin", "true"); // <-- Add this line
+    sessionStorage.setItem("isAdmin", "true"); // <-- Add this line
     navigate('/admin');
   } else {
     setError('Invalid phone number or password');
