@@ -2,6 +2,15 @@
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -28,15 +37,19 @@ export default async function handler(req, res) {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
       },
+      secure: true,
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 25000,
+      greetingTimeout: 25000,
+      socketTimeout: 25000
     });
 
     // Test the connection
     await transporter.verify();
 
-    res.status(200).json({
+    return res.status(200).json({
       status: 'ok',
       service: 'gmail-email-service',
       timestamp: new Date().toISOString(),
@@ -57,7 +70,7 @@ export default async function handler(req, res) {
       errorMessage = 'Network connectivity issue';
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       status: 'error',
       service: 'gmail-email-service',
       timestamp: new Date().toISOString(),

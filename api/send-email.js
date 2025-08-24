@@ -2,6 +2,16 @@
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
+  // Set CORS headers for all requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -24,29 +34,30 @@ export default async function handler(req, res) {
       });
     }
 
-    // Gmail SMTP configuration
+    // Check Gmail credentials
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error('❌ Gmail credentials missing');
+      return res.status(500).json({
+        success: false,
+        error: 'Gmail credentials not configured'
+      });
+    }
+
+    // Gmail SMTP configuration - Vercel optimized
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.GMAIL_USER, // Your Gmail address
-        pass: process.env.GMAIL_APP_PASSWORD // Your Gmail App Password
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
       },
+      secure: true, // Use SSL
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 25000, // 25 seconds
+      greetingTimeout: 25000,
+      socketTimeout: 25000
     });
-
-    // Verify transporter configuration
-    try {
-      await transporter.verify();
-      console.log('📧 Gmail SMTP server is ready to send emails');
-    } catch (verifyError) {
-      console.error('❌ Gmail SMTP verification failed:', verifyError);
-      return res.status(500).json({
-        success: false,
-        error: 'Email service configuration error. Please check Gmail credentials.'
-      });
-    }
 
     // Email configuration
     const mailOptions = {
@@ -58,7 +69,6 @@ export default async function handler(req, res) {
       subject,
       html,
       text: text || 'Please enable HTML to view this email properly.',
-      // Add some email headers for better deliverability
       headers: {
         'X-Mailer': 'Ashok Kumar Textiles Order System',
         'X-Priority': '3',
@@ -71,15 +81,9 @@ export default async function handler(req, res) {
     const info = await transporter.sendMail(mailOptions);
     
     console.log('✅ Email sent successfully:', info.messageId);
-    console.log('📧 Email details:', {
-      to,
-      subject,
-      messageId: info.messageId,
-      response: info.response
-    });
 
     // Return success response
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       messageId: info.messageId,
       message: 'Email sent successfully via Gmail'
@@ -101,10 +105,10 @@ export default async function handler(req, res) {
       errorMessage = 'Gmail authentication error. Verify app password.';
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: error.message
     });
   }
 }
