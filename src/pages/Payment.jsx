@@ -501,7 +501,7 @@ function Payment() {
           customerEmail: userDetails.email || user?.email || '',
           customerPhone: userDetails.phone || profile?.phone || '',
           items: formattedItems.map(item => ({
-            name: item.name,
+            name: item.title || item.name || 'Product',
             price: item.price,
             quantity: item.quantity,
             color: item.color || '',
@@ -596,8 +596,8 @@ function Payment() {
             customerEmail: userDetails.email || user?.email || '',
             customerPhone: userDetails.phone || '',
             items: cartItems.map(item => ({
-              name: item.name,
-              price: item.price,
+              name: item.title || item.name || 'Product',
+              price: item.discount_price || item.price,
               quantity: item.quantity,
               color: item.color || '',
               size: item.size || ''
