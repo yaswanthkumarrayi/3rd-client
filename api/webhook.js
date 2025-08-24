@@ -1,5 +1,5 @@
-import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -38,7 +38,7 @@ function verifyWebhookSignature(payload, signature, secret) {
   );
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     setJson(res);
     return res.status(405).end(JSON.stringify({ error: 'Method not allowed' }));

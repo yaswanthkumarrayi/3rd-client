@@ -4,6 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
+import { emailService } from "../services/emailService";
 
 function Payment() {
   const navigate = useNavigate();
@@ -293,10 +294,6 @@ function Payment() {
               const orderResult = await createOrder(response.razorpay_payment_id);
             } catch (orderError) {
               console.error('❌ Order creation failed:', orderError);
-              console.error('❌ Order error details:', {
-                message: orderError.message,
-                stack: orderError.stack
-              });
               // Don't return here - continue with success flow since payment is complete
               // We'll just show a warning to the user
               setError(`Payment successful but order recording failed: ${orderError.message}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
@@ -344,7 +341,7 @@ function Payment() {
                 </svg>
                 <div>
                   <div class="font-medium">Payment Successful!</div>
-                  <div class="text-sm opacity-90">Order placed successfully</div>
+                  <div class="text-sm opacity-90">Order placed successfully and confirmation emails sent via Gmail</div>
                 </div>
               </div>
             `;
@@ -432,19 +429,31 @@ function Payment() {
         category: item.category || ''
       }));
 
-      // Prepare order data to match Supabase schema exactly
+      // Prepare order data with proper data types
       const orderData = {
         user_email: String(user?.email || userDetails.email || ''),
+        user_name: String(userDetails.full_name || ''),
         phone: String(userDetails.phone || profile?.phone || ''),
         address: String(userDetails.address || profile?.address || ''),
         city: String(userDetails.city || profile?.city || ''),
         state: String(userDetails.state || profile?.state || ''),
         pincode: String(userDetails.pincode || profile?.pincode || ''),
-        items: formattedItems, // Send as array/object for jsonb column
-        amount: Number(getTotal()),
-        status: "paid", // Status after successful payment
+        items: JSON.stringify(formattedItems), // Structured item data
+        subtotal: Number(getSubtotal()),
+        shipping_fee: Number(getShipping()),
+        total: Number(getTotal()),
+        status: "paid", // Initial status after successful payment
         payment_id: String(payment_id),
-        shipping: Number(getShipping())
+        payment_status: "completed",
+        payment_method: "razorpay",
+        order_date: new Date().toISOString(),
+        savings: Number(getTotalSavings()),
+        delivery_notes: "",
+        metadata: JSON.stringify({
+          browser: navigator.userAgent,
+          platform: navigator.platform,
+          payment_gateway: "razorpay"
+        })
       };
       
       // Test connectivity first
@@ -456,8 +465,6 @@ function Payment() {
         console.error('❌ Supabase connectivity test failed:', testError);
         throw new Error(`Database connection failed: ${testError.message}`);
       }
-
-      console.log('📝 Order data being sent:', orderData);
       
       // Now insert the order
       const { data, error } = await supabase
@@ -480,6 +487,61 @@ function Payment() {
       if (!data) {
         throw new Error("Order creation returned no data");
       }
+
+      console.log('✅ Order created successfully:', data);
+
+      // Send email notifications after successful order creation
+      try {
+        console.log('📧 Attempting to send email notifications via Gmail...');
+        
+        // Prepare email data
+        const emailData = {
+          orderNumber: `AKT-${data.id}`, // Using order ID as order number
+          customerName: userDetails.full_name || user?.email?.split('@')[0] || 'Customer',
+          customerEmail: userDetails.email || user?.email || '',
+          customerPhone: userDetails.phone || profile?.phone || '',
+          items: formattedItems.map(item => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            color: item.color || '',
+            size: item.size || ''
+          })),
+          totalAmount: getTotal(),
+          shippingAddress: {
+            street: userDetails.address || profile?.address || '',
+            city: userDetails.city || profile?.city || '',
+            state: userDetails.state || profile?.state || '',
+            pincode: userDetails.pincode || profile?.pincode || '',
+            country: 'India'
+          },
+          paymentId: payment_id
+        };
+
+        // Send admin notification email
+        console.log('📧 Sending admin notification email via Gmail...');
+        const adminEmailSent = await emailService.sendOrderNotificationToAdmin(emailData);
+        if (adminEmailSent) {
+          console.log('✅ Admin notification email sent successfully via Gmail');
+        } else {
+          console.warn('⚠️ Admin notification email failed');
+        }
+
+        // Send customer confirmation email
+        if (emailData.customerEmail) {
+          console.log('📧 Sending customer confirmation email via Gmail...');
+          const customerEmailSent = await emailService.sendOrderConfirmationToCustomer(emailData);
+          if (customerEmailSent) {
+            console.log('✅ Customer confirmation email sent successfully via Gmail');
+          } else {
+            console.warn('⚠️ Customer confirmation email failed');
+          }
+        }
+
+      } catch (emailError) {
+        console.error('❌ Email notification failed:', emailError);
+        // Don't throw error here - order was successful, email is secondary
+      }
       
       return data;
     } catch (error) {
@@ -488,29 +550,28 @@ function Payment() {
       // Try a fallback method with minimal data
       try {
         const fallbackOrderData = {
-          user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
-          phone: String(userDetails.phone || ''),
-          address: String(userDetails.address || ''),
-          city: String(userDetails.city || ''),
-          state: String(userDetails.state || ''),
-          pincode: String(userDetails.pincode || ''),
-          amount: Number(getTotal()),
-          status: "paid",
-          payment_id: String(payment_id),
-          shipping: Number(getShipping()),
-          items: cartItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            category: item.category,
-            fabric: item.fabric,
-            quantity: item.quantity,
-            discount_price: item.discount_price,
-            original_price: item.original_price,
-            hero_image_url: item.hero_image_url
-          }))
-        };
+  user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
+  user_name: String(userDetails.full_name || ''),
+  phone: String(userDetails.phone || ''),
+  address: String(userDetails.address || ''),
+  city: String(userDetails.city || ''),
+  state: String(userDetails.state || ''),
+  pincode: String(userDetails.pincode || ''),
+  amount: Number(getTotal()),
+  status: "paid",
+  payment_id: String(payment_id),
+  items: JSON.stringify(cartItems.map(item => ({
+    id: item.id,
+    title: item.title,
+    category: item.category,
+    fabric: item.fabric,
+    quantity: item.quantity,
+    discount_price: item.discount_price,
+    original_price: item.original_price,
+    hero_image_url: item.hero_image_url
+  })))
+};
 
-        console.log('🔄 Fallback order data being sent:', fallbackOrderData);
         
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("orders")
@@ -519,17 +580,57 @@ function Payment() {
           .single();
         
         if (fallbackError) {
-          console.error('❌ Fallback order creation failed:', fallbackError);
-          console.error('❌ Fallback error details:', {
-            message: fallbackError.message,
-            details: fallbackError.details,
-            hint: fallbackError.hint,
-            code: fallbackError.code
-          });
           throw new Error(`Fallback order creation failed: ${fallbackError.message}`);
         }
 
         console.log('✅ Fallback order created successfully:', fallbackData);
+        
+        // Send email notifications for fallback order too
+        try {
+          console.log('📧 Attempting to send email notifications for fallback order via Gmail...');
+          
+          // Prepare email data for fallback
+          const emailData = {
+            orderNumber: `AKT-${fallbackData.id}`, // Using order ID as order number
+            customerName: userDetails.full_name || user?.email?.split('@')[0] || 'Customer',
+            customerEmail: userDetails.email || user?.email || '',
+            customerPhone: userDetails.phone || '',
+            items: cartItems.map(item => ({
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              color: item.color || '',
+              size: item.size || ''
+            })),
+            totalAmount: getTotal(),
+            shippingAddress: {
+              street: userDetails.address || '',
+              city: userDetails.city || '',
+              state: userDetails.state || '',
+              pincode: userDetails.pincode || '',
+              country: 'India'
+            },
+            paymentId: payment_id
+          };
+
+          // Send admin notification email
+          const adminEmailSent = await emailService.sendOrderNotificationToAdmin(emailData);
+          if (adminEmailSent) {
+            console.log('✅ Fallback admin notification email sent successfully via Gmail');
+          }
+
+          // Send customer confirmation email
+          if (emailData.customerEmail) {
+            const customerEmailSent = await emailService.sendOrderConfirmationToCustomer(emailData);
+            if (customerEmailSent) {
+              console.log('✅ Fallback customer confirmation email sent successfully via Gmail');
+            }
+          }
+
+        } catch (emailError) {
+          console.error('❌ Fallback email notification failed:', emailError);
+          // Don't throw error here - order was successful, email is secondary
+        }
         
         return fallbackData;
       } catch (fallbackError) {
@@ -620,7 +721,7 @@ function Payment() {
                 <Check className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-3xl font-bold text-gray-800 mb-4">Payment Successful!</h2>
-              <p className="text-gray-600 mb-6">Your order has been placed successfully and is being processed.</p>
+              <p className="text-gray-600 mb-6">Your order has been placed successfully and confirmation emails have been sent via Gmail.</p>
               {orderDetails.payment_id && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <p className="text-sm text-gray-500 font-medium">Payment Reference</p>
