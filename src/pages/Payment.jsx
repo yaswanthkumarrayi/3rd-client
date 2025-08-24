@@ -293,6 +293,10 @@ function Payment() {
               const orderResult = await createOrder(response.razorpay_payment_id);
             } catch (orderError) {
               console.error('❌ Order creation failed:', orderError);
+              console.error('❌ Order error details:', {
+                message: orderError.message,
+                stack: orderError.stack
+              });
               // Don't return here - continue with success flow since payment is complete
               // We'll just show a warning to the user
               setError(`Payment successful but order recording failed: ${orderError.message}. Please contact support with payment ID: ${response.razorpay_payment_id}`);
@@ -428,31 +432,19 @@ function Payment() {
         category: item.category || ''
       }));
 
-      // Prepare order data with proper data types
+      // Prepare order data to match Supabase schema exactly
       const orderData = {
         user_email: String(user?.email || userDetails.email || ''),
-        user_name: String(userDetails.full_name || ''),
         phone: String(userDetails.phone || profile?.phone || ''),
         address: String(userDetails.address || profile?.address || ''),
         city: String(userDetails.city || profile?.city || ''),
         state: String(userDetails.state || profile?.state || ''),
         pincode: String(userDetails.pincode || profile?.pincode || ''),
-        items: JSON.stringify(formattedItems), // Structured item data
-        subtotal: Number(getSubtotal()),
-        shipping_fee: Number(getShipping()),
-        total: Number(getTotal()),
-        status: "paid", // Initial status after successful payment
+        items: formattedItems, // Send as array/object for jsonb column
+        amount: Number(getTotal()),
+        status: "paid", // Status after successful payment
         payment_id: String(payment_id),
-        payment_status: "completed",
-        payment_method: "razorpay",
-        order_date: new Date().toISOString(),
-        savings: Number(getTotalSavings()),
-        delivery_notes: "",
-        metadata: JSON.stringify({
-          browser: navigator.userAgent,
-          platform: navigator.platform,
-          payment_gateway: "razorpay"
-        })
+        shipping: Number(getShipping())
       };
       
       // Test connectivity first
@@ -464,6 +456,8 @@ function Payment() {
         console.error('❌ Supabase connectivity test failed:', testError);
         throw new Error(`Database connection failed: ${testError.message}`);
       }
+
+      console.log('📝 Order data being sent:', orderData);
       
       // Now insert the order
       const { data, error } = await supabase
@@ -494,28 +488,29 @@ function Payment() {
       // Try a fallback method with minimal data
       try {
         const fallbackOrderData = {
-  user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
-  user_name: String(userDetails.full_name || ''),
-  phone: String(userDetails.phone || ''),
-  address: String(userDetails.address || ''),
-  city: String(userDetails.city || ''),
-  state: String(userDetails.state || ''),
-  pincode: String(userDetails.pincode || ''),
-  amount: Number(getTotal()),
-  status: "paid",
-  payment_id: String(payment_id),
-  items: JSON.stringify(cartItems.map(item => ({
-    id: item.id,
-    title: item.title,
-    category: item.category,
-    fabric: item.fabric,
-    quantity: item.quantity,
-    discount_price: item.discount_price,
-    original_price: item.original_price,
-    hero_image_url: item.hero_image_url
-  })))
-};
+          user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
+          phone: String(userDetails.phone || ''),
+          address: String(userDetails.address || ''),
+          city: String(userDetails.city || ''),
+          state: String(userDetails.state || ''),
+          pincode: String(userDetails.pincode || ''),
+          amount: Number(getTotal()),
+          status: "paid",
+          payment_id: String(payment_id),
+          shipping: Number(getShipping()),
+          items: cartItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            category: item.category,
+            fabric: item.fabric,
+            quantity: item.quantity,
+            discount_price: item.discount_price,
+            original_price: item.original_price,
+            hero_image_url: item.hero_image_url
+          }))
+        };
 
+        console.log('🔄 Fallback order data being sent:', fallbackOrderData);
         
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("orders")
@@ -524,8 +519,17 @@ function Payment() {
           .single();
         
         if (fallbackError) {
+          console.error('❌ Fallback order creation failed:', fallbackError);
+          console.error('❌ Fallback error details:', {
+            message: fallbackError.message,
+            details: fallbackError.details,
+            hint: fallbackError.hint,
+            code: fallbackError.code
+          });
           throw new Error(`Fallback order creation failed: ${fallbackError.message}`);
         }
+
+        console.log('✅ Fallback order created successfully:', fallbackData);
         
         return fallbackData;
       } catch (fallbackError) {
