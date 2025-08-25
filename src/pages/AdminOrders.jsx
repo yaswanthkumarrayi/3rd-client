@@ -20,60 +20,64 @@ async function fetchAllOrders() {
 
     if (ordersError) throw ordersError;
 
-    // Format and validate the orders data
-    const formattedOrders = orders.map(order => {
-      // Parse items safely
-      let parsedItems = [];
-      try {
-        const items = typeof order.items === 'string' 
-          ? JSON.parse(order.items) 
-          : order.items;
+const safeNumber = (val, fallback = 0) => {
+  const num = Number(val);
+  return isNaN(num) ? fallback : num;
+};
 
-        // Validate and format each item
-        parsedItems = Array.isArray(items) ? items.map(item => ({
-          id: item?.id || '',
-          title: item?.title || 'Unknown Product',
-          category: item?.category || '',
-          fabric: item?.fabric || '',
-          quantity: Number(item?.quantity) || 1,
-          discount_price: Number(item?.discount_price) || 0,
-          original_price: Number(item?.original_price) || 0,
-          hero_image_url: item?.hero_image_url || '', 
-          total: (Number(item?.discount_price) || 0) * (Number(item?.quantity) || 1)
-        })) : [];
-      } catch (e) {
-        console.error('Error parsing items for order:', order.id, e);
-      }
+const formattedOrders = orders.map(order => {
+  let parsedItems = [];
+  try {
+    const items = typeof order.items === 'string' 
+      ? JSON.parse(order.items) 
+      : order.items;
 
-      // Calculate totals
-      const subtotal = parsedItems.reduce((sum, item) => sum + (item.total || 0), 0);
-      const shipping = 100; // Fixed shipping cost
-      const total = subtotal + shipping;
-
-      // Format user details with fallbacks
+    parsedItems = Array.isArray(items) ? items.map(item => {
+      const quantity = safeNumber(item?.quantity, 1);
+      const price = safeNumber(item?.discount_price || item?.price, 0);
       return {
-        ...order,
-        items: parsedItems,
-        total: total || 0,
-        subtotal: subtotal || 0,
-        shipping: shipping,
-        created_at: order.created_at || new Date().toISOString(),
-        updated_at: order.updated_at || order.created_at || new Date().toISOString(),
-        status: order.status || 'paid',
-        user_details: {
-          full_name: order.user_name || order.full_name || '',
-          email: order.user_email || '',
-          phone: order.phone || '',
-          address: order.address || '',
-          city: order.city || '',
-          state: order.state || '',
-          pincode: order.pincode || ''
-        },
-        payment_id: order.payment_id || '',
-        razorpay_order_id: order.razorpay_order_id || '',
-        tracking_id: order.tracking_id || ''
+        id: item?.id || '',
+        title: item?.title || item?.name || 'Unknown Product',
+        category: item?.category || '',
+        fabric: item?.fabric || '',
+        quantity,
+        discount_price: price,
+        original_price: safeNumber(item?.original_price || item?.price, 0),
+        hero_image_url: item?.hero_image_url || item?.image_url || item?.image || '',
+        amount: price * quantity
       };
-    });
+    }) : [];
+  } catch (e) {
+    console.error('Error parsing items for order:', order.id, e);
+  }
+
+  const subtotal = safeNumber(order.amount, 0);
+  const shipping = safeNumber(order.shipping, 100);
+  const total = subtotal + shipping;
+
+  return {
+    ...order,
+    items: parsedItems,
+    subtotal,
+    shipping,
+    total,
+    created_at: order.created_at || new Date().toISOString(),
+    updated_at: order.updated_at || order.created_at || new Date().toISOString(),
+    status: order.status || 'paid',
+    user_details: {
+      full_name: order.user_name || order.full_name || '',
+      email: order.user_email || '',
+      phone: order.phone || '',
+      address: order.address || '',
+      city: order.city || '',
+      state: order.state || '',
+      pincode: order.pincode || ''
+    },
+    payment_id: order.payment_id || '',
+    razorpay_order_id: order.razorpay_order_id || '',
+    tracking_id: order.tracking_id || ''
+  };
+});
 
     setOrders(formattedOrders);
   } catch (err) {
@@ -82,6 +86,7 @@ async function fetchAllOrders() {
   }
   setLoading(false);
 }
+
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'delivered':
@@ -176,79 +181,93 @@ async function fetchAllOrders() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-  <div className="space-y-2">
-    <div className="text-sm font-medium text-gray-900">
-      {order.user_details.full_name}
-    </div>
-    <div className="text-sm text-gray-600">
-      {order.user_details.email}
-    </div>
-    <div className="text-sm text-gray-600">
-      📞 {order.user_details.phone}
-    </div>
-    <div className="text-xs text-gray-500 mt-2">
-      <p className="font-medium">Shipping Address:</p>
-      <p>{order.user_details.address}</p>
-      <p>{order.user_details.city}, {order.user_details.state}</p>
-      <p>PIN: {order.user_details.pincode}</p>
-    </div>
-  </div>
-</td>
-                        {/* //orders items */}
-<td className="px-6 py-4">
-  <div className="space-y-3">
-    {Array.isArray(order.items) && order.items.map((item, idx) => (
-      <div key={idx} className="bg-gray-50 rounded-lg p-3">
-        <div className="flex items-start space-x-3">
-          <img 
-            src={item.hero_image_url} 
-            alt={item.title} 
-            className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-          />
-          <div className="flex-1">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                <p className="text-xs text-gray-500">Product ID: {item.id}</p>
-                <p className="text-xs text-gray-500">Category: {item.category}</p>
-                <p className="text-xs text-gray-500">Fabric: {item.fabric}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  ₹{item.discount_price?.toLocaleString()}
-                </p>
-                {item.original_price > item.discount_price && (
-                  <p className="text-xs text-gray-500 line-through">
-                    ₹{item.original_price?.toLocaleString()}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="mt-2 flex justify-between items-center text-sm">
-              <span className="text-gray-600">Qty: {item.quantity}</span>
-              <span className="font-medium text-gray-900">
-                Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</td>
+                          <div className="space-y-2">
+                            <div className="text-sm font-medium text-gray-900">
+                              {order.user_details.full_name}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {order.user_details.email}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              📞 {order.user_details.phone}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-2">
+                              <p className="font-medium">Shipping Address:</p>
+                              <p>{order.user_details.address}</p>
+                              <p>{order.user_details.city}, {order.user_details.state}</p>
+                              <p>PIN: {order.user_details.pincode}</p>
+                            </div>
+                          </div>
+                        </td>
+                        {/* Order Items */}
+                        <td className="px-6 py-4">
+                          <div className="space-y-3">
+                            {Array.isArray(order.items) && order.items.map((item, idx) => (
+                              <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex items-start space-x-3">
+                                  <div className="w-16 h-16 bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                                    {item.hero_image_url ? (
+                                      <img 
+                                        src={item.hero_image_url} 
+                                        alt={item.title} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                          e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div className={`w-full h-full ${item.hero_image_url ? 'hidden' : 'flex'} items-center justify-center bg-gray-100`}>
+                                      <Package className="h-6 w-6 text-gray-400" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{item.title}</p>
+                                        <p className="text-xs text-gray-500">Product ID: {item.id}</p>
+                                        <p className="text-xs text-gray-500">Category: {item.category}</p>
+                                        <p className="text-xs text-gray-500">Fabric: {item.fabric}</p>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-sm font-medium text-gray-900">
+                                          ₹{item.discount_price?.toLocaleString()}
+                                        </p>
+                                        {item.original_price > item.discount_price && (
+                                          <p className="text-xs text-gray-500 line-through">
+                                            ₹{item.original_price?.toLocaleString()}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 flex justify-between items-center text-sm">
+                                      <span className="text-gray-600">Qty: {item.quantity}</span>
+                                      <span className="font-medium text-gray-900">
+                                        Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="space-y-1">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-xs text-gray-600">
+                              Subtotal: ₹{order.subtotal?.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              Shipping: ₹{order.shipping?.toLocaleString()}
+                            </div>
+                            <div className="text-sm font-medium text-gray-900 pt-1 border-t">
                               Total: ₹{order.total?.toLocaleString()}
                             </div>
                             {order.payment_id && (
-                              <div className="text-xs text-gray-600">
+                              <div className="text-xs text-gray-600 mt-2">
                                 Payment ID: {order.payment_id}
                               </div>
                             )}
-                            <div className="text-xs text-gray-500">
-                              Shipping: ₹100
-                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -303,7 +322,7 @@ async function fetchAllOrders() {
                           <User className="h-4 w-4 text-gray-400" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">{order.user_details.full_name}</p>
-                            <p className="text-sm text-gray-600">{order.user_email}</p>
+                            <p className="text-sm text-gray-600">{order.user_details.email}</p>
                           </div>
                         </div>
 
@@ -327,52 +346,74 @@ async function fetchAllOrders() {
                     </div>
 
                     {/* Order Items */}
-<div className="border-b pb-4">
-  <h4 className="text-sm font-medium text-gray-900 mb-3">Order Items</h4>
-  <div className="space-y-3">
-    {Array.isArray(order.items) && order.items.map((item, idx) => (
-      <div key={idx} className="bg-gray-50 rounded-lg p-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="text-sm font-medium text-gray-900">{item.title}</div>
-            <div className="text-xs text-gray-500 mt-1">
-              Product ID: {item.id}
-            </div>
-            <div className="text-xs text-gray-500">
-              {item.fabric} | {item.category}
-            </div>
-            <div className="mt-2 text-sm text-gray-600">
-              Quantity: {item.quantity}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm font-medium text-gray-900">
-              ₹{item.discount_price?.toLocaleString()}
-            </div>
-            {item.original_price > item.discount_price && (
-              <div className="text-xs text-gray-500 line-through">
-                ₹{item.original_price?.toLocaleString()}
-              </div>
-            )}
-            <div className="text-sm font-medium text-gray-900 mt-2">
-              Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
-            </div>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>                    {/* Payment Details */}
+                    <div className="border-b pb-4">
+                      <h4 className="text-sm font-medium text-gray-900 mb-3">Order Items</h4>
+                      <div className="space-y-3">
+                        {Array.isArray(order.items) && order.items.map((item, idx) => (
+                          <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-start space-x-3">
+                              <div className="w-16 h-16 bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {item.hero_image_url ? (
+                                  <img 
+                                    src={item.hero_image_url} 
+                                    alt={item.title} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-full h-full ${item.hero_image_url ? 'hidden' : 'flex'} items-center justify-center bg-gray-100`}>
+                                  <Package className="h-6 w-6 text-gray-400" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-gray-900 truncate">{item.title}</div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      Product ID: {item.id}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {item.fabric} | {item.category}
+                                    </div>
+                                    <div className="mt-2 text-sm text-gray-600">
+                                      Quantity: {item.quantity}
+                                    </div>
+                                  </div>
+                                  <div className="text-right ml-2">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      ₹{item.discount_price?.toLocaleString()}
+                                    </div>
+                                    {item.original_price > item.discount_price && (
+                                      <div className="text-xs text-gray-500 line-through">
+                                        ₹{item.original_price?.toLocaleString()}
+                                      </div>
+                                    )}
+                                    <div className="text-sm font-medium text-gray-900 mt-2">
+                                      Total: ₹{(item.discount_price * item.quantity)?.toLocaleString()}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Payment Details */}
                     <div className="border-b pb-4">
                       <h4 className="text-sm font-medium text-gray-900 mb-3">Payment Information</h4>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">Subtotal:</span>
-                          <span className="text-sm font-medium text-gray-900">₹{(order.total - 100)?.toLocaleString()}</span>
+                          <span className="text-sm font-medium text-gray-900">₹{order.subtotal?.toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-600">Shipping:</span>
-                          <span className="text-sm font-medium text-gray-900">₹100</span>
+                          <span className="text-sm font-medium text-gray-900">₹{order.shipping?.toLocaleString()}</span>
                         </div>
                         <div className="flex items-center justify-between pt-2 border-t">
                           <span className="text-sm font-medium text-gray-900">Total Amount:</span>

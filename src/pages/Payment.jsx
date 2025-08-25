@@ -417,16 +417,16 @@ function Payment() {
       // Check current auth session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      // Format cart items with essential details
+      // Format cart items with essential details based on product schema
       const formattedItems = cartItems.map(item => ({
         id: item.id,
-        title: item.title || item.name,
+        title: item.title,
         quantity: item.quantity,
-        price: item.discount_price || item.price,
-        original_price: item.original_price || item.price,
-        image_url: item.hero_image_url || item.image,
-        sku: item.sku || '',
-        category: item.category || ''
+        discount_price: Number(item.discount_price),
+        original_price: Number(item.original_price),
+        hero_image_url: item.hero_image_url,
+        fabric: item.fabric,
+        category: item.category
       }));
 
       // Prepare minimal required order data
@@ -445,6 +445,7 @@ function Payment() {
           sku: item.sku || ''
         }))),
         amount: Number(getTotal()),
+        shipping: Number(getShipping()), // Add shipping cost
         status: "paid",
         payment_id: String(payment_id),
         created_at: new Date().toISOString()

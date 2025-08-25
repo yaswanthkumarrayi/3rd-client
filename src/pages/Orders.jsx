@@ -42,23 +42,50 @@ const Orders = () => {
     });
   }, []);
 
-  async function fetchOrders(email) {
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .eq("user_email", email)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error('Error fetching orders:', error);
-      setLoading(false);
-      return;
-    }
-    if (data) {
-      console.log('Fetched orders:', data);
-      setOrders(data);
-    }
+async function fetchOrders(email) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("user_email", email)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching orders:", error);
     setLoading(false);
+    return;
   }
+
+  if (data) {
+    // For each order, enrich items with hero_image_url from products table
+    const enrichedOrders = await Promise.all(
+      data.map(async (order) => {
+        const parsedItems = parseOrderItems(order.items);
+
+        const enrichedItems = await Promise.all(
+          parsedItems.map(async (item) => {
+            if (!item.id) return item; // skip if no product id
+            const { data: productData } = await supabase
+              .from("products")
+              .select("hero_image_url")
+              .eq("id", item.id)
+              .single();
+            
+            return {
+              ...item,
+              hero_image_url: productData?.hero_image_url || "/vite.svg"
+            };
+          })
+        );
+
+        return { ...order, items: enrichedItems };
+      })
+    );
+
+    setOrders(enrichedOrders);
+  }
+  setLoading(false);
+}
+
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -220,7 +247,7 @@ const Orders = () => {
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-gray-600">Shipping:</span>
                               <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                ₹{order.shipping || 0}
+                                ₹{order.shipping || 100}
                               </span>
                             </div>
                           </div>
@@ -229,8 +256,10 @@ const Orders = () => {
                           <div className="bg-fuchsia-50 rounded-xl p-4">
                             <div className="text-center">
                               <div className="text-xs text-gray-600 mb-1">Order Total</div>
-                              <div className="text-2xl font-bold text-fuchsia-600">₹{order.total || order.amount}</div>
-                              {order.items && parseOrderItems(order.items).some(item => item.original_price > item.discount_price) && (
+                              <div className="text-2xl font-bold text-fuchsia-600">₹{order.amount?.toLocaleString()}</div>
+                              {parseOrderItems(order.items).some(item => 
+                                Number(item.original_price) > Number(item.discount_price)
+                              ) && (
                                 <div className="text-xs text-green-600 mt-1">Savings included</div>
                               )}
                             </div>
@@ -299,13 +328,14 @@ const Orders = () => {
                                 <div className="flex-shrink-0">
                                   <div className="relative group">
                                     <img
-                                      src={item.hero_image_url || item.image_url}
+                                      src={item.hero_image_url || '/vite.svg'}
                                       alt={item.title}
                                       className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200 shadow-sm group-hover:border-fuchsia-200 transition-all duration-200"
                                       onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = '/vite.svg';  // Fallback image
                                       }}
+                                      loading="lazy"
                                     />
                                     <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                                       <span className="text-white text-xs font-medium">View Product</span>
