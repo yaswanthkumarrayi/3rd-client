@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 import { emailService } from "../services/emailService";
-order_date
+
 function Payment() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
