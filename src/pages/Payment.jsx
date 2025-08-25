@@ -429,63 +429,82 @@ function Payment() {
         category: item.category || ''
       }));
 
-      // Prepare order data with proper data types
+      // Prepare minimal required order data
       const orderData = {
-        user_email: String(user?.email || userDetails.email || ''),
-        user_name: String(userDetails.full_name || ''),
+        user_email: String(user?.email || userDetails.email),
         phone: String(userDetails.phone || profile?.phone || ''),
         address: String(userDetails.address || profile?.address || ''),
         city: String(userDetails.city || profile?.city || ''),
         state: String(userDetails.state || profile?.state || ''),
         pincode: String(userDetails.pincode || profile?.pincode || ''),
-        items: JSON.stringify(formattedItems), // Structured item data
-        subtotal: Number(getSubtotal()),
-        shipping_fee: Number(getShipping()),
+        items: JSON.stringify(formattedItems.map(item => ({
+          id: item.id,
+          title: item.title,
+          quantity: item.quantity,
+          price: item.price,
+          sku: item.sku || ''
+        }))),
         total: Number(getTotal()),
-        status: "paid", // Initial status after successful payment
+        status: "paid",
         payment_id: String(payment_id),
-        payment_status: "completed",
         payment_method: "razorpay",
-        order_date: new Date().toISOString(),
-        savings: Number(getTotalSavings()),
-        delivery_notes: "",
-        metadata: JSON.stringify({
-          browser: navigator.userAgent,
-          platform: navigator.platform,
-          payment_gateway: "razorpay"
-        })
+        order_date: new Date().toISOString()
       };
       
-      // Test connectivity first
-      const { data: testData, error: testError } = await supabase
-        .from("orders")
-        .select("count", { count: "exact", head: true });
+      // Now insert the order with retry logic
+      let retries = 3;
+      let data = null;
+      let error = null;
       
-      if (testError) {
-        console.error('❌ Supabase connectivity test failed:', testError);
-        throw new Error(`Database connection failed: ${testError.message}`);
-      }
-      
-      // Now insert the order
-      const { data, error } = await supabase
-        .from("orders")
-        .insert([orderData])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('❌ Database error creating order:', error);
-        console.error('Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw new Error(`Failed to create order: ${error.message}`);
+      while (retries > 0 && !data) {
+        console.log(`📝 Attempting to create order (${retries} retries left)...`);
+        
+        // Test connectivity first
+        const { error: testError } = await supabase
+          .from("orders")
+          .select("id")
+          .limit(1);
+          
+        if (testError) {
+          console.error('❌ Database connectivity check failed:', testError);
+          retries--;
+          continue;
+        }
+        
+        // Try to insert the order
+        const result = await supabase
+          .from("orders")
+          .insert([orderData])
+          .select()
+          .single();
+          
+        error = result.error;
+        data = result.data;
+        
+        if (error) {
+          console.error('❌ Failed to create order:', {
+            message: error.message,
+            code: error.code,
+            details: error.details
+          });
+          retries--;
+          // Wait 1 second before retrying
+          if (retries > 0) await new Promise(r => setTimeout(r, 1000));
+          continue;
+        }
+        
+        if (!data) {
+          console.error('❌ Order creation returned no data');
+          retries--;
+          continue;
+        }
+        
+        // Success! Break the loop
+        break;
       }
       
       if (!data) {
-        throw new Error("Order creation returned no data");
+        throw new Error(`Failed to create order after multiple attempts: ${error?.message}`);
       }
 
       console.log('✅ Order created successfully:', data);
@@ -547,30 +566,19 @@ function Payment() {
     } catch (error) {
       console.error("❌ Error creating order:", error);
       
-      // Try a fallback method with minimal data
+      // Try a simpler fallback with absolutely minimal data
       try {
         const fallbackOrderData = {
-  user_email: String(user?.email || userDetails.email || 'unknown@email.com'),
-  user_name: String(userDetails.full_name || ''),
-  phone: String(userDetails.phone || ''),
-  address: String(userDetails.address || ''),
-  city: String(userDetails.city || ''),
-  state: String(userDetails.state || ''),
-  pincode: String(userDetails.pincode || ''),
-  amount: Number(getTotal()),
-  status: "paid",
-  payment_id: String(payment_id),
-  items: JSON.stringify(cartItems.map(item => ({
-    id: item.id,
-    title: item.title,
-    category: item.category,
-    fabric: item.fabric,
-    quantity: item.quantity,
-    discount_price: item.discount_price,
-    original_price: item.original_price,
-    hero_image_url: item.hero_image_url
-  })))
-};
+          user_email: String(user?.email || userDetails.email || 'guest@akshop.com'),
+          total: Number(getTotal()),
+          status: "paid",
+          payment_id: String(payment_id),
+          items: JSON.stringify(cartItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price: item.price || item.discount_price
+          })))
+        };
 
         
         const { data: fallbackData, error: fallbackError } = await supabase
@@ -592,7 +600,6 @@ function Payment() {
           // Prepare email data for fallback
           const emailData = {
             orderNumber: `AKT-${fallbackData.id}`, // Using order ID as order number
-            customerName: userDetails.full_name || user?.email?.split('@')[0] || 'Customer',
             customerEmail: userDetails.email || user?.email || '',
             customerPhone: userDetails.phone || '',
             items: cartItems.map(item => ({

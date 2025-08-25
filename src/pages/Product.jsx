@@ -5,7 +5,6 @@ import { ArrowLeft, Star, Heart, Share2, DollarSign, Shield, RotateCcw, ChevronL
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
-
 const Product = () => {
   const { id } = useParams();
   const navigate = useNavigate();
