@@ -42,19 +42,23 @@ class EmailService {
   generateOrderEmailHTML(orderData) {
     const itemsHTML = orderData.items.map(item => {
       const details = [];
-      if (item.color) details.push(`Color: ${item.color}`);
-      if (item.size) details.push(`Size: ${item.size}`);
+      if (item.fabric) details.push(`Fabric: ${item.fabric}`);
+      if (item.category) details.push(`Category: ${item.category}`);
       const detailsStr = details.length > 0 ? `<br><small>${details.join(' | ')}</small>` : '';
+      
+      const quantity = Number(item.quantity) || 1;
+      const price = Number(item.price) || 0;
+      const total = price * quantity;
       
       return `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">
-            <strong>${item.name}</strong>
+            <strong>${item.name || 'Product'}</strong>
             ${detailsStr}
           </td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(item.price)}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(item.price * item.quantity)}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${quantity}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(price)}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(total)}</td>
         </tr>
       `;
     }).join('');
@@ -114,6 +118,14 @@ class EmailService {
                 </thead>
                 <tbody>
                   ${itemsHTML}
+                  <tr>
+                    <td colspan="3" style="padding: 8px; text-align: right;">Subtotal:</td>
+                    <td style="padding: 8px; text-align: right;">${this.formatPrice(orderData.totalAmount - (orderData.shippingAmount || 0))}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" style="padding: 8px; text-align: right;">Shipping:</td>
+                    <td style="padding: 8px; text-align: right;">${this.formatPrice(orderData.shippingAmount || 0)}</td>
+                  </tr>
                   <tr class="total-row">
                     <td colspan="3" style="padding: 12px; text-align: right; font-size: 16px;"><strong>Grand Total:</strong></td>
                     <td style="padding: 12px; text-align: right; font-size: 16px; color: #2563eb;"><strong>${this.formatPrice(orderData.totalAmount)}</strong></td>
@@ -156,18 +168,22 @@ class EmailService {
   generateCustomerConfirmationHTML(orderData) {
     const itemsHTML = orderData.items.map(item => {
       const details = [];
-      if (item.color) details.push(`Color: ${item.color}`);
-      if (item.size) details.push(`Size: ${item.size}`);
+      if (item.fabric) details.push(`Fabric: ${item.fabric}`);
+      if (item.category) details.push(`Category: ${item.category}`);
       const detailsStr = details.length > 0 ? `<br><small style="color: #666;">${details.join(' | ')}</small>` : '';
+      
+      const quantity = Number(item.quantity) || 1;
+      const price = Number(item.price) || 0;
+      const total = price * quantity;
       
       return `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">
-            <strong>${item.name}</strong>
+            <strong>${item.name || 'Product'}</strong>
             ${detailsStr}
           </td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(item.price * item.quantity)}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${quantity}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${this.formatPrice(total)}</td>
         </tr>
       `;
     }).join('');
@@ -218,6 +234,14 @@ class EmailService {
                 </thead>
                 <tbody>
                   ${itemsHTML}
+                  <tr>
+                    <td colspan="2" style="padding: 8px; text-align: right;">Subtotal:</td>
+                    <td style="padding: 8px; text-align: right;">${this.formatPrice(orderData.totalAmount - (orderData.shippingAmount || 0))}</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="padding: 8px; text-align: right;">Shipping:</td>
+                    <td style="padding: 8px; text-align: right;">${this.formatPrice(orderData.shippingAmount || 0)}</td>
+                  </tr>
                   <tr class="total-row">
                     <td colspan="2" style="padding: 12px; text-align: right; font-size: 16px;"><strong>Grand Total:</strong></td>
                     <td style="padding: 12px; text-align: right; font-size: 16px; color: #2563eb;"><strong>${this.formatPrice(orderData.totalAmount)}</strong></td>

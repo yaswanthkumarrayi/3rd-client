@@ -513,20 +513,23 @@ function Payment() {
       try {
         console.log('📧 Attempting to send email notifications via Gmail...');
         
-        // Prepare email data
+        // Prepare email data based on order schema
         const emailData = {
-          orderNumber: `AKT-${data.id}`, // Using order ID as order number
+          orderNumber: `AKT-${data.id}`,
           customerName: userDetails.full_name || user?.email?.split('@')[0] || 'Customer',
           customerEmail: userDetails.email || user?.email || '',
           customerPhone: userDetails.phone || profile?.phone || '',
           items: formattedItems.map(item => ({
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            color: item.color || '',
-            size: item.size || ''
+            name: item.title || 'Product',  // Using title from the product schema
+            price: Number(item.discount_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            color: '',
+            size: '',
+            fabric: item.fabric || '',
+            category: item.category || ''
           })),
-          totalAmount: getTotal(),
+          totalAmount: Number(data.amount) || 0, // Using amount from order schema
+          shippingAmount: Number(data.shipping) || 0, // Include shipping amount
           shippingAddress: {
             street: userDetails.address || profile?.address || '',
             city: userDetails.city || profile?.city || '',
@@ -534,7 +537,7 @@ function Payment() {
             pincode: userDetails.pincode || profile?.pincode || '',
             country: 'India'
           },
-          paymentId: payment_id
+          paymentId: data.payment_id || payment_id
         };
 
         // Send admin notification email
