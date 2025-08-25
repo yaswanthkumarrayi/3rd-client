@@ -61,7 +61,7 @@ const Orders = () => {
   }
 
   const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'placed':
         return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'processing':
@@ -78,7 +78,7 @@ const Orders = () => {
   };
 
   const getStatusIcon = (status) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'placed':
         return <Clock className="w-4 h-4" />;
       case 'processing':
@@ -119,7 +119,6 @@ const Orders = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
       <main className="pt-20 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
@@ -376,7 +375,6 @@ const Orders = () => {
           )}
         </div>
       </main>
-
       <Footer />
     </div>
   );
