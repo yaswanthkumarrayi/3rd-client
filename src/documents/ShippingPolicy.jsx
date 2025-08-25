@@ -121,9 +121,9 @@ const ShippingPolicy = () => (
       
       <SectionTitle>Shipping Support</SectionTitle>
       <div className="bg-pink-50 rounded-lg p-4 mb-2">
-        <p className="text-pink-700 font-semibold mb-1">Email: <span className="font-normal">ashokkumartextiles@gmail.com</span></p>
+        <p className="text-pink-700 font-semibold mb-1">Email: <span className="font-normal">aktexmsp9@gmail.com</span></p>
         <p className="text-pink-700 font-semibold mb-1">Phone: <span className="font-normal">+91 9704447158</span></p>
-        <p className="text-pink-700 font-semibold mb-1">WhatsApp: <span className="font-normal">+91 9704447158</span></p>
+        <p className="text-pink-700 font-semibold mb-1">WhatsApp: <span className="font-normal">+91 9652303183</span></p>
         <p className="text-pink-700 font-semibold">Support Hours: <span className="font-normal">Monday to Saturday, 10:00 AM to 6:00 PM (IST)</span></p>
       </div>
     </div>

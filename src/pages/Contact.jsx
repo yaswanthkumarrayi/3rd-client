@@ -4,7 +4,7 @@ import Footer from "../components/Footer";
 
 const CONTACT_NUMBER = "+91 9704447158";
 const WHATSAPP_NUMBER = "9704447158";
-const EMAIL = "ashoktextiles@gmail.com";
+const EMAIL = "aktexmsp9@gmail.com";
 const LOCATION_URL = "https://maps.app.goo.gl/WZ3LQK9c8qHntpML7";
 const FACEBOOK_URL = "https://www.facebook.com/ashokkumartextiles.guntur/";
 const INSTAGRAM_URL = "https://www.instagram.com/ashok_kumar_textiles";

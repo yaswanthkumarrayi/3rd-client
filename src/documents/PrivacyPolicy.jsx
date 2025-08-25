@@ -121,8 +121,9 @@ const PrivacyPolicy = () => (
       
       <SectionTitle>Contact Us</SectionTitle>
       <div className="bg-pink-50 rounded-lg p-4 mb-2">
-        <p className="text-pink-700 font-semibold mb-1">Email: <span className="font-normal">ashokkumartextiles@gmail.com</span></p>
-        <p className="text-pink-700 font-semibold mb-1">Phone: <span className="font-normal">+91 9704447158</span></p>
+        <p className="text-pink-700 font-semibold mb-1">Email: <span className="font-normal">aktexmsp9@gmail.com</span></p>
+        <p className="text-pink-700 font-semibold mb-1">Phone: <span className="font-normal">+91 9704447158  </span></p>
+        <p className="text-pink-700 font-semibold mb-1">Phone: <span className="font-normal">+91 9652303183  </span></p>
         <p className="text-pink-700 font-semibold mb-1">Address: <span className="font-normal">Vijayawada, Andhra Pradesh, India</span></p>
       </div>
     </div>

@@ -16,7 +16,7 @@ const RefundPolicy = () => (
         Please read our refund and exchange policy carefully. We strive to ensure your satisfaction while maintaining fair business practices.
       </p>
       <p className="text-sm text-gray-500 mb-2 text-center">Last updated: July 23, 2025</p>
-      
+
       <SectionTitle>Important Policy Notice</SectionTitle>
       <ul className="list-disc ml-6 text-pink-700 mb-4">
         <li>⚠️ <span className="font-semibold">NO RETURNS POLICY</span> — All sales are final and non-refundable.</li>
@@ -26,7 +26,7 @@ const RefundPolicy = () => (
       <SectionTitle>Exchange Policy</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Limited Exchange Available</p>
       <p className="text-gray-700 mb-4">
-        Exchange (same dress) is applicable <span className="font-semibold">ONLY</span> if damage is clearly shown in the unpacking video.
+        Exchange (same sarees) is applicable <span className="font-semibold">ONLY</span> if damage is clearly shown in the unpacking video.
       </p>
 
       <SectionTitle>Exchange Eligibility Criteria</SectionTitle>
@@ -36,7 +36,6 @@ const RefundPolicy = () => (
           <li>Significant damage to the product clearly visible in unpacking video</li>
           <li>Manufacturing defects that affect product usability</li>
           <li>Wrong product delivered (different from order)</li>
-          <li>Major color variations (not due to photography/screen differences)</li>
           <li>Torn or damaged fabric</li>
         </ul>
         <p className="font-semibold text-red-700 mb-1">❌ NOT Valid for Exchange</p>
@@ -90,20 +89,6 @@ const RefundPolicy = () => (
         </li>
       </ol>
 
-      <SectionTitle>Return Shipping Information</SectionTitle>
-      <p className="text-gray-700 mb-2 font-semibold">Who Pays for Shipping?</p>
-      <ul className="list-disc ml-6 text-gray-700 mb-4">
-        <li>If damage is confirmed: Ashok Kumar Textiles pays return shipping</li>
-        <li>If exchange is denied: Customer pays return shipping (if item was sent back)</li>
-      </ul>
-      <p className="text-gray-700 mb-2 font-semibold">Return Packaging Requirements</p>
-      <ul className="list-disc ml-6 text-gray-700 mb-4">
-        <li>Use original packaging if available</li>
-        <li>Pack securely to prevent damage during return shipping</li>
-        <li>Include all original tags and accessories</li>
-        <li>Add a copy of your order confirmation</li>
-      </ul>
-
       <SectionTitle>Refund Information</SectionTitle>
       <p className="text-gray-700 mb-4">
         <span className="font-semibold">No Monetary Refunds:</span> We do not offer monetary refunds under any circumstances. Approved exchanges will only receive a replacement of the same product.
@@ -138,16 +123,16 @@ const RefundPolicy = () => (
       <SectionTitle>Contact Us for Exchanges</SectionTitle>
       <div className="bg-pink-50 rounded-lg p-4 mb-2">
         <p className="text-pink-700 font-semibold mb-1">
-          Email: <span className="font-normal">ashokkumartextiles@gmail.com</span>
+          Email: <span className="font-normal">aktexmsp9@gmail.com</span>
         </p>
         <p className="text-pink-700 font-semibold mb-1">
-          Phone: <span className="font-normal">+91 9704447158</span>
+          Phone: <span className="font-normal">+91 9704447158, 9652303183</span>
         </p>
         <p className="text-pink-700 font-semibold mb-1">
-          Address: <span className="font-normal">Vijayawada, Andhra Pradesh, India</span>
+          Address: <span className="font-normal">Guntur, Andhra Pradesh, India</span>
         </p>
         <p className="text-pink-700 font-semibold">
-          Support Hours: <span className="font-normal">Monday to Saturday, 10:00 AM to 6:00 PM (IST)</span>
+          Support Hours: <span className="font-normal">Monday to Sunday, 10:00 AM to 9:00 PM (IST)</span>
         </p>
       </div>
 
@@ -158,4 +143,5 @@ const RefundPolicy = () => (
     </div>
   </div>
 );
+
 export default RefundPolicy;
