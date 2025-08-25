@@ -447,7 +447,6 @@ function Payment() {
         amount: Number(getTotal()),
         status: "paid",
         payment_id: String(payment_id),
-        payment_method: "razorpay",
         created_at: new Date().toISOString()
       };
       
