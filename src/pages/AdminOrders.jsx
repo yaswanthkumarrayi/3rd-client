@@ -16,76 +16,100 @@ async function fetchAllOrders() {
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
-      .order('created_at', { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (ordersError) throw ordersError;
 
-const safeNumber = (val, fallback = 0) => {
-  const num = Number(val);
-  return isNaN(num) ? fallback : num;
-};
+    const safeNumber = (val, fallback = 0) => {
+      const num = Number(val);
+      return isNaN(num) ? fallback : num;
+    };
 
-const formattedOrders = orders.map(order => {
-  let parsedItems = [];
-  try {
-    const items = typeof order.items === 'string' 
-      ? JSON.parse(order.items) 
-      : order.items;
+    const formattedOrders = await Promise.all(
+      orders.map(async (order) => {
+        let parsedItems = [];
+        try {
+          const items = typeof order.items === "string"
+            ? JSON.parse(order.items)
+            : order.items;
 
-    parsedItems = Array.isArray(items) ? items.map(item => {
-      const quantity = safeNumber(item?.quantity, 1);
-      const price = safeNumber(item?.discount_price || item?.price, 0);
-      return {
-        id: item?.id || '',
-        title: item?.title || item?.name || 'Unknown Product',
-        category: item?.category || '',
-        fabric: item?.fabric || '',
-        quantity,
-        discount_price: price,
-        original_price: safeNumber(item?.original_price || item?.price, 0),
-        hero_image_url: item?.hero_image_url || item?.image_url || item?.image || '',
-        amount: price * quantity
-      };
-    }) : [];
-  } catch (e) {
-    console.error('Error parsing items for order:', order.id, e);
-  }
+          parsedItems = Array.isArray(items)
+            ? await Promise.all(
+                items.map(async (item) => {
+                  // keep original price/amount logic
+                  const quantity = safeNumber(item?.quantity, 1);
+                  const price = safeNumber(item?.discount_price || item?.price, 0);
 
-  const subtotal = safeNumber(order.amount, 0);
-  const shipping = safeNumber(order.shipping, 100);
-  const total = subtotal + shipping;
+                  // add image from products table if missing
+                  let productImage = item?.hero_image_url || item?.image_url || item?.image || "";
 
-  return {
-    ...order,
-    items: parsedItems,
-    subtotal,
-    shipping,
-    total,
-    created_at: order.created_at || new Date().toISOString(),
-    updated_at: order.updated_at || order.created_at || new Date().toISOString(),
-    status: order.status || 'paid',
-    user_details: {
-      full_name: order.user_name || order.full_name || '',
-      email: order.user_email || '',
-      phone: order.phone || '',
-      address: order.address || '',
-      city: order.city || '',
-      state: order.state || '',
-      pincode: order.pincode || ''
-    },
-    payment_id: order.payment_id || '',
-    razorpay_order_id: order.razorpay_order_id || '',
-    tracking_id: order.tracking_id || ''
-  };
-});
+                  if (!productImage && item?.id) {
+                    const { data: product } = await supabase
+                      .from("products")
+                      .select("hero_image_url")
+                      .eq("id", item.id)
+                      .single();
+
+                    if (product) {
+                      productImage = product.hero_image_url || "";
+                    }
+                  }
+
+                  return {
+                    ...item,
+                    id: item?.id || "",
+                    title: item?.title || item?.name || "Unknown Product",
+                    category: item?.category || "",
+                    fabric: item?.fabric || "",
+                    quantity,
+                    discount_price: price,
+                    original_price: safeNumber(item?.original_price || item?.price, 0),
+                    hero_image_url: productImage,
+                    amount: price * quantity,
+                  };
+                })
+              )
+            : [];
+        } catch (e) {
+          console.error("Error parsing items for order:", order.id, e);
+        }
+
+        // keep your amount/shipping/total logic as-is
+        const subtotal = safeNumber(order.amount, 0);
+        const total = subtotal ;
+
+        return {
+          ...order,
+          items: parsedItems,
+          subtotal,
+          total,
+          created_at: order.created_at || new Date().toISOString(),
+          updated_at: order.updated_at || order.created_at || new Date().toISOString(),
+          status: order.status || "paid",
+          user_details: {
+            full_name: order.user_name || order.full_name || "",
+            email: order.user_email || "",
+            phone: order.phone || "",
+            address: order.address || "",
+            city: order.city || "",
+            state: order.state || "",
+            pincode: order.pincode || "",
+          },
+          payment_id: order.payment_id || "",
+          razorpay_order_id: order.razorpay_order_id || "",
+          tracking_id: order.tracking_id || "",
+        };
+      })
+    );
 
     setOrders(formattedOrders);
-  } catch (err) {
-    console.error("Error fetching orders:", err.message);
-    setOrders([]);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+  } finally {
+    setLoading(false);
   }
-  setLoading(false);
 }
+
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {

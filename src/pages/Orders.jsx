@@ -31,6 +31,31 @@ const Orders = () => {
     }
   };
 
+  // Helper function to calculate item price from order total
+  const calculateItemPrice = (orderAmount, orderItems, itemQuantity = 1, shippingCost = 0) => {
+    if (!orderItems || orderItems.length === 0) return 0;
+    
+    // Subtract shipping from total amount to get items total
+    const itemsTotal = orderAmount - (shippingCost || 0);
+    
+    // Calculate total quantity of all items
+    const totalQuantity = orderItems.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    
+    // Calculate price per unit
+    const pricePerUnit = itemsTotal / totalQuantity;
+    
+    return Math.round(pricePerUnit * 100) / 100; // Round to 2 decimal places
+  };
+
+  // Helper function to get item price (use stored price if available, otherwise calculate)
+  const getItemPrice = (item, orderAmount, orderItems, shippingCost) => {
+    const storedPrice = item.discount_price || item.price;
+    if (storedPrice && storedPrice > 0) {
+      return storedPrice;
+    }
+    return calculateItemPrice(orderAmount, orderItems, item.quantity, shippingCost);
+  };
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
@@ -256,12 +281,17 @@ async function fetchOrders(email) {
                           <div className="bg-fuchsia-50 rounded-xl p-4">
                             <div className="text-center">
                               <div className="text-xs text-gray-600 mb-1">Order Total</div>
-                              <div className="text-2xl font-bold text-fuchsia-600">₹{order.amount?.toLocaleString()}</div>
-                              {parseOrderItems(order.items).some(item => 
-                                Number(item.original_price) > Number(item.discount_price)
-                              ) && (
-                                <div className="text-xs text-green-600 mt-1">Savings included</div>
-                              )}
+                              <div className="text-2xl font-bold text-fuchsia-600">₹{Number(order.amount)?.toLocaleString()}</div>
+                              {(() => {
+                                const orderItems = parseOrderItems(order.items);
+                                const shippingCost = order.shipping || 0;
+                                const itemsTotal = Number(order.amount) - shippingCost;
+                                return itemsTotal !== Number(order.amount) && (
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    Items: ₹{itemsTotal.toLocaleString()} + Shipping: ₹{shippingCost}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
@@ -306,6 +336,9 @@ async function fetchOrders(email) {
                   <div className="p-4 sm:p-6">
                     {(() => {
                       const orderItems = parseOrderItems(order.items);
+                      const shippingCost = order.shipping || 0;
+                      const itemsTotal = Number(order.amount) - shippingCost;
+                      
                       return (
                         <>
                           <div className="flex items-center justify-between mb-6">
@@ -315,86 +348,99 @@ async function fetchOrders(email) {
                                 Items ({orderItems.length})
                               </h4>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-gray-600">Order Total:</span>
-                              <span className="text-lg font-bold text-fuchsia-600">₹{order.total}</span>
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">Items Total:</span>
+                                <span className="text-lg font-bold text-fuchsia-600">₹{itemsTotal.toLocaleString()}</span>
+                              </div>
+                              {shippingCost > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500">+ Shipping:</span>
+                                  <span className="text-sm font-medium text-gray-700">₹{shippingCost}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           
                           <div className="grid gap-4">
-                            {orderItems.map((item, idx) => (
-                              <div key={idx} className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-fuchsia-50/50 transition-colors duration-200">
-                                {/* Product Image */}
-                                <div className="flex-shrink-0">
-                                  <div className="relative group">
-                                    <img
-                                      src={item.hero_image_url || '/vite.svg'}
-                                      alt={item.title}
-                                      className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200 shadow-sm group-hover:border-fuchsia-200 transition-all duration-200"
-                                      onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = '/vite.svg';  // Fallback image
-                                      }}
-                                      loading="lazy"
-                                    />
-                                    <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                      <span className="text-white text-xs font-medium">View Product</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                {/* Product Details */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                                    <div>
-                                      <h5 className="font-medium text-gray-900 text-base sm:text-lg mb-2 truncate line-clamp-2 hover:text-fuchsia-600 transition-colors duration-200">
-                                        {item.title || 'Product Title Unavailable'}
-                                      </h5>
-                                      <div className="flex flex-wrap gap-2 mb-3">
-                                        {item.fabric && (
-                                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
-                                            {item.fabric}
-                                          </span>
-                                        )}
-                                        {item.category && (
-                                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-                                            {item.category}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">Price:</span>
-                                        <span className="font-bold text-gray-900">₹{item.discount_price || item.price || 0}</span>
-                                        {item.original_price && item.original_price > (item.discount_price || item.price) && (
-                                          <span className="text-gray-500 line-through text-sm">₹{item.original_price}</span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-sm text-gray-500">Qty:</span>
-                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
-                                          {item.quantity || 1}
-                                        </span>
-                                      </div>
-                                      <div className="mt-1">
-                                        <div className="font-bold text-lg text-fuchsia-600">
-                                          ₹{((item.discount_price || item.price || 0) * (item.quantity || 1)).toLocaleString()}
-                                        </div>
-                                        <p className="text-xs text-gray-500 text-right">Item Total</p>
+                            {orderItems.map((item, idx) => {
+                              const itemPrice = getItemPrice(item, Number(order.amount), orderItems, shippingCost);
+                              const itemTotal = itemPrice * (item.quantity || 1);
+                              
+                              return (
+                                <div key={idx} className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-fuchsia-50/50 transition-colors duration-200">
+                                  {/* Product Image */}
+                                  <div className="flex-shrink-0">
+                                    <div className="relative group">
+                                      <img
+                                        src={item.hero_image_url || '/vite.svg'}
+                                        alt={item.title}
+                                        className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-gray-200 shadow-sm group-hover:border-fuchsia-200 transition-all duration-200"
+                                        onError={(e) => {
+                                          e.target.onerror = null;
+                                          e.target.src = '/vite.svg';  // Fallback image
+                                        }}
+                                        loading="lazy"
+                                      />
+                                      <div className="absolute inset-0 bg-black/40 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                        <span className="text-white text-xs font-medium">View Product</span>
                                       </div>
                                     </div>
                                   </div>
                                   
-                                  {item.original_price && (item.discount_price || item.price) && 
-                                   item.original_price > (item.discount_price || item.price) && (
-                                    <div className="mt-2 text-sm text-green-600">
-                                      You saved ₹{((item.original_price - (item.discount_price || item.price)) * (item.quantity || 1)).toLocaleString()}!
+                                  {/* Product Details */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                      <div>
+                                        <h5 className="font-medium text-gray-900 text-base sm:text-lg mb-2 truncate line-clamp-2 hover:text-fuchsia-600 transition-colors duration-200">
+                                          {item.title || 'Product Title Unavailable'}
+                                        </h5>
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                          {item.fabric && (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
+                                              {item.fabric}
+                                            </span>
+                                          )}
+                                          {item.category && (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                                              {item.category}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-col items-end gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-gray-500">Price:</span>
+                                          <span className="font-bold text-gray-900">₹{itemPrice.toLocaleString()}</span>
+                                          {item.original_price && item.original_price > itemPrice && (
+                                            <span className="text-gray-500 line-through text-sm">₹{item.original_price}</span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-gray-500">Qty:</span>
+                                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
+                                            {item.quantity || 1}
+                                          </span>
+                                        </div>
+                                        <div className="mt-1">
+                                          <div className="font-bold text-lg text-fuchsia-600">
+                                            ₹{itemTotal.toLocaleString()}
+                                          </div>
+                                          <p className="text-xs text-gray-500 text-right">Item Total</p>
+                                        </div>
+                                      </div>
                                     </div>
-                                  )}
+                                    
+                                    {item.original_price && itemPrice && 
+                                     item.original_price > itemPrice && (
+                                      <div className="mt-2 text-sm text-green-600">
+                                        You saved ₹{((item.original_price - itemPrice) * (item.quantity || 1)).toLocaleString()}!
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </>
                       );
