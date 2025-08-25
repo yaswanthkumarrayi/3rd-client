@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import { supabase } from "../supabaseClient";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 import { emailService } from "../services/emailService";
-
+order_date
 function Payment() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -444,11 +444,11 @@ function Payment() {
           price: item.price,
           sku: item.sku || ''
         }))),
-        total: Number(getTotal()),
+        amount: Number(getTotal()),
         status: "paid",
         payment_id: String(payment_id),
         payment_method: "razorpay",
-        order_date: new Date().toISOString()
+        created_at: new Date().toISOString()
       };
       
       // Now insert the order with retry logic
