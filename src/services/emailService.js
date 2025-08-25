@@ -253,7 +253,7 @@ class EmailService {
             </div>
 
             <p style="text-align: center; margin: 20px 0;">
-              <strong>Questions?</strong> Contact us at <a href="mailto:support@ashokkumartextiles.com">support@ashokkumartextiles.com</a> or call us at +91-9876543210
+              <strong>Questions?</strong> Contact us at <a href="mailto:support@ashokkumartextiles.com">support@ashokkumartextiles.com</a> or call us at +91-9652303183 or +91-9704447158
             </p>
           </div>
 
@@ -482,7 +482,7 @@ ${orderData.shippingAddress.country}
 
 🚚 Expected Delivery: 5-7 business days
 
-Questions? Contact us at support@ashokkumartextiles.com
+Questions? Contact us at aktexmsp9@gmail.com
 
 Thank you for choosing Ashok Kumar Textiles!
 Quality textiles for every occasion
