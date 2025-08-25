@@ -13,6 +13,7 @@ const AdminOrders = () => {
 async function fetchAllOrders() {
   setLoading(true);
   try {
+    // First, get all orders
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
       .select("*")
@@ -20,13 +21,31 @@ async function fetchAllOrders() {
 
     if (ordersError) throw ordersError;
 
+    // Then fetch user details for each order
+    const ordersWithUserDetails = await Promise.all(
+      orders.map(async (order) => {
+        if (order.user_email) {
+          const { data: userData } = await supabase
+            .from("users")
+            .select("full_name")
+            .eq("email", order.user_email)
+            .single();
+          return {
+            ...order,
+            users: userData || null
+          };
+        }
+        return order;
+      })
+    );
+
     const safeNumber = (val, fallback = 0) => {
       const num = Number(val);
       return isNaN(num) ? fallback : num;
     };
 
     const formattedOrders = await Promise.all(
-      orders.map(async (order) => {
+      ordersWithUserDetails.map(async (order) => {
         let parsedItems = [];
         try {
           const items = typeof order.items === "string"
@@ -87,7 +106,7 @@ async function fetchAllOrders() {
           updated_at: order.updated_at || order.created_at || new Date().toISOString(),
           status: order.status || "paid",
           user_details: {
-            full_name: order.user_name || order.full_name || "",
+            full_name: order.users?.full_name || order.user_name || order.full_name || "",
             email: order.user_email || "",
             phone: order.phone || "",
             address: order.address || "",
