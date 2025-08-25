@@ -253,7 +253,7 @@ class EmailService {
             </div>
 
             <p style="text-align: center; margin: 20px 0;">
-              <strong>Questions?</strong> Contact us at <a href="mailto:support@ashokkumartextiles.com">support@ashokkumartextiles.com</a> or call us at +91-9652303183 or +91-9704447158
+              <strong>Questions?</strong> Contact us at <a href="mailto:aktexmsp9@gmail.com">aktexmsp9@gmail.com</a> or call us at +91-9652303183 or +91-9704447158
             </p>
           </div>
 
