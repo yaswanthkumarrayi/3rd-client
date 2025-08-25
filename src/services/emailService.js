@@ -270,7 +270,6 @@ class EmailService {
               <h3 style="margin-top: 0; color: #2563eb;">📋 What's Next?</h3>
               <ul style="margin: 0; padding-left: 20px;">
                 <li>We'll process your order within 1-2 business days</li>
-                <li>You'll receive a shipping confirmation email with tracking details</li>
                 <li>Your items will be delivered within 5-7 business days</li>
                 <li>Keep your payment ID handy for any future reference</li>
               </ul>
