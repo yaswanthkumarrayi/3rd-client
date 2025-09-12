@@ -997,7 +997,7 @@ app.all('/api/hdfc-payment-response', async (req, res) => {
   }
 });
 
-// 404 handler
+// 404 handle
 app.use((req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
@@ -1009,28 +1009,34 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Payment Server v2.0.0 running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`💳 Payment status: http://localhost:${PORT}/api/razorpay-status`);
-  console.log(`🔧 Razorpay mode: ${currentMode}`);
-  
-  if (razorpay) {
-    console.log('✅ Razorpay integration ready');
-  } else {
-    console.log('⚠️  Razorpay not configured - check environment variables');
-  }
-  
-  console.log('🏦 HDFC Payment Gateway ready');
-  console.log('📋 Available endpoints:');
-  console.log('  GET  /api/health');
-  console.log('  GET  /api/razorpay-status');
-  console.log('  POST /api/create-order');
-  console.log('  POST /api/verify-payment');
-  console.log('  POST /api/hdfc-create-order');
-  console.log('  ALL  /api/hdfc-payment-response');
-  console.log('  POST /api/hdfc-payment-success');
-  console.log('  POST /api/hdfc-payment-failure');
-  console.log('  POST /api/hdfc-payment-cancel');
-  console.log('  POST /api/test');
-});
+// Export the app for Vercel
+export default app;
+
+// Only start the server if not running on Vercel
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Payment Server v2.0.0 running on port ${PORT}`);
+    console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`💳 Payment status: http://localhost:${PORT}/api/razorpay-status`);
+    console.log(`🔧 Razorpay mode: ${currentMode}`);
+    
+    if (razorpay) {
+      console.log('✅ Razorpay integration ready');
+    } else {
+      console.log('⚠️  Razorpay not configured - check environment variables');
+    }
+    
+    console.log('🏦 HDFC Payment Gateway ready');
+    console.log('📋 Available endpoints:');
+    console.log('  GET  /api/health');
+    console.log('  GET  /api/razorpay-status');
+    console.log('  POST /api/create-order');
+    console.log('  POST /api/verify-payment');
+    console.log('  POST /api/hdfc-create-order');
+    console.log('  ALL  /api/hdfc-payment-response');
+    console.log('  POST /api/hdfc-payment-success');
+    console.log('  POST /api/hdfc-payment-failure');
+    console.log('  POST /api/hdfc-payment-cancel');
+    console.log('  POST /api/test');
+  });
+}
