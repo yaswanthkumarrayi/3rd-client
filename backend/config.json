@@ -4,6 +4,6 @@
   "PAYMENT_PAGE_CLIENT_ID": "hdfcmaster",
   "BASE_URL": "https://smartgatewayuat.hdfcbank.com",
   "RESPONSE_KEY": "9EFC035E8F043AFB88F37DEF30C16D",
-  "ENABLE_LOGGING": true,
-  "LOGGING_PATH": "./logs/hdfc.log"
+  "ENABLE_LOGGING": false,
+  "LOGGING_PATH": "/tmp/hdfc.log"
 }
