@@ -12,7 +12,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'https://ashok-textiles.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
@@ -605,7 +605,7 @@ app.post('/api/hdfc-create-order', async (req, res) => {
     const orderId = `order_${Date.now()}`;
     
     // Create return URL for HDFC callback
-    const baseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const baseUrl = process.env.VITE_API_BASE_URL;
     const returnUrl = `${baseUrl}/api/hdfc-payment-response`;
 
     // Prepare order session data
