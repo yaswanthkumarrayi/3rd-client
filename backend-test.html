@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 10px 0; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Backend API Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Health Check</h3>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>2. HDFC Payment Test</h3>
+        <button onclick="testHDFC()">Test HDFC Create Order</button>
+        <div id="hdfc-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Razorpay Test</h3>
+        <button onclick="testRazorpay()">Test Razorpay Create Order</button>
+        <div id="razorpay-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://textilesbackend.vercel.app';
+
+        async function testHealth() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ SUCCESS: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.textContent = `❌ ERROR: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ NETWORK ERROR: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testHDFC() {
+            const resultDiv = document.getElementById('hdfc-result');
+            resultDiv.textContent = 'Testing HDFC PaymentHandler initialization and order creation...';
+            
+            const testData = {
+                amount: 100,
+                productinfo: 'Test Product',
+                firstname: 'Test',
+                lastname: 'User',
+                email: 'test@example.com',
+                phone: '9999999999',
+                address: 'Test Address',
+                city: 'Test City',
+                state: 'Test State',
+                pincode: '123456'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/hdfc-create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ SUCCESS: PaymentHandler initialized and order created!\n\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.textContent = `❌ ERROR (${response.status}):\n\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                    
+                    // Check for specific error types
+                    if (data.details && data.details.includes('RESPONSE_KEY')) {
+                        resultDiv.textContent += '\n\n🔧 This indicates config.json is still missing RESPONSE_KEY - wait for deployment to complete.';
+                    }
+                    if (data.details && data.details.includes('config file')) {
+                        resultDiv.textContent += '\n\n🔧 This indicates config.json file is missing - wait for deployment to complete.';
+                    }
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ NETWORK ERROR: ${error.message}\n\nThis could indicate the backend is still deploying.`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        async function testRazorpay() {
+            const resultDiv = document.getElementById('razorpay-result');
+            resultDiv.textContent = 'Testing...';
+            
+            const testData = {
+                amount: 10000, // Amount in paise (100 rupees)
+                currency: 'INR'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.textContent = `✅ SUCCESS: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section success';
+                } else {
+                    resultDiv.textContent = `❌ ERROR (${response.status}): ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ NETWORK ERROR: ${error.message}`;
+                resultDiv.parentElement.className = 'test-section error';
+            }
+        }
+
+        // Auto-test health on page load
+        window.onload = () => {
+            testHealth();
+        };
+    </script>
+</body>
+</html>
