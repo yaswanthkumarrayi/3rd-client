@@ -75,7 +75,9 @@ app.get('/api/razorpay-status', (req, res) => {
     version: '1.0.0'
   });
 });
-
+app.get("/", (req, res) => {
+  res.send("Hello from backend!");
+});
 // Create Razorpay order
 app.post('/api/create-order', async (req, res) => {
   console.log('📦 Create order request received:', {
