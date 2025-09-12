@@ -12,8 +12,8 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'https://ashok-textiles.vercel.app'],
-  credentials: true
+  origin: '*', // or restrict to your frontend like 'http://localhost:3000'
+  methods: ['GET', 'POST'],
 }));
 app.use(express.json());
 
