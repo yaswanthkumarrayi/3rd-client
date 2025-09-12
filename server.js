@@ -5,6 +5,9 @@ import cors from 'cors';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 
+// Import PaymentHandler (ES module)
+import { PaymentHandler, APIException } from './PaymentHandler.js';
+
 const app = express();
 
 // Middleware
@@ -563,6 +566,427 @@ app.use((error, req, res, next) => {
   }
 });
 
+// HDFC Payment Gateway Configuration
+const HDFC_CONFIG = {
+  API_KEY: process.env.HDFC_API_KEY || "D5B755878234D26AC0C865AA253012",
+  MERCHANT_ID: process.env.HDFC_MERCHANT_ID || "SG3514",
+  CLIENT_ID: process.env.HDFC_CLIENT_ID || "yourClientId",
+  BASE_URL: process.env.HDFC_BASE_URL || "https://smartgatewayuat.hdfcbank.com",
+  PAYMENT_ENDPOINT: process.env.HDFC_PAYMENT_ENDPOINT || "/merchant/ipay",
+  RESPONSE_KEY: process.env.HDFC_RESPONSE_KEY || "9EFC035E8F043AFB88F37DEF30C16D",
+  ENVIRONMENT: process.env.HDFC_ENVIRONMENT || "production" // or "sandbox" for testing
+};
+
+// HDFC Create Order endpoint
+app.post('/api/hdfc-create-order', async (req, res) => {
+  console.log('🏦 HDFC Create order request received:', {
+    method: req.method,
+    body: req.body,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    const { amount, productinfo, firstname, lastname, email, phone, address, city, state, pincode } = req.body;
+
+    // Validate required fields
+    if (!amount || !firstname || !email || !phone) {
+      console.log('❌ HDFC validation failed:', { amount, firstname, email, phone });
+      return res.status(400).json({ 
+        error: 'Missing required fields: amount, firstname, email, phone' 
+      });
+    }
+
+    console.log('✅ HDFC validation passed, processing payment...');
+
+    // Create PaymentHandler instance
+    const paymentHandler = PaymentHandler.getInstance();
+    
+    // Generate unique order ID
+    const orderId = `order_${Date.now()}`;
+    
+    // Create return URL for HDFC callback
+    const baseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const returnUrl = `${baseUrl}/api/hdfc-payment-response`;
+
+    // Prepare order session data
+    const orderSessionData = {
+      order_id: orderId,
+      amount: parseFloat(amount),
+      currency: "INR",
+      return_url: returnUrl,
+      customer_id: email,
+    };
+
+    console.log('🔄 Creating HDFC order session with PaymentHandler...');
+    
+    // Use PaymentHandler to create order session
+    const orderSessionResp = await paymentHandler.orderSession(orderSessionData);
+    
+    console.log('✅ HDFC order session created:', orderSessionResp);
+
+    // Return response in the format expected by frontend
+    return res.status(200).json({
+      success: true,
+      order_id: orderSessionResp.id || orderId,
+      payment_url: orderSessionResp.payment_links.web,
+      payment_data: orderSessionResp,
+      hdfc_response: orderSessionResp,
+      return_url: returnUrl
+    });
+
+  } catch (error) {
+    console.error('❌ HDFC Create Order Error:', error);
+    
+    if (error.name === 'APIException') {
+      return res.status(error.httpResponseCode || 500).json({ 
+        error: 'HDFC API Error: ' + error.errorMessage,
+        details: error.errorCode,
+        status: error.status
+      });
+    }
+    
+    return res.status(500).json({ 
+      error: 'Failed to create HDFC payment order',
+      details: error.message 
+    });
+  }
+});
+
+function generateHDFCForm(paymentData, actionUrl) {
+  let formHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Redirecting to HDFC Payment Gateway...</title>
+      <style>
+        body { 
+          font-family: Arial, sans-serif; 
+          text-align: center; 
+          padding: 50px;
+          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+          color: white;
+        }
+        .container {
+          max-width: 500px;
+          margin: 0 auto;
+          background: rgba(255,255,255,0.1);
+          padding: 40px;
+          border-radius: 15px;
+          backdrop-filter: blur(10px);
+        }
+        .logo {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 20px;
+        }
+        .loader {
+          border: 4px solid rgba(255,255,255,0.3);
+          border-top: 4px solid #fff;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .details {
+          background: rgba(255,255,255,0.2);
+          padding: 15px;
+          border-radius: 8px;
+          margin: 20px 0;
+          text-align: left;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="logo">🏦 HDFC Bank Payment Gateway</div>
+        <h2>Redirecting to Secure Payment...</h2>
+        <div class="loader"></div>
+        
+        <div class="details">
+          <strong>Order ID:</strong> ${paymentData.order_id}<br>
+          <strong>Amount:</strong> ₹${paymentData.amount}<br>
+          <strong>Customer:</strong> ${paymentData.billing_name}
+        </div>
+        
+        <p>Please wait while we redirect you to the secure HDFC payment page...</p>
+        
+        <form id="hdfcPaymentForm" action="${actionUrl}" method="POST">
+  `;
+
+  // Add all form fields
+  Object.keys(paymentData).forEach(key => {
+    if (paymentData[key] !== undefined && paymentData[key] !== null) {
+      formHTML += `          <input type="hidden" name="${key}" value="${paymentData[key]}" />\\n`;
+    }
+  });
+
+  formHTML += `
+        </form>
+        
+        <button onclick="document.getElementById('hdfcPaymentForm').submit()" 
+                style="background: #28a745; color: white; border: none; padding: 12px 24px; 
+                       border-radius: 6px; cursor: pointer; font-size: 16px;">
+          Continue to Payment
+        </button>
+      </div>
+
+      <script>
+        // Auto-submit after 3 seconds
+        setTimeout(function() {
+          document.getElementById('hdfcPaymentForm').submit();
+        }, 3000);
+      </script>
+    </body>
+    </html>
+  `;
+
+  return formHTML;
+}
+
+// HDFC Test Payment Page (for development/testing)
+app.all('/api/hdfc-test-payment', async (req, res) => {
+  console.log('🧪 HDFC Test Payment Page accessed:', {
+    method: req.method,
+    body: req.body,
+    query: req.query
+  });
+
+  // Simulate HDFC payment page
+  const testPaymentPage = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>HDFC Payment Gateway - Test Environment</title>
+      <style>
+        body { 
+          font-family: Arial, sans-serif; 
+          max-width: 600px; 
+          margin: 50px auto; 
+          padding: 20px;
+          background: #f5f5f5;
+        }
+        .payment-container {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .hdfc-logo {
+          text-align: center;
+          color: #004088;
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 20px;
+        }
+        .amount {
+          font-size: 32px;
+          color: #004088;
+          text-align: center;
+          margin: 20px 0;
+        }
+        .details {
+          background: #f8f9fa;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 20px 0;
+        }
+        .button {
+          width: 100%;
+          padding: 15px;
+          margin: 10px 0;
+          border: none;
+          border-radius: 5px;
+          font-size: 16px;
+          cursor: pointer;
+        }
+        .success { background: #28a745; color: white; }
+        .failure { background: #dc3545; color: white; }
+        .note {
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          padding: 15px;
+          border-radius: 5px;
+          margin: 20px 0;
+          color: #856404;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="payment-container">
+        <div class="hdfc-logo">🏦 HDFC Bank Payment Gateway</div>
+        <div class="note">
+          <strong>⚠️ TEMPORARY LOCAL TEST ENVIRONMENT</strong><br>
+          <strong>IMPORTANT:</strong> HDFC smartgateway URLs are currently not accessible (404 errors).<br>
+          This is a local simulation for development. In production, you'll need to:<br>
+          • Contact HDFC for correct gateway URLs<br>
+          • Verify your merchant account credentials<br>
+          • Get proper UAT/Production endpoints
+        </div>
+        
+        <div class="amount">₹ ${req.body?.amount || req.query?.amount || '0'}</div>
+        
+        <div class="details">
+          <strong>Transaction Details:</strong><br>
+          Transaction ID: ${req.body?.txnid || req.query?.txnid || 'TEST_' + Date.now()}<br>
+          Merchant: ${req.body?.merchant_id || req.query?.merchant_id || 'Test Merchant'}<br>
+          Email: ${req.body?.email || req.query?.email || 'test@example.com'}
+        </div>
+
+        <button class="button success" onclick="simulateSuccess()">
+          ✅ Simulate Successful Payment
+        </button>
+        
+        <button class="button failure" onclick="simulateFailure()">
+          ❌ Simulate Failed Payment
+        </button>
+      </div>
+
+      <script>
+        function simulateSuccess() {
+          alert('✅ Payment Successful! (Simulated)\\n\\nIn production, this would redirect to your success URL with payment confirmation.');
+          // In production, this would redirect to the success URL
+          window.location.href = '/payment/success?status=success&txnid=' + (new URLSearchParams(window.location.search).get('txnid') || 'TEST_' + Date.now());
+        }
+
+        function simulateFailure() {
+          alert('❌ Payment Failed! (Simulated)\\n\\nIn production, this would redirect to your failure URL.');
+          // In production, this would redirect to the failure URL
+          window.location.href = '/payment/failure?status=failed&txnid=' + (new URLSearchParams(window.location.search).get('txnid') || 'TEST_' + Date.now());
+        }
+      </script>
+    </body>
+    </html>
+  `;
+
+  return res.status(200).send(testPaymentPage);
+});
+
+// HDFC Payment Success Handler
+app.post('/api/hdfc-payment-success', (req, res) => {
+  console.log('✅ HDFC Payment Success:', req.body);
+  // Handle success logic here
+  res.redirect(`http://localhost:5174/payment/success?txnid=${req.body.txnid}`);
+});
+
+// HDFC Payment Failure Handler
+app.post('/api/hdfc-payment-failure', (req, res) => {
+  console.log('❌ HDFC Payment Failure:', req.body);
+  // Handle failure logic here
+  res.redirect(`http://localhost:5174/payment/failure?txnid=${req.body.txnid}`);
+});
+
+// HDFC Payment Cancel Handler
+app.post('/api/hdfc-payment-cancel', (req, res) => {
+  console.log('🚫 HDFC Payment Cancelled:', req.body);
+  // Handle cancel logic here
+  res.redirect(`http://localhost:5174/payment/cancel?txnid=${req.body.txnid}`);
+});
+
+// HDFC Payment Response Handler (New - for actual HDFC integration)
+app.all('/api/hdfc-payment-response', async (req, res) => {
+  console.log('🏦 HDFC Payment Response received:', {
+    method: req.method,
+    body: req.body,
+    query: req.query,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    const orderId = req.body.order_id || req.body.orderId || req.query.order_id;
+    const status = req.body.status || req.query.status;
+    const amount = req.body.amount || req.query.amount;
+    const hash = req.body.hash || req.query.hash;
+
+    if (!orderId) {
+      console.error('❌ Missing order_id in HDFC response');
+      return res.redirect(`http://localhost:5174/payment/failure?error=missing_order_id`);
+    }
+
+    // Verify the payment status with PaymentHandler
+    try {
+      const paymentHandler = PaymentHandler.getInstance();
+      const orderStatusResult = await paymentHandler.orderStatus(orderId);
+      
+      console.log('📊 HDFC Order Status Check:', orderStatusResult);
+      
+      // Use the verified status from PaymentHandler
+      const verifiedStatus = orderStatusResult.status || status;
+      
+      // Determine payment status and redirect accordingly
+      let redirectUrl;
+      const baseUrl = 'http://localhost:5174';
+
+      switch (verifiedStatus) {
+        case 'CHARGED':
+        case 'SUCCESS':
+        case 'COMPLETED':
+          console.log('✅ HDFC payment successful for order:', orderId);
+          redirectUrl = `${baseUrl}/payment/success?status=success&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}`;
+          break;
+          
+        case 'PENDING':
+        case 'PENDING_VBV':
+          console.log('⏳ HDFC payment pending for order:', orderId);
+          redirectUrl = `${baseUrl}/payment/success?status=pending&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}&message=Payment is being processed`;
+          break;
+          
+        case 'AUTHORIZATION_FAILED':
+        case 'AUTHENTICATION_FAILED':
+        case 'FAILED':
+        case 'CANCELLED':
+        default:
+          console.log('❌ HDFC payment failed for order:', orderId, 'Status:', verifiedStatus);
+          redirectUrl = `${baseUrl}/payment/failure?status=failed&order_id=${orderId}&gateway=HDFC&error=${verifiedStatus || 'payment_failed'}`;
+          break;
+      }
+
+      // Redirect to the appropriate page
+      return res.redirect(redirectUrl);
+      
+    } catch (statusError) {
+      console.error('⚠️ Could not verify order status with PaymentHandler:', statusError);
+      // Fall back to the status from the callback
+      let redirectUrl;
+      const baseUrl = 'http://localhost:5174';
+
+      switch (status) {
+        case 'CHARGED':
+        case 'SUCCESS':
+        case 'COMPLETED':
+          console.log('✅ HDFC payment successful for order (fallback):', orderId);
+          redirectUrl = `${baseUrl}/payment/success?status=success&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}`;
+          break;
+          
+        case 'PENDING':
+        case 'PENDING_VBV':
+          console.log('⏳ HDFC payment pending for order (fallback):', orderId);
+          redirectUrl = `${baseUrl}/payment/success?status=pending&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}&message=Payment is being processed`;
+          break;
+          
+        case 'AUTHORIZATION_FAILED':
+        case 'AUTHENTICATION_FAILED':
+        case 'FAILED':
+        case 'CANCELLED':
+        default:
+          console.log('❌ HDFC payment failed for order (fallback):', orderId, 'Status:', status);
+          redirectUrl = `${baseUrl}/payment/failure?status=failed&order_id=${orderId}&gateway=HDFC&error=${status || 'payment_failed'}`;
+          break;
+      }
+
+      return res.redirect(redirectUrl);
+    }
+
+  } catch (error) {
+    console.error('💥 HDFC Payment Response Error:', error);
+    return res.redirect(`http://localhost:5174/payment/failure?error=server_error&message=${encodeURIComponent(error.message)}`);
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -573,9 +997,9 @@ app.use('*', (req, res) => {
   });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+
+app.listen(PORT, () => {
   console.log(`🚀 Payment Server v2.0.0 running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/api/health`);
   console.log(`💳 Payment status: http://localhost:${PORT}/api/razorpay-status`);
@@ -587,10 +1011,16 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('⚠️  Razorpay not configured - check environment variables');
   }
   
+  console.log('🏦 HDFC Payment Gateway ready');
   console.log('📋 Available endpoints:');
   console.log('  GET  /api/health');
   console.log('  GET  /api/razorpay-status');
   console.log('  POST /api/create-order');
   console.log('  POST /api/verify-payment');
+  console.log('  POST /api/hdfc-create-order');
+  console.log('  ALL  /api/hdfc-payment-response');
+  console.log('  POST /api/hdfc-payment-success');
+  console.log('  POST /api/hdfc-payment-failure');
+  console.log('  POST /api/hdfc-payment-cancel');
   console.log('  POST /api/test');
 });

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import PaymentGatewaySelector from "../components/PaymentGatewaySelector";
 import { supabase } from "../supabaseClient";
+import HDFCPaymentService from "../services/hdfcPaymentService";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 import { emailService } from "../services/emailService";
 
@@ -16,6 +18,7 @@ function Payment() {
   const [loading, setLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('razorpay');
   const [userDetails, setUserDetails] = useState({
     full_name: "",
     email: "",
@@ -201,19 +204,101 @@ function Payment() {
     
     setProcessing(true);
     setError("");
+
+    try {
+      if (selectedPaymentGateway === 'hdfc') {
+        await handleHDFCPayment();
+      } else {
+        await handleRazorpayPayment();
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      setError(error.message || "Payment failed. Please try again.");
+      setProcessing(false);
+    }
+  };
+
+  const handleHDFCPayment = async () => {
+    try {
+      // Create order in our database first
+      const orderData = await createOrderInDatabase();
+      if (!orderData.success) {
+        throw new Error("Failed to create order");
+      }
+
+      // Prepare HDFC payment data
+      const hdfcOrderData = {
+        amount: getTotal(),
+        productinfo: `Order #${orderData.orderId} - ${cartItems.length} items`,
+        firstname: userDetails.full_name.split(' ')[0] || 'Customer',
+        lastname: userDetails.full_name.split(' ').slice(1).join(' ') || '',
+        email: userDetails.email,
+        phone: userDetails.phone,
+        address: userDetails.address,
+        city: userDetails.city,
+        state: userDetails.state,
+        pincode: userDetails.pincode
+      };
+
+      // Create HDFC payment order
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const hdfcRes = await fetch(`${apiBaseUrl}/api/hdfc-create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hdfcOrderData)
+      });
+
+      if (!hdfcRes.ok) {
+        throw new Error(`HDFC payment creation failed: ${hdfcRes.status}`);
+      }
+
+      const hdfcData = await hdfcRes.json();
+      
+      if (!hdfcData.success) {
+        throw new Error(hdfcData.error || "Failed to create HDFC payment");
+      }
+
+      // Update order with HDFC transaction ID
+      const updateResult = await supabase
+        .from('orders')
+        .update({ 
+          payment_id: hdfcData.order_id
+        })
+        .eq('id', orderData.orderId);
+
+      if (updateResult.error) {
+        console.error('❌ Failed to update order with HDFC details:', updateResult.error);
+        throw new Error('Failed to update order with payment details');
+      }
+
+      // Redirect to HDFC payment page
+      console.log('🏦 HDFC Response received:', hdfcData);
+      
+      if (!hdfcData.success || !hdfcData.payment_url) {
+        throw new Error("Invalid HDFC payment response - missing payment URL");
+      }
+      
+      console.log('🔗 Redirecting to HDFC payment URL:', hdfcData.payment_url);
+      HDFCPaymentService.initiatePayment(hdfcData.payment_data, hdfcData.payment_url);
+      
+    } catch (error) {
+      console.error("HDFC payment error:", error);
+      throw error;
+    }
+  };
+
+  const handleRazorpayPayment = async () => {
     try {
       const res = await loadRazorpayScript();
       if (!res) {
-        console.error("❌ Razorpay script failed to load");
-        setError("Razorpay SDK failed to load. Please try again.");
-        setProcessing(false);
-        return;
+        throw new Error("Razorpay SDK failed to load. Please try again.");
       }
       
       // Create Razorpay order via backend
       const amountPaise = getTotal() * 100;
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
       
-      const orderRes = await fetch("/api/create-order", {
+      const orderRes = await fetch(`${apiBaseUrl}/api/create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -228,7 +313,6 @@ function Payment() {
       
       if (!orderRes.ok) {
         const errorText = await orderRes.text();
-        console.error("❌ Order creation failed - Response:", errorText);
         throw new Error(`Server error: ${orderRes.status} - ${errorText}`);
       }
       
@@ -237,7 +321,6 @@ function Payment() {
         const responseText = await orderRes.text();
         orderData = JSON.parse(responseText);
       } catch (jsonError) {
-        console.error("❌ Failed to parse JSON response:", jsonError);
         throw new Error(`Invalid JSON response from server`);
       }
 
@@ -263,7 +346,9 @@ function Payment() {
         handler: async function (response) {
           try {
             // Verify payment signature
-            const verifyRes = await fetch("/api/verify-payment", {
+            // Verify payment on backend
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            const verifyRes = await fetch(`${apiBaseUrl}/api/verify-payment`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -397,9 +482,63 @@ function Payment() {
       paymentObject.open();
       
     } catch (error) {
-      console.error("❌ Payment error:", error);
-      setError(error.message || "Payment failed. Try again.");
-      setProcessing(false);
+      console.error("❌ Razorpay payment error:", error);
+      throw error;
+    }
+  };
+
+  const createOrderInDatabase = async () => {
+    try {
+      // Format cart items with essential details
+      const formattedItems = cartItems.map(item => ({
+        id: item.id,
+        title: item.title,
+        quantity: item.quantity,
+        discount_price: Number(item.discount_price),
+        original_price: Number(item.original_price),
+        hero_image_url: item.hero_image_url,
+        fabric: item.fabric,
+        category: item.category
+      }));
+
+      // Calculate totals
+      const subtotal = getSubtotal();
+      const shipping = getShipping();
+      const totalAmount = getTotal();
+
+      // Create order record
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_email: userDetails.email,
+          phone: userDetails.phone,
+          address: userDetails.address,
+          city: userDetails.city,
+          state: userDetails.state,
+          pincode: userDetails.pincode,
+          items: formattedItems, // Pass as object for jsonb column
+          amount: totalAmount,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (orderError) {
+        throw new Error(orderError.message);
+      }
+
+      return {
+        success: true,
+        orderId: orderData.id,
+        orderData
+      };
+    } catch (error) {
+      console.error("Error creating order in database:", error);
+      return {
+        success: false,
+        error: error.message
+      };
     }
   };
 
@@ -437,15 +576,14 @@ function Payment() {
         city: String(userDetails.city || profile?.city || ''),
         state: String(userDetails.state || profile?.state || ''),
         pincode: String(userDetails.pincode || profile?.pincode || ''),
-        items: JSON.stringify(formattedItems.map(item => ({
+        items: formattedItems.map(item => ({
           id: item.id,
           title: item.title,
           quantity: item.quantity,
-          price: item.price,
+          price: item.price || item.discount_price,
           sku: item.sku || ''
-        }))),
+        })),
         amount: Number(getTotal()),
-        shipping: Number(getShipping()), // Add shipping cost
         status: "paid",
         payment_id: String(payment_id),
         created_at: new Date().toISOString()
@@ -573,14 +711,14 @@ function Payment() {
       try {
         const fallbackOrderData = {
           user_email: String(user?.email || userDetails.email || 'guest@akshop.com'),
-          total: Number(getTotal()),
+          amount: Number(getTotal()),
           status: "paid",
           payment_id: String(payment_id),
-          items: JSON.stringify(cartItems.map(item => ({
+          items: cartItems.map(item => ({
             id: item.id,
             quantity: item.quantity,
             price: item.price || item.discount_price
-          })))
+          }))
         };
 
         
@@ -950,6 +1088,14 @@ function Payment() {
                         <p className="text-gray-700 font-medium">🔒 SSL Secured Payment Gateway</p>
                         <p className="text-sm text-gray-600 mt-1">Your payment information is encrypted and secure</p>
                       </div>
+                    </div>
+
+                    {/* Payment Gateway Selection */}
+                    <div className="mb-6">
+                      <PaymentGatewaySelector 
+                        selectedGateway={selectedPaymentGateway}
+                        onGatewaySelect={setSelectedPaymentGateway}
+                      />
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">

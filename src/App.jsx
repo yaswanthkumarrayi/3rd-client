@@ -21,6 +21,8 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Search from "./pages/Search";
 import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailure from "./pages/PaymentFailure";
 import Category from "./pages/Category";
 
 // WhatsApp phone number
@@ -52,6 +54,8 @@ const App = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/payment" element={<Payment />} />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/failure" element={<PaymentFailure />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="/user" element={<User />} />
         <Route path="/orders" element={<Orders />} />
