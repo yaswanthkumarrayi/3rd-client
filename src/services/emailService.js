@@ -28,7 +28,7 @@ class EmailService {
     if (import.meta.env.PROD) {
       this.emailServerUrl = window.location.origin;
     } else {
-      this.emailServerUrl = 'http://localhost:5000'; // Changed to port 5000 to match our Express server
+      this.emailServerUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
     }
   }
 
