@@ -611,14 +611,27 @@ app.post('/api/hdfc-create-order', async (req, res) => {
     console.log('✅ HDFC validation passed, processing payment...');
 
     // Create PaymentHandler instance
-    const paymentHandler = PaymentHandler.getInstance();
+    let paymentHandler;
+    try {
+      console.log('🔧 Initializing PaymentHandler...');
+      paymentHandler = PaymentHandler.getInstance();
+      console.log('✅ PaymentHandler initialized successfully');
+    } catch (initError) {
+      console.error('❌ PaymentHandler initialization failed:', initError);
+      return res.status(500).json({ 
+        error: 'Payment gateway initialization failed',
+        details: initError.message 
+      });
+    }
     
     // Generate unique order ID
     const orderId = `order_${Date.now()}`;
     
     // Create return URL for HDFC callback
-    const baseUrl = process.env.VITE_API_BASE_URL;
+    const baseUrl = process.env.VITE_API_BASE_URL || 'https://textilesbackend.vercel.app';
     const returnUrl = `${baseUrl}/api/hdfc-payment-response`;
+
+    console.log('🔗 Using return URL:', returnUrl);
 
     // Prepare order session data
     const orderSessionData = {
@@ -648,6 +661,14 @@ app.post('/api/hdfc-create-order', async (req, res) => {
 
   } catch (error) {
     console.error('❌ HDFC Create Order Error:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      httpResponseCode: error.httpResponseCode,
+      errorCode: error.errorCode,
+      errorMessage: error.errorMessage
+    });
     
     if (error.name === 'APIException') {
       return res.status(error.httpResponseCode || 500).json({ 
@@ -659,7 +680,8 @@ app.post('/api/hdfc-create-order', async (req, res) => {
     
     return res.status(500).json({ 
       error: 'Failed to create HDFC payment order',
-      details: error.message 
+      details: error.message,
+      type: error.name || 'Unknown Error'
     });
   }
 });
