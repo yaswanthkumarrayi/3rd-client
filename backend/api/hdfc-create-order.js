@@ -5,10 +5,10 @@ const HDFC_CONFIG = {
   API_KEY: process.env.HDFC_API_KEY || "D5B755878234D26AC0C865AA253012",
   MERCHANT_ID: process.env.HDFC_MERCHANT_ID || "SG3514",
   CLIENT_ID: process.env.HDFC_CLIENT_ID || "hdfcmaster",
-  BASE_URL: process.env.HDFC_BASE_URL || "https://smartgateway.hdfcbank.com",
+  BASE_URL: process.env.HDFC_BASE_URL || "https://smartgatewayuat.hdfcbank.com", // Back to UAT for testing
   PAYMENT_ENDPOINT: process.env.HDFC_PAYMENT_ENDPOINT || "/merchant/ipay",
   RESPONSE_KEY: process.env.HDFC_RESPONSE_KEY || "9EFC035E8F043AFB88F37DEF30C16D",
-  ENVIRONMENT: "production" // Live environment
+  ENVIRONMENT: "uat" // UAT environment for testing with current credentials
 };
 
 export default async function handler(req, res) {
