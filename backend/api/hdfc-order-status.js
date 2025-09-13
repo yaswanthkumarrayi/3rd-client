@@ -9,6 +9,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Handle both GET and POST methods
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
   try {
     const { order_id, orderId } = req.method === 'GET' ? req.query : req.body;
     const targetOrderId = order_id || orderId;
@@ -27,7 +32,6 @@ export default async function handler(req, res) {
     }
 
     // Sample response format as required by HDFC bank testing
-    // In real implementation, this would fetch from your database
     const orderStatusResponse = {
       "customer_email": "customer@example.com",
       "customer_phone": "9999999999", 
@@ -46,40 +50,6 @@ export default async function handler(req, res) {
         "iframe": `https://smartgatewayuat.hdfcbank.com/orders/ordeh_${targetOrderId}/payment-page`,
         "web": `https://smartgatewayuat.hdfcbank.com/orders/ordeh_${targetOrderId}/payment-page`,
         "mobile": `https://smartgatewayuat.hdfcbank.com/orders/ordeh_${targetOrderId}/payment-page`
-      },
-      "udf1": "",
-      "udf2": "", // Not using UDF2 as per HDFC requirement
-      "udf3": "",
-      "udf4": "",
-      "udf5": "",
-      "udf6": "",
-      "udf7": "",
-      "udf8": "",
-      "udf9": "",
-      "udf10": "",
-      "txn_id": `SG3514-${targetOrderId}-1`,
-      "payment_method_type": "CARD",
-      "auth_type": "THREE_DS",
-      "card": {
-        "expiry_year": "2025",
-        "card_reference": "",
-        "saved_to_locker": false,
-        "expiry_month": "12",
-        "name_on_card": "Test Customer",
-        "card_issuer": "HDFC Bank",
-        "last_four_digits": "1234",
-        "using_saved_card": false,
-        "card_fingerprint": "test_fingerprint",
-        "card_isin": "401200",
-        "card_type": "CREDIT",
-        "card_brand": "VISA",
-        "using_token": false,
-        "tokens": [],
-        "token_type": "CARD",
-        "card_issuer_country": "INDIA",
-        "juspay_bank_code": "JP_HDFC",
-        "extended_card_type": "CREDIT",
-        "payment_account_reference": ""
       },
       "gateway_reference_id": `ref_${targetOrderId}`,
       "bank_reference_number": `bank_ref_${Date.now()}`,
