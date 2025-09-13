@@ -8,21 +8,51 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Handle GET request for testing
+  if (req.method === 'GET') {
+    console.log('🧪 HDFC Payment Response - GET request for testing');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
+    return res.redirect(`${frontendUrl}/payment/failure?error=test_access&message=This endpoint is for HDFC payment callbacks only`);
+  }
+
   console.log('🏦 HDFC Payment Response received:', {
     method: req.method,
     body: req.body,
     query: req.query,
+    headers: req.headers,
     timestamp: new Date().toISOString()
   });
 
   try {
-    const orderId = req.body.order_id || req.body.orderId || req.query.order_id;
-    const status = req.body.status || req.query.status;
-    const amount = req.body.amount || req.query.amount;
-    const hash = req.body.hash || req.query.hash;
+    // Extract order_id from multiple possible sources
+    let orderId = null;
+    let status = null;
+    let amount = null;
+    let hash = null;
+
+    // Check if we have request body
+    if (req.body && typeof req.body === 'object') {
+      orderId = req.body.order_id || req.body.orderId || req.body.txnid;
+      status = req.body.status || req.body.payment_status;
+      amount = req.body.amount;
+      hash = req.body.hash;
+    }
+
+    // Fallback to query parameters
+    if (!orderId && req.query) {
+      orderId = req.query.order_id || req.query.orderId || req.query.txnid;
+      status = status || req.query.status || req.query.payment_status;
+      amount = amount || req.query.amount;
+      hash = hash || req.query.hash;
+    }
+
+    console.log('🔍 Extracted payment data:', { orderId, status, amount, hash });
 
     if (!orderId) {
-      console.error('❌ Missing order_id in HDFC response');
+      console.error('❌ Missing order_id in HDFC response', {
+        bodyKeys: req.body ? Object.keys(req.body) : [],
+        queryKeys: req.query ? Object.keys(req.query) : []
+      });
       const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
       return res.redirect(`${frontendUrl}/payment/failure?error=missing_order_id`);
     }

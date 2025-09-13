@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDFC Payment Flow Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #2a5298;
+        }
+        .test-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .test-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 HDFC Payment Gateway Test</h1>
+        
+        <div class="test-info">
+            <h3>🔧 Test Configuration</h3>
+            <p><strong>Environment:</strong> UAT (smartgatewayuat.hdfcbank.com)</p>
+            <p><strong>Backend:</strong> https://textilesbackend.vercel.app</p>
+            <p><strong>Frontend:</strong> https://www.ashokkumartextiles.com</p>
+            <p><strong>Merchant ID:</strong> SG3514</p>
+            <p><strong>Client ID:</strong> hdfcmaster</p>
+        </div>
+
+        <form id="paymentForm">
+            <div class="form-group">
+                <label for="amount">Amount (INR)</label>
+                <input type="number" id="amount" step="0.01" value="100.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="firstname">First Name</label>
+                <input type="text" id="firstname" value="Test" required>
+            </div>
+
+            <div class="form-group">
+                <label for="lastname">Last Name</label>
+                <input type="text" id="lastname" value="Customer">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="test@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" value="9876543210" required>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" value="123 Test Street">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" value="Mumbai">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State</label>
+                <input type="text" id="state" value="Maharashtra">
+            </div>
+
+            <div class="form-group">
+                <label for="pincode">Pincode</label>
+                <input type="text" id="pincode" value="400001">
+            </div>
+
+            <button type="submit">🚀 Test HDFC Payment</button>
+            <button type="button" onclick="testApiHealth()">🔍 Test API Health</button>
+        </form>
+
+        <div id="result" class="test-result"></div>
+
+        <div style="margin-top: 30px;">
+            <h3>📋 Expected Flow:</h3>
+            <ol>
+                <li>✅ API call to /api/hdfc-create-order</li>
+                <li>✅ Generate HDFC-compliant order ID</li>
+                <li>✅ Create payment form with correct URLs</li>
+                <li>✅ Redirect to HDFC UAT gateway</li>
+                <li>✅ No 404 analytics errors</li>
+                <li>✅ Success/Failure redirects to production URLs (not localhost)</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://textilesbackend.vercel.app';
+
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.productinfo = `Test Order - ${data.amount} INR`;
+
+            showResult('loading', '⏳ Creating HDFC payment order...');
+
+            try {
+                console.log('🔧 Sending HDFC payment request:', data);
+                
+                const response = await fetch(`${BACKEND_URL}/api/hdfc-create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('📥 HDFC API Response Status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ HDFC Payment Response:', result);
+
+                if (result.success) {
+                    showResult('success', `
+                        ✅ HDFC Payment Order Created Successfully!<br>
+                        📋 Order ID: ${result.order_id}<br>
+                        🔗 Payment URL: ${result.payment_url}<br>
+                        🎯 Return URL: ${result.return_url}<br>
+                        <br>
+                        <button onclick="window.open('${result.payment_url}', '_blank')">
+                            🏦 Open HDFC Payment Page
+                        </button>
+                    `);
+                } else {
+                    showResult('error', `❌ HDFC Error: ${result.error || 'Unknown error'}`);
+                }
+
+            } catch (error) {
+                console.error('💥 HDFC Payment Test Error:', error);
+                showResult('error', `💥 Test Failed: ${error.message}`);
+            }
+        });
+
+        async function testApiHealth() {
+            showResult('loading', '🔍 Testing API health...');
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/health`);
+                const result = await response.json();
+
+                if (response.ok && result.status === 'OK') {
+                    showResult('success', `
+                        ✅ API Health Check Passed!<br>
+                        🚀 Server: ${result.server}<br>
+                        ⏰ Uptime: ${result.uptime}<br>
+                        💳 Razorpay: ${result.razorpay_status}<br>
+                        🏦 HDFC: Ready
+                    `);
+                } else {
+                    showResult('error', `❌ API Health Check Failed: ${JSON.stringify(result)}`);
+                }
+            } catch (error) {
+                showResult('error', `💥 Health Check Error: ${error.message}`);
+            }
+        }
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+
+        // Auto-test API health on page load
+        window.addEventListener('load', () => {
+            console.log('🧪 HDFC Payment Test Page Loaded');
+            console.log('🔧 Backend URL:', BACKEND_URL);
+            testApiHealth();
+        });
+    </script>
+</body>
+</html>
