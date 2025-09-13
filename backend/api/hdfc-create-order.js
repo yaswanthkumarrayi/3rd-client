@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { PaymentHandler } from '../PaymentHandler.js';
+// import { PaymentHandler } from '../PaymentHandler.js';  // Temporarily disabled for debugging
 
 const HDFC_CONFIG = {
   API_KEY: process.env.HDFC_API_KEY || "D5B755878234D26AC0C865AA253012",
@@ -44,33 +44,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('✅ HDFC validation passed, initializing PaymentHandler...');
-
-    // Initialize PaymentHandler with detailed debugging
-    let paymentHandler;
-    try {
-      console.log('🔧 Attempting PaymentHandler.getInstance()...');
-      paymentHandler = PaymentHandler.getInstance();
-      console.log('✅ PaymentHandler initialized successfully');
-      
-      // Test PaymentHandler methods
-      const merchantId = paymentHandler.getMerchantId();
-      const baseUrl = paymentHandler.getBaseUrl();
-      const apiKey = paymentHandler.getApiKey();
-      console.log('🔧 PaymentHandler config:', { merchantId, baseUrl, hasApiKey: !!apiKey });
-      
-    } catch (initError) {
-      console.error('❌ PaymentHandler initialization failed:', {
-        message: initError.message,
-        stack: initError.stack,
-        type: initError.constructor.name
-      });
-      return res.status(500).json({ 
-        error: 'Payment gateway initialization failed',
-        details: initError.message,
-        type: initError.constructor.name
-      });
-    }
+    console.log('✅ HDFC validation passed, creating simple payment order...');
 
     // Generate unique order ID (HDFC style)
     const orderId = `order_${Date.now()}`;
@@ -80,7 +54,7 @@ export default async function handler(req, res) {
     const backendUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://textilesbackend.vercel.app';
     const returnUrl = `${backendUrl}/api/hdfc-payment-response`;
 
-    // HDFC Order Session Data using PaymentHandler format
+    // HDFC Order Session Data (simplified without PaymentHandler)
     const orderSessionData = {
       order_id: orderId,
       amount: formattedAmount,
@@ -95,31 +69,30 @@ export default async function handler(req, res) {
       billing_state: state || '',
       billing_zip: pincode || '',
       billing_country: 'India',
-      product_info: productinfo || "Online Purchase"
+      product_info: productinfo || "Online Purchase",
+      payment_page_client_id: HDFC_CONFIG.CLIENT_ID,
+      merchant_id: HDFC_CONFIG.MERCHANT_ID
     };
 
-    console.log('📦 Creating HDFC order session:', orderId);
+    console.log('📦 Creating HDFC order session (simple mode):', orderId);
 
-    // Use PaymentHandler to create order session
-    const hdfcResponse = await paymentHandler.orderSession(orderSessionData);
-    
-    console.log('✅ HDFC order session created successfully:', hdfcResponse);
+    // Generate HDFC payment URL
+    const paymentUrl = `${HDFC_CONFIG.BASE_URL}${HDFC_CONFIG.PAYMENT_ENDPOINT}`;
 
-    // Extract payment URL from PaymentHandler response
-    let paymentUrl = null;
-    if (hdfcResponse && hdfcResponse.payment_links && hdfcResponse.payment_links.web) {
-      paymentUrl = hdfcResponse.payment_links.web;
-    } else if (hdfcResponse && hdfcResponse.sdk_payload) {
-      // For SDK integration, we might need to construct the URL differently
-      paymentUrl = `${HDFC_CONFIG.BASE_URL}/payment-page/order/${hdfcResponse.id || orderId}`;
-    }
+    // Create form data for HDFC submission
+    const formData = {
+      ...orderSessionData,
+      productinfo: productinfo || "Online Purchase"
+    };
+
+    console.log('✅ HDFC order session created successfully (simple mode)');
 
     return res.status(200).json({
       success: true,
       order_id: orderId,
       payment_url: paymentUrl,
-      payment_data: orderSessionData,
-      hdfc_response: hdfcResponse,
+      payment_data: formData,
+      redirect_form: generateHDFCForm(formData, paymentUrl),
       return_url: returnUrl
     });
 
