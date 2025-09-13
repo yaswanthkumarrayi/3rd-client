@@ -114,14 +114,15 @@ class HDFCPaymentService {
     console.log('📋 Payment data:', paymentData);
 
     try {
-      // If redirect_form HTML is provided, use it (recommended for HDFC)
+      // If redirect_form HTML is provided, use it by replacing current page content
       if (redirectForm) {
         console.log('✅ Using HDFC redirect form for payment');
         
-        // Create a new window/tab with the form and auto-submit
-        const newWindow = window.open('', '_self');
-        newWindow.document.write(redirectForm);
-        newWindow.document.close();
+        // Replace the entire document content with the redirect form
+        // This avoids chrome-error issues with window.open
+        document.open();
+        document.write(redirectForm);
+        document.close();
         
         return;
       }
