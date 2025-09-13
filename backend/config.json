@@ -2,7 +2,7 @@
   "MERCHANT_ID": "SG3514",
   "API_KEY": "D5B755878234D26AC0C865AA253012",
   "PAYMENT_PAGE_CLIENT_ID": "hdfcmaster",
-  "BASE_URL": "https://smartgateway.hdfcbank.com",
+  "BASE_URL": "https://smartgatewayuat.hdfcbank.com",
   "RESPONSE_KEY": "9EFC035E8F043AFB88F37DEF30C16D",
   "ENABLE_LOGGING": false,
   "LOGGING_PATH": "/tmp/hdfc.log"
