@@ -1,5 +1,4 @@
-import crypto from 'crypto';
-// import { PaymentHandler } from '../PaymentHandler.js';  // Temporarily disabled for debugging
+const crypto = require('crypto');
 
 const HDFC_CONFIG = {
   API_KEY: process.env.HDFC_API_KEY || "D5B755878234D26AC0C865AA253012",
@@ -11,7 +10,7 @@ const HDFC_CONFIG = {
   ENVIRONMENT: "uat" // UAT environment for testing with current credentials
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
