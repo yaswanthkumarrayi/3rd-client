@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HDFC Payment Flow Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            margin: 10px 0;
+            font-weight: bold;
+            width: auto;
+            padding: 12px 24px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background: white;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-color: #28a745;
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            border-color: #dc3545;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #0d47a1;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 HDFC Payment Flow Test (Fixed)</h1>
+        
+        <div class="info test-result">
+            <strong>🔧 Fixed Issues:</strong>
+            ✅ chrome-error://chromewebdata/ 404 error resolved
+            ✅ Proper form submission to HDFC gateway
+            ✅ Auto-redirecting HTML form generation
+            ✅ Fallback manual form submission
+            
+            <strong>🔗 API Endpoint:</strong> https://textilesbackend.vercel.app/api/hdfc-create-order
+            <strong>🎯 Expected Flow:</strong> Create Order → Generate Form → Auto-submit → HDFC Gateway
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test HDFC Payment Creation</h3>
+            <form id="hdfcTestForm">
+                <div class="form-group">
+                    <label for="amount">Amount (INR)</label>
+                    <input type="number" id="amount" step="0.01" value="100.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="firstname">First Name</label>
+                    <input type="text" id="firstname" value="Test" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastname">Last Name</label>
+                    <input type="text" id="lastname" value="Customer">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" value="test@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" value="9876543210" required>
+                </div>
+                <button type="submit">🚀 Test HDFC Payment (Fixed)</button>
+            </form>
+            <div id="testResult" class="test-result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 What This Test Does</h3>
+            <div class="info test-result">
+1. ✅ Calls HDFC create order API
+2. ✅ Receives payment data + redirect_form HTML
+3. ✅ Uses the redirect_form for proper submission (NOT direct URL)
+4. ✅ Auto-submits form to HDFC gateway
+5. ✅ Should redirect to HDFC UAT payment page
+6. ❌ Previous issue: Was trying direct URL redirect causing chrome-error
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Manual Test Instructions</h3>
+            <div class="warning test-result">
+<strong>To test the complete flow:</strong>
+
+1. Fill the form above and click "Test HDFC Payment"
+2. Check the console for payment creation success
+3. You should see a loading page with HDFC branding
+4. The page should auto-redirect to HDFC payment gateway
+5. NO MORE chrome-error://chromewebdata/ errors!
+
+<strong>If you see any errors:</strong>
+- Check browser console for detailed logs
+- Verify network tab for API call success
+- Ensure popup blockers are disabled
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://textilesbackend.vercel.app';
+
+        document.getElementById('hdfcTestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            data.productinfo = `Test Order - ${data.amount} INR`;
+            data.address = "123 Test Street";
+            data.city = "Mumbai";
+            data.state = "Maharashtra";
+            data.pincode = "400001";
+
+            showResult('info', '⏳ Creating HDFC payment order...');
+
+            try {
+                console.log('🔧 Sending HDFC payment request:', data);
+                
+                const response = await fetch(`${API_BASE}/api/hdfc-create-order`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('📥 HDFC API Response Status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                console.log('✅ HDFC Payment Response:', result);
+
+                if (result.success) {
+                    showResult('success', `
+✅ HDFC Payment Order Created Successfully!
+
+📋 Order ID: ${result.order_id}
+🔗 Payment URL: ${result.payment_url}
+🎯 Return URL: ${result.return_url}
+📝 Has Redirect Form: ${result.redirect_form ? 'YES ✅' : 'NO ❌'}
+
+🚀 Now testing the redirect form...
+                    `);
+
+                    // Test the redirect form
+                    if (result.redirect_form) {
+                        console.log('🎯 Testing redirect form submission...');
+                        showResult('info', '🔄 Redirecting to HDFC payment page using generated form...');
+                        
+                        // Simulate the same process as the frontend
+                        setTimeout(() => {
+                            const newWindow = window.open('', '_blank');
+                            newWindow.document.write(result.redirect_form);
+                            newWindow.document.close();
+                        }, 2000);
+                    } else {
+                        showResult('error', '❌ No redirect form provided - this would cause the chrome-error!');
+                    }
+                } else {
+                    showResult('error', `❌ HDFC Error: ${result.error || 'Unknown error'}`);
+                }
+
+            } catch (error) {
+                console.error('💥 HDFC Payment Test Error:', error);
+                showResult('error', `💥 Test Failed: ${error.message}`);
+            }
+        });
+
+        function showResult(type, message) {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            resultDiv.style.display = 'block';
+        }
+
+        // Show initial status
+        window.addEventListener('load', () => {
+            console.log('🧪 HDFC Payment Flow Test Page Loaded');
+            console.log('🔧 Backend URL:', API_BASE);
+            showResult('info', '✅ Test page loaded. Ready to test HDFC payment flow fixes.');
+        });
+    </script>
+</body>
+</html>
