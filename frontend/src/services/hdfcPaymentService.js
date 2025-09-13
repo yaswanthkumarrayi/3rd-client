@@ -107,26 +107,70 @@ class HDFCPaymentService {
     return formHTML;
   }
 
-  // Handle payment redirection (Updated for HDFC Juspay integration)
-  initiatePayment(paymentData, paymentUrl) {
-    // Validate input parameters
-    if (!paymentUrl) {
-      console.error('❌ HDFC Payment URL is missing');
-      throw new Error('Payment URL is required for HDFC payment');
-    }
+  // Handle payment redirection (Updated for HDFC form-based integration)
+  initiatePayment(paymentData, paymentUrl, redirectForm) {
+    console.log('🏦 Initiating HDFC payment...');
+    console.log('🔗 Payment URL:', paymentUrl);
+    console.log('📋 Payment data:', paymentData);
 
-    console.log('🏦 Initiating HDFC payment redirect to:', paymentUrl);
-    console.log('🔗 Payment data:', paymentData);
-
-    // For HDFC Juspay integration, we directly redirect to the payment URL
-    // No need to create forms - the URL is ready to use
     try {
-      console.log('✅ Redirecting to HDFC payment page...');
-      window.location.href = paymentUrl;
+      // If redirect_form HTML is provided, use it (recommended for HDFC)
+      if (redirectForm) {
+        console.log('✅ Using HDFC redirect form for payment');
+        
+        // Create a new window/tab with the form and auto-submit
+        const newWindow = window.open('', '_self');
+        newWindow.document.write(redirectForm);
+        newWindow.document.close();
+        
+        return;
+      }
+
+      // Fallback: Create and submit form manually
+      if (!paymentUrl || !paymentData) {
+        throw new Error('Payment URL and data are required for HDFC payment');
+      }
+
+      console.log('⚠️ Using fallback form submission method');
+      this.submitPaymentForm(paymentData, paymentUrl);
+      
     } catch (error) {
-      console.error('❌ Failed to redirect to HDFC payment page:', error);
-      throw new Error('Failed to redirect to payment page');
+      console.error('❌ Failed to initiate HDFC payment:', error);
+      throw new Error(`Failed to initiate payment: ${error.message}`);
     }
+  }
+
+  // Create and submit payment form manually
+  submitPaymentForm(paymentData, targetUrl) {
+    console.log('📝 Creating HDFC payment form...');
+    
+    // Create form element
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = targetUrl;
+    form.style.display = 'none';
+
+    // Add all payment data as hidden inputs
+    Object.keys(paymentData).forEach(key => {
+      if (paymentData[key] !== undefined && paymentData[key] !== null) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = paymentData[key];
+        form.appendChild(input);
+      }
+    });
+
+    // Add form to document and submit
+    document.body.appendChild(form);
+    
+    console.log('🚀 Submitting HDFC payment form...');
+    form.submit();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(form);
+    }, 1000);
   }
 
   // Format amount for HDFC (should be in paisa for Indian rupees)

@@ -274,12 +274,20 @@ function Payment() {
       // Redirect to HDFC payment page
       console.log('🏦 HDFC Response received:', hdfcData);
       
-      if (!hdfcData.success || !hdfcData.payment_url) {
-        throw new Error("Invalid HDFC payment response - missing payment URL");
+      if (!hdfcData.success) {
+        throw new Error(hdfcData.error || "Failed to create HDFC payment");
+      }
+
+      if (!hdfcData.payment_url && !hdfcData.redirect_form) {
+        throw new Error("Invalid HDFC payment response - missing payment URL or redirect form");
       }
       
-      console.log('🔗 Redirecting to HDFC payment URL:', hdfcData.payment_url);
-      HDFCPaymentService.initiatePayment(hdfcData.payment_data, hdfcData.payment_url);
+      console.log('🔗 Initiating HDFC payment...');
+      HDFCPaymentService.initiatePayment(
+        hdfcData.payment_data, 
+        hdfcData.payment_url, 
+        hdfcData.redirect_form
+      );
       
     } catch (error) {
       console.error("HDFC payment error:", error);
