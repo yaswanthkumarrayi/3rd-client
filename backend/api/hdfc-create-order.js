@@ -34,6 +34,8 @@ export default async function handler(req, res) {
   try {
     const { amount, productinfo, firstname, lastname, email, phone, address, city, state, pincode } = req.body;
 
+    console.log('🔧 HDFC Debug - Request received:', { amount, firstname, email, phone });
+
     // Validate required fields
     if (!amount || !firstname || !email || !phone) {
       console.log('❌ HDFC validation failed:', { amount, firstname, email, phone });
@@ -42,18 +44,31 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('✅ HDFC validation passed, processing payment...');
+    console.log('✅ HDFC validation passed, initializing PaymentHandler...');
 
-    // Initialize PaymentHandler
+    // Initialize PaymentHandler with detailed debugging
     let paymentHandler;
     try {
+      console.log('🔧 Attempting PaymentHandler.getInstance()...');
       paymentHandler = PaymentHandler.getInstance();
       console.log('✅ PaymentHandler initialized successfully');
-    } catch (error) {
-      console.error('❌ PaymentHandler initialization failed:', error.message);
+      
+      // Test PaymentHandler methods
+      const merchantId = paymentHandler.getMerchantId();
+      const baseUrl = paymentHandler.getBaseUrl();
+      const apiKey = paymentHandler.getApiKey();
+      console.log('🔧 PaymentHandler config:', { merchantId, baseUrl, hasApiKey: !!apiKey });
+      
+    } catch (initError) {
+      console.error('❌ PaymentHandler initialization failed:', {
+        message: initError.message,
+        stack: initError.stack,
+        type: initError.constructor.name
+      });
       return res.status(500).json({ 
         error: 'Payment gateway initialization failed',
-        details: error.message 
+        details: initError.message,
+        type: initError.constructor.name
       });
     }
 
