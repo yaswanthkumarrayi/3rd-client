@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award, Check } from "lucide-react";
+import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
 
 const testimonials = [
   {
@@ -97,12 +97,21 @@ const Home = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState({});
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
     
-    // Intersection Observer for scroll animations
+    // Check if device is mobile for performance optimizations
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    // Intersection Observer with mobile-optimized settings
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -114,7 +123,10 @@ const Home = () => {
           }
         });
       },
-      { threshold: 0.1, rootMargin: '50px' }
+      { 
+        threshold: isMobile ? 0.05 : 0.1, 
+        rootMargin: isMobile ? '20px' : '50px' 
+      }
     );
 
     // Observe sections
@@ -124,8 +136,11 @@ const Home = () => {
       if (element) observer.observe(element);
     });
 
-    return () => observer.disconnect();
-  }, []);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, [isMobile]);
 
   async function fetchProducts() {
     try {
@@ -152,7 +167,7 @@ const Home = () => {
   };
 
   const handleExploreCollection = () => {
-    document.getElementById('featured-collection').scrollIntoView({
+    document.getElementById('featured-collection')?.scrollIntoView({
       behavior: 'smooth'
     });
   };
@@ -164,7 +179,7 @@ const Home = () => {
       {/* Hero Section */}
       <section 
         id="hero"
-        className={`relative bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 pt-20 sm:pt-24 pb-12 sm:pb-16 transition-all duration-1000 ${
+        className={`relative bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 pt-20 sm:pt-24 pb-12 sm:pb-16 transition-all duration-${isMobile ? '300' : '1000'} ${
           isVisible.hero ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
         }`}
       >
@@ -176,20 +191,20 @@ const Home = () => {
             <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               <div className="space-y-4 sm:space-y-6">
                 <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-fuchsia-200 shadow-sm hover:shadow-md transition-all duration-300">
-                  <Sparkles className="w-4 h-4 text-fuchsia-500 animate-pulse" />
+                  <Sparkles className={`w-4 h-4 text-fuchsia-500 ${isMobile ? '' : 'animate-pulse'}`} />
                   <span className="text-fuchsia-600 font-medium text-sm">Premium Collection</span>
                 </div>
                 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
                   <span className="block animate-fade-in-up font-heading">Classic</span>
-                  <span className="block bg-gradient-to-r from-fuchsia-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-fade-in-up animation-delay-200 font-heading">
+                  <span className="block bg-gradient-to-r from-fuchsia-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-fade-in-up font-heading">
                     Meets
                   </span>
-                  <span className="block animate-fade-in-up animation-delay-400 font-heading">Elegance</span>
+                  <span className="block animate-fade-in-up font-heading">Elegance</span>
                 </h1>
               </div>
               
-              <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-fade-in-up animation-delay-600 font-inter">
+              <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-fade-in-up font-inter">
                 Indulge in the artistry of timeless weaves, crafted to celebrate your elegance and make every occasion unforgettable.
               </p>
 
@@ -198,9 +213,9 @@ const Home = () => {
                 {stats.map((stat, idx) => {
                   const IconComponent = stat.icon;
                   return (
-                    <div key={stat.label} className={`text-center animate-fade-in-up animation-delay-${800 + idx * 200}`}>
+                    <div key={stat.label} className="text-center animate-fade-in-up">
                       <div className="flex flex-col items-center space-y-2">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-fuchsia-100 to-pink-100 rounded-full flex items-center justify-center mb-2 hover:scale-110 transition-transform duration-300">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-fuchsia-100 to-pink-100 rounded-full flex items-center justify-center mb-2 ${isMobile ? '' : 'hover:scale-110'} transition-transform duration-300`}>
                           <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-fuchsia-500" />
                         </div>
                         <div className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent">
@@ -215,36 +230,28 @@ const Home = () => {
 
               <button 
                 onClick={handleExploreCollection}
-                className="w-full sm:w-auto bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg hover:from-fuchsia-700 hover:to-pink-700 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl animate-fade-in-up animation-delay-1000"
+                className={`w-full sm:w-auto bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg hover:from-fuchsia-700 hover:to-pink-700 ${isMobile ? '' : 'hover:scale-105'} transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl animate-fade-in-up`}
               >
                 Explore Collection 
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                <ArrowRight className={`w-5 h-5 ${isMobile ? '' : 'group-hover:translate-x-1'} transition-transform duration-300`} />
               </button>
             </div>
 
             {/* Hero Image */}
             {featuredProduct && (
-              <div className={`relative group cursor-pointer order-first lg:order-last animate-fade-in-up animation-delay-600`}
+              <div className="relative group cursor-pointer order-first lg:order-last animate-fade-in-up"
                    onClick={() => handleProductClick(featuredProduct.id)}>
                 <div className="relative">
                   <img
                     src={featuredProduct.hero_image_url}
                     alt={featuredProduct.title}
-                    className="w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 group-hover:shadow-2xl group-hover:scale-[1.02] transition-all duration-500"
+                    loading="eager"
+                    className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'} transition-all duration-${isMobile ? '300' : '500'}`}
                   />
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
                   
-                  {/* Hover Overlay */}
-                  <div className="absolute inset-0 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/20">
-                    <div className="bg-white/95 backdrop-blur-sm text-fuchsia-700 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg transform scale-95 group-hover:scale-100 transition-transform duration-300">
-                      <Sparkles className="w-4 sm:w-5 sm:h-5" />
-                      <span className="text-sm sm:text-base">View Details</span>
-                      <ArrowRight className="w-4 sm:w-5 sm:h-5" />
-                    </div>
-                  </div>
-
                   {/* Featured Badge */}
-                  <div className="absolute top-3 sm:top-4 left-3 sm:left-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg animate-bounce">
+                  <div className={`absolute top-3 sm:top-4 left-3 sm:left-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${isMobile ? '' : 'animate-bounce'}`}>
                     ✨ Featured
                   </div>
                   
@@ -262,7 +269,7 @@ const Home = () => {
       {/* Features Section */}
       <section 
         id="features"
-        className={`py-12 sm:py-16 bg-white transition-all duration-1000 ${
+        className={`py-12 sm:py-16 bg-white transition-all duration-${isMobile ? '300' : '1000'} ${
           isVisible.features ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
         }`}
       >
@@ -271,11 +278,11 @@ const Home = () => {
             {features.map((feature, idx) => {
               const IconComponent = feature.icon;
               return (
-                <div key={idx} className={`text-center group hover:bg-gradient-to-br hover:from-fuchsia-50 hover:to-pink-50 p-4 sm:p-6 rounded-xl transition-all duration-500 hover:shadow-lg hover:-translate-y-2 animate-fade-in-up animation-delay-${200 + idx * 100}`}>
-                  <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-fuchsia-100 to-pink-100 rounded-xl mb-3 sm:mb-4 group-hover:from-fuchsia-200 group-hover:to-pink-200 group-hover:scale-110 transition-all duration-300">
+                <div key={idx} className={`text-center group ${isMobile ? '' : 'hover:bg-gradient-to-br hover:from-fuchsia-50 hover:to-pink-50'} p-4 sm:p-6 rounded-xl transition-all duration-500 ${isMobile ? '' : 'hover:shadow-lg hover:-translate-y-2'} animate-fade-in-up`}>
+                  <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-fuchsia-100 to-pink-100 rounded-xl mb-3 sm:mb-4 ${isMobile ? '' : 'group-hover:from-fuchsia-200 group-hover:to-pink-200 group-hover:scale-110'} transition-all duration-300`}>
                     <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 text-fuchsia-600" />
                   </div>
-                  <h3 className="font-bold text-gray-900 text-sm sm:text-lg mb-1 sm:mb-2 group-hover:text-fuchsia-600 transition-colors duration-300">
+                  <h3 className={`font-bold text-gray-900 text-sm sm:text-lg mb-1 sm:mb-2 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300`}>
                     {feature.title}
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
@@ -291,7 +298,7 @@ const Home = () => {
       {/* Featured Collection */}
       <section 
         id="products"
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 transition-all duration-1000 ${
+        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 transition-all duration-${isMobile ? '300' : '1000'} ${
           isVisible.products ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
         }`}
       >
@@ -329,15 +336,16 @@ const Home = () => {
               <div 
                 key={product.id} 
                 onClick={() => handleProductClick(product.id)}
-                className={`group bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 cursor-pointer animate-fade-in-up animation-delay-${100 + idx * 50}`}
+                className={`group bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden ${isMobile ? '' : 'hover:shadow-2xl hover:-translate-y-2'} transition-all duration-500 cursor-pointer animate-fade-in-up`}
               >
                 <div className="relative overflow-hidden">
                   <img
                     src={product.hero_image_url}
                     alt={product.title}
-                    className="w-full h-82 sm:h-64 object-cover group-hover:scale-110 transition-transform duration-700"
+                    loading="lazy"
+                    className={`w-full h-82 sm:h-64 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent group-hover:from-black/40 transition-all duration-300"></div>
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`}></div>
                   
                   {/* New Tag */}
                   <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
@@ -346,14 +354,14 @@ const Home = () => {
                   
                   {/* Discount Badge */}
                   {product.original_price > product.discount_price && (
-                    <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                    <div className={`absolute top-2 sm:top-3 right-2 sm:right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg ${isMobile ? '' : 'animate-pulse'}`}>
                       {Math.round(((product.original_price - product.discount_price) / product.original_price) * 100)}% OFF
                     </div>
                   )}
 
                   {/* Quick View Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <div className="bg-white/95 backdrop-blur-sm text-fuchsia-600 px-3 sm:px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                  <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? '' : 'opacity-0 group-hover:opacity-100'} transition-all duration-300`}>
+                    <div className={`bg-white/95 backdrop-blur-sm text-fuchsia-600 px-3 sm:px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg ${isMobile ? '' : 'transform scale-90 group-hover:scale-100'} transition-transform duration-300`}>
                       <Sparkles className="w-4 h-4" />
                       <span className="text-sm">Quick View</span>
                     </div>
@@ -361,7 +369,7 @@ const Home = () => {
                 </div>
                 
                 <div className="p-4 sm:p-5 space-y-3">
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-fuchsia-600 transition-colors duration-300 line-clamp-2">
+                  <h3 className={`text-base sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 line-clamp-2`}>
                     {product.title}
                   </h3>
                   
@@ -391,7 +399,7 @@ const Home = () => {
                       )}
                     </div>
                     
-                    <div className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">
+                    <div className={`${isMobile ? '' : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1'} transition-all duration-300`}>
                       <ArrowRight className="w-5 h-5 text-fuchsia-600" />
                     </div>
                   </div>
@@ -405,7 +413,7 @@ const Home = () => {
       {/* Search by Categories Section */}
       <section 
         id="categories"
-        className={`py-12 sm:py-16 bg-gradient-to-br from-gray-50 to-fuchsia-50/30 transition-all duration-1000 ${
+        className={`py-12 sm:py-16 bg-gradient-to-br from-gray-50 to-fuchsia-50/30 transition-all duration-${isMobile ? '300' : '1000'} ${
           isVisible.categories ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
         }`}
       >
@@ -420,55 +428,57 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
-  {categories.map((category, idx) => (
-    <div
-      key={category.name}
-      onClick={() => handleCategoryClick(category.name)}
-      className={`group cursor-pointer bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 animate-fade-in-up animation-delay-${100 + idx * 100}`}
-    >
-      <div className="relative overflow-hidden">
-        <img
-          src={category.image}
-          alt={category.name}
-          className="w-full h-92 sm:h-44 object-cover group-hover:scale-110 transition-transform duration-700"
-          style={{ minHeight: 420, maxHeight: 620 }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent group-hover:from-black/70 transition-all duration-300"></div>
-        {/* Category Badge */}
-        <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-white/90 backdrop-blur-sm text-fuchsia-600 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-          New
-        </div>
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="bg-white/95 backdrop-blur-sm text-fuchsia-600 px-3 sm:px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg transform scale-90 group-hover:scale-100 transition-transform duration-300">
-            <span className="text-sm">Explore</span>
-            <ArrowRight className="w-4 h-4" />
+            {categories.map((category, idx) => (
+              <div
+                key={category.name}
+                onClick={() => handleCategoryClick(category.name)}
+                className={`group cursor-pointer bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden ${isMobile ? '' : 'hover:shadow-2xl hover:-translate-y-3'} transition-all duration-500 animate-fade-in-up`}
+              >
+                <div className="relative overflow-hidden">
+                  <img
+                    src={category.image}
+                    alt={category.name}
+                    loading="lazy"
+                    className={`w-full h-92 sm:h-44 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
+                    style={{ minHeight: 420, maxHeight: 620 }}
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent ${isMobile ? '' : 'group-hover:from-black/70'} transition-all duration-300`}></div>
+                  
+                  {/* Category Badge */}
+                  <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-white/90 backdrop-blur-sm text-fuchsia-600 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                    New
+                  </div>
+                  
+                  {/* Hover Overlay */}
+                  <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? '' : 'opacity-0 group-hover:opacity-100'} transition-all duration-300`}>
+                    <div className={`bg-white/95 backdrop-blur-sm text-fuchsia-600 px-3 sm:px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg ${isMobile ? '' : 'transform scale-90 group-hover:scale-100'} transition-transform duration-300`}>
+                      <span className="text-sm">Explore</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 sm:p-4 text-center">
+                  <h3 className={`text-base sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 mb-1 sm:mb-2`}>
+                    {category.name}
+                  </h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                    {category.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
-      <div className="p-3 sm:p-4 text-center">
-        <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-fuchsia-600 transition-colors duration-300 mb-1 sm:mb-2">
-          {category.name}
-        </h3>
-        <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
-          {category.description}
-        </p>
-      </div>
-    </div>
-  ))}
-</div>
         </div>
       </section>
 
       {/* Testimonials */}
       <section 
         id="testimonials"
-        className={`bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 py-12 sm:py-16 transition-all duration-1000 ${
+        className={`bg-gradient-to-br from-fuchsia-50 via-pink-50 to-purple-50 py-12 sm:py-16 transition-all duration-${isMobile ? '300' : '1000'} ${
           isVisible.testimonials ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
         }`}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Heading */}
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-3 sm:mb-4 font-heading">
               What Our Customers Say
@@ -478,12 +488,11 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Testimonials Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
             {testimonials.map((t, idx) => (
               <div
                 key={idx}
-                className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 hover:shadow-xl hover:bg-white/90 hover:-translate-y-2 transition-all duration-500 animate-fade-in-up animation-delay-${200 + idx * 100}`}
+                className={`bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sm:p-6 border border-white/20 ${isMobile ? '' : 'hover:shadow-xl hover:bg-white/90 hover:-translate-y-2'} transition-all duration-500 animate-fade-in-up`}
               >
                 <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
                   <div className="flex-shrink-0">
@@ -516,7 +525,6 @@ const Home = () => {
             ))}
           </div>
 
-          {/* Additional Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[
               { value: "4.7", label: "Average Rating" },
@@ -526,7 +534,7 @@ const Home = () => {
             ].map((stat, idx) => (
               <div
                 key={stat.label}
-                className={`bg-white/80 backdrop-blur-sm rounded-xl py-4 sm:py-6 px-3 sm:px-4 text-center border border-white/20 shadow-md hover:shadow-lg hover:bg-white/90 hover:-translate-y-2 transition-all duration-500 animate-fade-in-up animation-delay-${400 + idx * 100}`}
+                className={`bg-white/80 backdrop-blur-sm rounded-xl py-4 sm:py-6 px-3 sm:px-4 text-center border border-white/20 shadow-md ${isMobile ? '' : 'hover:shadow-lg hover:bg-white/90 hover:-translate-y-2'} transition-all duration-500 animate-fade-in-up`}
               >
                 <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-2">
                   {stat.value}
@@ -565,69 +573,32 @@ const Home = () => {
           animation: fade-in-up 0.8s ease-out forwards;
         }
         
-        .animation-delay-200 {
-          animation-delay: 0.2s;
-          opacity: 0;
-        }
-        
-        .animation-delay-400 {
-          animation-delay: 0.4s;
-          opacity: 0;
-        }
-        
-        .animation-delay-600 {
-          animation-delay: 0.6s;
-          opacity: 0;
-        }
-        
-        .animation-delay-800 {
-          animation-delay: 0.8s;
-          opacity: 0;
-        }
-        
-        .animation-delay-1000 {
-          animation-delay: 1s;
-          opacity: 0;
-        }
-        
-        .animation-delay-50 {
-          animation-delay: 0.05s;
-          opacity: 0;
-        }
-        
-        .animation-delay-100 {
-          animation-delay: 0.1s;
-          opacity: 0;
-        }
-        
-        .animation-delay-150 {
-          animation-delay: 0.15s;
-          opacity: 0;
-        }
-        
-        .animation-delay-200 {
-          animation-delay: 0.2s;
-          opacity: 0;
-        }
-        
-        .animation-delay-300 {
-          animation-delay: 0.3s;
-          opacity: 0;
-        }
-        
-        .animation-delay-400 {
-          animation-delay: 0.4s;
-          opacity: 0;
-        }
-        
-        .animation-delay-500 {
-          animation-delay: 0.5s;
-          opacity: 0;
-        }
-        
-        @media (max-width: 640px) {
+        /* Mobile performance optimizations */
+        @media (max-width: 768px) {
           .animate-fade-in-up {
-            animation-duration: 0.6s;
+            animation-duration: 0.4s;
+          }
+          
+          /* Disable complex animations on mobile for performance */
+          .animate-pulse {
+            animation: none;
+          }
+          
+          .animate-bounce {
+            animation: none;
+          }
+          
+          /* Optimize transitions for mobile */
+          * {
+            transition-duration: 0.2s !important;
+          }
+          
+          /* Image optimization for mobile */
+          img {
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: optimize-contrast;
           }
         }
         
@@ -636,34 +607,10 @@ const Home = () => {
           scroll-behavior: smooth;
         }
         
-        /* Custom gradient backgrounds */
-        .gradient-bg-1 {
-          background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #f3e8ff 100%);
-        }
-        
-        .gradient-bg-2 {
-          background: linear-gradient(135deg, #fafafa 0%, #fdf2f8 50%, #fce7f3 100%);
-        }
-        
-        /* Enhanced hover effects */
-        .hover-lift {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .hover-lift:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
         /* Backdrop blur support */
         .backdrop-blur-sm {
           backdrop-filter: blur(4px);
           -webkit-backdrop-filter: blur(4px);
-        }
-        
-        /* Custom pulse animation for badges */
-        .animate-pulse-slow {
-          animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>
