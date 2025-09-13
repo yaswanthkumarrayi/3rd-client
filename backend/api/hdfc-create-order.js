@@ -46,8 +46,11 @@ export default async function handler(req, res) {
 
     console.log('✅ HDFC validation passed, creating simple payment order...');
 
-    // Generate unique order ID (HDFC style)
-    const orderId = `order_${Date.now()}`;
+    // Generate unique order ID (HDFC compliant format)
+    // Requirements: <21 chars, alphanumeric, non-sequential, no special chars
+    const timestamp = Date.now().toString().slice(-8); // Last 8 digits
+    const randomStr = Math.random().toString(36).substring(2, 8).toUpperCase(); // 6 random chars
+    const orderId = `AKT${timestamp}${randomStr}`; // AKT + timestamp + random = ~17 chars
     const formattedAmount = parseFloat(amount).toFixed(2);
     
     // Create return URL for HDFC callback (backend URL)
