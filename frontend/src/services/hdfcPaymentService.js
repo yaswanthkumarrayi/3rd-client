@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 class HDFCPaymentService {
   constructor() {
-    this.baseURL = import.meta.env.VITE_HDFC_BASE_URL || 'https://smartgatewayuat.hdfcbank.com';
+    this.baseURL = import.meta.env.VITE_HDFC_BASE_URL || 'https://smartgateway.hdfcbank.com';
     this.apiKey = import.meta.env.VITE_HDFC_API_KEY;
     this.merchantId = import.meta.env.VITE_HDFC_MERCHANT_ID;
     this.clientId = import.meta.env.VITE_HDFC_CLIENT_ID;
