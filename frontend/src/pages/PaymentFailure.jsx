@@ -6,15 +6,16 @@ const PaymentFailure = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const txnid = searchParams.get('txnid');
+  const txnid = searchParams.get('txnid') || searchParams.get('order_id');
   const status = searchParams.get('status');
   const error = searchParams.get('error');
   const gateway = searchParams.get('gateway') || 'HDFC';
+  const message = searchParams.get('message');
 
   useEffect(() => {
     // You can add analytics tracking here
-    console.log('Payment Failed:', { txnid, status, error, gateway });
-  }, [txnid, status, error, gateway]);
+    console.log('Payment Failed:', { txnid, status, error, gateway, message });
+  }, [txnid, status, error, gateway, message]);
 
   const commonFailureReasons = [
     'Insufficient funds in your account',

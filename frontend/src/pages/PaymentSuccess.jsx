@@ -7,15 +7,16 @@ const PaymentSuccess = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
-  const txnid = searchParams.get('txnid');
+  const txnid = searchParams.get('txnid') || searchParams.get('order_id');
   const status = searchParams.get('status');
   const amount = searchParams.get('amount');
   const gateway = searchParams.get('gateway') || 'HDFC';
+  const message = searchParams.get('message');
 
   useEffect(() => {
     // You can add analytics tracking here
-    console.log('Payment Success:', { txnid, status, amount, gateway });
-  }, [txnid, status, amount, gateway]);
+    console.log('Payment Success:', { txnid, status, amount, gateway, message });
+  }, [txnid, status, amount, gateway, message]);
 
   const copyTransactionId = () => {
     if (txnid) {

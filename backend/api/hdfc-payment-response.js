@@ -23,7 +23,8 @@ export default async function handler(req, res) {
 
     if (!orderId) {
       console.error('❌ Missing order_id in HDFC response');
-      return res.redirect(`${process.env.VITE_API_BASE_URL || 'http://localhost:5173'}/payment/failure?error=missing_order_id`);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+      return res.redirect(`${frontendUrl}/payment/failure?error=missing_order_id`);
     }
 
     // Validate HMAC if present (simplified validation)
@@ -35,25 +36,26 @@ export default async function handler(req, res) {
 
     if (!validSignature) {
       console.error('❌ HDFC signature validation failed');
-      return res.redirect(`${process.env.VITE_API_BASE_URL || 'http://localhost:5173'}/payment/failure?error=signature_validation_failed&order_id=${orderId}`);
+      const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+      return res.redirect(`${frontendUrl}/payment/failure?error=signature_validation_failed&order_id=${orderId}`);
     }
 
     // Determine payment status and redirect accordingly
     let redirectUrl;
-    const baseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
 
     switch (status) {
       case 'CHARGED':
       case 'SUCCESS':
       case 'COMPLETED':
         console.log('✅ HDFC payment successful for order:', orderId);
-        redirectUrl = `${baseUrl}/payment/success?status=success&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}`;
+        redirectUrl = `${frontendUrl}/payment/success?status=success&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}`;
         break;
         
       case 'PENDING':
       case 'PENDING_VBV':
         console.log('⏳ HDFC payment pending for order:', orderId);
-        redirectUrl = `${baseUrl}/payment/success?status=pending&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}&message=Payment is being processed`;
+        redirectUrl = `${frontendUrl}/payment/success?status=pending&order_id=${orderId}&gateway=HDFC&amount=${amount || ''}&message=Payment is being processed`;
         break;
         
       case 'AUTHORIZATION_FAILED':
@@ -62,7 +64,7 @@ export default async function handler(req, res) {
       case 'CANCELLED':
       default:
         console.log('❌ HDFC payment failed for order:', orderId, 'Status:', status);
-        redirectUrl = `${baseUrl}/payment/failure?status=failed&order_id=${orderId}&gateway=HDFC&error=${status || 'payment_failed'}`;
+        redirectUrl = `${frontendUrl}/payment/failure?status=failed&order_id=${orderId}&gateway=HDFC&error=${status || 'payment_failed'}`;
         break;
     }
 
@@ -80,7 +82,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('💥 HDFC Payment Response Error:', error);
-    const baseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:5173';
-    return res.redirect(`${baseUrl}/payment/failure?error=server_error&message=${encodeURIComponent(error.message)}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+    return res.redirect(`${frontendUrl}/payment/failure?error=server_error&message=${encodeURIComponent(error.message)}`);
   }
 }
