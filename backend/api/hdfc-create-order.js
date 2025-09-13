@@ -5,7 +5,7 @@ const HDFC_CONFIG = {
   API_KEY: process.env.HDFC_API_KEY || "D5B755878234D26AC0C865AA253012",
   MERCHANT_ID: process.env.HDFC_MERCHANT_ID || "SG3514",
   CLIENT_ID: process.env.HDFC_CLIENT_ID || "hdfcmaster",
-  BASE_URL: process.env.HDFC_BASE_URL || "https://smartgatewayuat.hdfcbank.com", // Back to UAT for testing
+  BASE_URL: process.env.HDFC_BASE_URL || "https://smartgatewayuat.hdfcbank.com", // UAT environment
   PAYMENT_ENDPOINT: process.env.HDFC_PAYMENT_ENDPOINT || "/merchant/ipay",
   RESPONSE_KEY: process.env.HDFC_RESPONSE_KEY || "9EFC035E8F043AFB88F37DEF30C16D",
   ENVIRONMENT: "uat" // UAT environment for testing with current credentials
@@ -56,6 +56,9 @@ export default async function handler(req, res) {
     // Create return URL for HDFC callback (backend URL)
     const backendUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://textilesbackend.vercel.app';
     const returnUrl = `${backendUrl}/api/hdfc-payment-response`;
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
+    const successUrl = `${frontendUrl}/payment/success`;
+    const failureUrl = `${frontendUrl}/payment/failure`;
 
     // HDFC Order Session Data (simplified without PaymentHandler)
     const orderSessionData = {
@@ -63,6 +66,8 @@ export default async function handler(req, res) {
       amount: formattedAmount,
       currency: "INR",
       return_url: returnUrl,
+      surl: successUrl, // Success URL
+      furl: failureUrl, // Failure URL 
       customer_id: email,
       customer_email: email,
       customer_phone: phone,
@@ -74,7 +79,9 @@ export default async function handler(req, res) {
       billing_country: 'India',
       product_info: productinfo || "Online Purchase",
       payment_page_client_id: HDFC_CONFIG.CLIENT_ID,
-      merchant_id: HDFC_CONFIG.MERCHANT_ID
+      merchant_id: HDFC_CONFIG.MERCHANT_ID,
+      apikey: HDFC_CONFIG.API_KEY,
+      response_key: HDFC_CONFIG.RESPONSE_KEY
     };
 
     console.log('📦 Creating HDFC order session (simple mode):', orderId);

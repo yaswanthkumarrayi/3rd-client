@@ -241,7 +241,7 @@ function Payment() {
       };
 
       // Create HDFC payment order
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://textilesbackend.vercel.app';
       const hdfcRes = await fetch(`${apiBaseUrl}/api/hdfc-create-order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -296,7 +296,7 @@ function Payment() {
       
       // Create Razorpay order via backend
       const amountPaise = getTotal() * 100;
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://textilesbackend.vercel.app';
       
       const orderRes = await fetch(`${apiBaseUrl}/api/create-order`, {
         method: "POST",
@@ -347,7 +347,7 @@ function Payment() {
           try {
             // Verify payment signature
             // Verify payment on backend
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://textilesbackend.vercel.app';
             const verifyRes = await fetch(`${apiBaseUrl}/api/verify-payment`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },

@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     if (!orderId) {
       console.error('❌ Missing order_id in HDFC response');
-      const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
       return res.redirect(`${frontendUrl}/payment/failure?error=missing_order_id`);
     }
 
@@ -36,13 +36,13 @@ export default async function handler(req, res) {
 
     if (!validSignature) {
       console.error('❌ HDFC signature validation failed');
-      const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
       return res.redirect(`${frontendUrl}/payment/failure?error=signature_validation_failed&order_id=${orderId}`);
     }
 
     // Determine payment status and redirect accordingly
     let redirectUrl;
-    const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
 
     switch (status) {
       case 'CHARGED':
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('💥 HDFC Payment Response Error:', error);
-    const frontendUrl = process.env.FRONTEND_URL || 'https://ashok-textiles.vercel.app';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.ashokkumartextiles.com';
     return res.redirect(`${frontendUrl}/payment/failure?error=server_error&message=${encodeURIComponent(error.message)}`);
   }
 }
