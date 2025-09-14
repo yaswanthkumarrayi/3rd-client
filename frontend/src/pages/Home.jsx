@@ -95,12 +95,16 @@ const categories = [
 
 const Home = () => {
   const [products, setProducts] = useState([]);
+  const [heroProduct, setHeroProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState({});
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Load hero product first for fast display
+    fetchHeroProduct();
+    // Then load grid products
     fetchProducts();
     
     // Check if device is mobile for performance optimizations
@@ -142,24 +146,65 @@ const Home = () => {
     };
   }, [isMobile]);
 
+  // Fetch latest product for hero image only
+  async function fetchHeroProduct() {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, title, hero_image_url, discount_price")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (!error && data) {
+        setHeroProduct(data);
+      } else {
+        // Fallback to static data if database fails
+        setHeroProduct({
+          id: "hero-fallback",
+          title: "Premium Banarasi Silk Saree",
+          hero_image_url: "banarasi.jpg",
+          discount_price: "2999"
+        });
+      }
+    } catch (error) {
+      console.log("Using fallback hero image:", error);
+      // Fallback to static data
+      setHeroProduct({
+        id: "hero-fallback",
+        title: "Premium Banarasi Silk Saree",
+        hero_image_url: "banarasi.jpg",
+        discount_price: "2999"
+      });
+    }
+  }
+
+  // Fetch products for the grid - excluding the hero product
   async function fetchProducts() {
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (!error) setProducts(data || []);
+        .select("id, title, hero_image_url, discount_price, original_price, fabric, category")
+        .order("created_at", { ascending: false })
+        .range(1, 12); // Skip first product (used for hero), get next 12
+      
+      if (!error) {
+        setProducts(data || []);
+      }
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   }
 
-  const featuredProduct = products[0];
-
   const handleProductClick = (productId) => {
-    navigate(`/product/${productId}`);
+    if (productId === "hero-fallback") {
+      navigate('/category/Banarasi');
+    } else {
+      navigate(`/product/${productId}`);
+    }
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -237,29 +282,40 @@ const Home = () => {
               </button>
             </div>
 
-            {/* Hero Image */}
-            {featuredProduct && (
+            {/* Hero Image - Using latest product from database */}
+            {heroProduct ? (
               <div className="relative group cursor-pointer order-first lg:order-last animate-fade-in-up"
-                   onClick={() => handleProductClick(featuredProduct.id)}>
+                   onClick={() => handleProductClick(heroProduct.id)}>
                 <div className="relative">
                   <img
-                    src={featuredProduct.hero_image_url}
-                    alt={featuredProduct.title}
+                    src={heroProduct.hero_image_url}
+                    alt={heroProduct.title}
                     loading="eager"
+                    width="500"
+                    height="500"
                     className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'} transition-all duration-${isMobile ? '300' : '500'}`}
+                    onError={(e) => {
+                      // Fallback to local image if hero image fails to load
+                      e.target.src = "banarasi.jpg";
+                    }}
                   />
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
                   
                   {/* Featured Badge */}
                   <div className={`absolute top-3 sm:top-4 left-3 sm:left-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${isMobile ? '' : 'animate-bounce'}`}>
-                    ✨ Featured
+                    ✨ Latest
                   </div>
                   
                   {/* Price Badge */}
                   <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/95 backdrop-blur-sm text-gray-900 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-bold shadow-lg text-sm sm:text-base">
-                    ₹{featuredProduct.discount_price}
+                    ₹{heroProduct.discount_price}
                   </div>
                 </div>
+              </div>
+            ) : (
+              // Loading skeleton for hero image
+              <div className="relative order-first lg:order-last animate-pulse">
+                <div className="w-full h-64 sm:h-80 lg:h-[500px] bg-gray-200 rounded-2xl"></div>
               </div>
             )}
           </div>
@@ -313,7 +369,7 @@ const Home = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {[...Array(8)].map((_, idx) => (
+            {[...Array(6)].map((_, idx) => (
               <div key={idx} className="animate-pulse">
                 <div className="bg-gray-200 h-48 sm:h-64 rounded-xl mb-4"></div>
                 <div className="space-y-3">
@@ -332,7 +388,7 @@ const Home = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" id="featured-collection">
-            {products.slice(1).map((product, idx) => (
+            {products.map((product, idx) => (
               <div 
                 key={product.id} 
                 onClick={() => handleProductClick(product.id)}
@@ -343,7 +399,13 @@ const Home = () => {
                     src={product.hero_image_url}
                     alt={product.title}
                     loading="lazy"
+                    width="300"
+                    height="400"
                     className={`w-full h-82 sm:h-64 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
+                    onError={(e) => {
+                      // Fallback to default image if product image fails
+                      e.target.src = "Designer.jpg";
+                    }}
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`}></div>
                   
@@ -439,6 +501,8 @@ const Home = () => {
                     src={category.image}
                     alt={category.name}
                     loading="lazy"
+                    width="300"
+                    height="420"
                     className={`w-full h-92 sm:h-44 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
                     style={{ minHeight: 420, maxHeight: 620 }}
                   />
@@ -599,7 +663,24 @@ const Home = () => {
             image-rendering: -moz-crisp-edges;
             image-rendering: -webkit-optimize-contrast;
             image-rendering: optimize-contrast;
+            /* Force browser to use faster rendering */
+            transform: translateZ(0);
+            backface-visibility: hidden;
           }
+        }
+        
+        /* Optimize all images for faster loading */
+        img {
+          /* Enable hardware acceleration */
+          transform: translateZ(0);
+          /* Optimize for speed over quality on mobile */
+          image-rendering: optimizeSpeed;
+        }
+        
+        /* Preload hero image optimization */
+        .hero-image {
+          content-visibility: auto;
+          contain-intrinsic-size: 500px;
         }
         
         /* Smooth scrolling */
