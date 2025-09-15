@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import { ArrowLeft, Star, Heart, Share2, DollarSign, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { optimizeImage, createBlurPlaceholder, preloadImages } from "../utils/imageOptimizer";
 
 const Product = () => {
   const { id } = useParams();
@@ -65,8 +66,19 @@ const Product = () => {
 }, [product]);
 
   const images = product
-    ? [product.hero_image_url, ...(product.featured_images || [])]
+    ? [product.hero_image_url, ...(product.featured_images || [])].map(img => ({
+        original: img,
+        optimized: optimizeImage(img, 'product'),
+        thumbnail: optimizeImage(img, 'thumbnail')
+      }))
     : [];
+
+  // ✅ Preload first image when product loads
+  useEffect(() => {
+    if (product && images.length > 0) {
+      preloadImages([images[0].optimized]);
+    }
+  }, [product]);
 
   function addToCart() {
     if (!product) return;
@@ -97,7 +109,7 @@ const Product = () => {
       cart.push({
         id: product.id,
         title: product.title,
-        hero_image_url: product.hero_image_url,
+        hero_image_url: images[0]?.optimized || product.hero_image_url,
         original_price: product.original_price,
         discount_price: product.discount_price,
         quantity: quantity,
@@ -241,14 +253,22 @@ const Product = () => {
               <div className="relative group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-200">
                 <div className="aspect-square w-full relative">
                   {imageLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                    <div 
+                      className="absolute inset-0 flex items-center justify-center rounded-2xl"
+                      style={{
+                        backgroundImage: `url(${createBlurPlaceholder(600, 600)})`,
+                        backgroundSize: 'cover'
+                      }}
+                    >
                       <div className="w-8 h-8 border-2 border-gray-300 border-t-fuchsia-600 rounded-full animate-spin"></div>
                     </div>
                   )}
                   <img
-                    src={images[activeImg]}
+                    src={images[activeImg]?.optimized || images[activeImg]}
                     alt={product.title}
-                    className="w-full h-full object-contain p-4"
+                    loading="eager"
+                    className="w-full h-full object-contain p-4 transition-opacity duration-300"
+                    style={{ opacity: imageLoading ? 0 : 1 }}
                     onLoad={() => setImageLoading(false)}
                     onLoadStart={() => setImageLoading(true)}
                   />
@@ -306,9 +326,10 @@ const Product = () => {
                       }`}
                     >
                       <img
-                        src={img}
+                        src={img.thumbnail || img.optimized || img}
                         alt={`View ${idx + 1}`}
-                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-opacity duration-200"
                       />
                     </button>
                   ))}
@@ -374,6 +395,14 @@ const Product = () => {
                 </div>
               </div>
 
+              {/* Product Description Section */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                <h3 className="font-semibold text-gray-900 mb-4">Product Description</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {product.description}
+                </p>
+              </div>
+
               {/* ✅ Updated Quantity Selector */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                 <h3 className="font-semibold text-gray-900 mb-4">Quantity</h3>
@@ -427,7 +456,7 @@ const Product = () => {
       const buyNowItem = {
         id: product.id,
         title: product.title,
-        hero_image_url: product.hero_image_url,
+        hero_image_url: images[0]?.optimized || product.hero_image_url,
         original_price: product.original_price,
         discount_price: product.discount_price,
         quantity: quantity,

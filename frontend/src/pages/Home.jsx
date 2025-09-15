@@ -4,6 +4,8 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
+import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE } from "../utils/imageOptimizer";
+import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const testimonials = [
   {
@@ -99,13 +101,18 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState({});
   const [isMobile, setIsMobile] = useState(false);
+  const [imageLoadingStates, setImageLoadingStates] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const PRODUCTS_PER_PAGE = 8; // Reduced from showing all products
   const navigate = useNavigate();
+  
+  // ✅ Simple performance monitoring
+  const { trackImageLoad, trackApiCall, trackImageError } = simplePerformanceTracker;
 
   useEffect(() => {
-    // Load hero product first for fast display
-    fetchHeroProduct();
-    // Then load grid products
-    fetchProducts();
+    // ✅ Combined fetch for better performance
+    fetchAllProducts();
     
     // Check if device is mobile for performance optimizations
     const checkMobile = () => {
@@ -146,18 +153,33 @@ const Home = () => {
     };
   }, [isMobile]);
 
-  // Fetch latest product for hero image only
-  async function fetchHeroProduct() {
+  // ✅ OPTIMIZED: Combined query instead of two separate queries
+  async function fetchAllProducts() {
     try {
+      const startTime = Date.now();
+      
+      // Get 13 products in one query (1 for hero + 12 for grid)
       const { data, error } = await supabase
         .from("products")
-        .select("id, title, hero_image_url, discount_price")
+        .select("id, title, hero_image_url, discount_price, original_price, fabric, category")
         .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+        .range(0, 12); // Get 13 products total
       
-      if (!error && data) {
-        setHeroProduct(data);
+      const responseTime = Date.now() - startTime;
+      trackApiCall('products-combined', responseTime);
+      
+      if (!error && data && data.length > 0) {
+        // First product for hero
+        setHeroProduct(data[0]);
+        
+        // Rest for grid
+        setProducts(data.slice(1));
+        
+        // Preload critical images
+        const criticalImages = data.slice(0, 4).map(p => p.hero_image_url);
+        preloadImages(criticalImages);
+        
+        console.log(`✅ Products loaded in ${responseTime}ms`);
       } else {
         // Fallback to static data if database fails
         setHeroProduct({
@@ -166,9 +188,11 @@ const Home = () => {
           hero_image_url: "banarasi.jpg",
           discount_price: "2999"
         });
+        setProducts([]);
       }
     } catch (error) {
-      console.log("Using fallback hero image:", error);
+      console.error("Error fetching products:", error);
+      trackApiCall('products-combined-error', Date.now() - startTime);
       // Fallback to static data
       setHeroProduct({
         id: "hero-fallback",
@@ -176,23 +200,6 @@ const Home = () => {
         hero_image_url: "banarasi.jpg",
         discount_price: "2999"
       });
-    }
-  }
-
-  // Fetch products for the grid - excluding the hero product
-  async function fetchProducts() {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, title, hero_image_url, discount_price, original_price, fabric, category")
-        .order("created_at", { ascending: false })
-        .range(1, 12); // Skip first product (used for hero), get next 12
-      
-      if (!error) {
-        setProducts(data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -241,11 +248,11 @@ const Home = () => {
                 </div>
                 
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  <span className="block animate-fade-in-up font-heading">Classic</span>
+                  <span className="block animate-fade-in-up font-heading">CLASSIC</span>
                   <span className="block bg-gradient-to-r from-fuchsia-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-fade-in-up font-heading">
-                    Meets
+                    MEETS
                   </span>
-                  <span className="block animate-fade-in-up font-heading">Elegance</span>
+                  <span className="block animate-fade-in-up font-heading">ELEGANCE</span>
                 </h1>
               </div>
               
@@ -282,32 +289,68 @@ const Home = () => {
               </button>
             </div>
 
-            {/* Hero Image - Using latest product from database */}
+            {/* Hero Image - Using latest product from database with optimization */}
             {heroProduct ? (
               <div className="relative group cursor-pointer order-first lg:order-last animate-fade-in-up"
                    onClick={() => handleProductClick(heroProduct.id)}>
                 <div className="relative">
+                  {/* Blur placeholder while image loads */}
+                  {imageLoadingStates[`hero-${heroProduct.id}`] !== false && (
+                    <div 
+                      className="absolute inset-0 rounded-2xl"
+                      style={{
+                        backgroundImage: `url(${createBlurPlaceholder(800, 500)})`,
+                        backgroundSize: 'cover',
+                        filter: 'blur(10px)',
+                        zIndex: 1
+                      }}
+                    />
+                  )}
                   <img
-                    src={heroProduct.hero_image_url}
+                    src={optimizeImage(heroProduct.hero_image_url, 'hero')}
                     alt={heroProduct.title}
                     loading="eager"
-                    width="500"
+                    width="800"
                     height="500"
-                    className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'} transition-all duration-${isMobile ? '300' : '500'}`}
+                    className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 transition-all duration-${isMobile ? '300' : '500'} ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'} ${imageLoadingStates[`hero-${heroProduct.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
+                    style={{
+                      zIndex: 2,
+                      position: 'relative'
+                    }}
+                    onLoad={(e) => {
+                      const loadTime = Date.now() - (e.target.dataset.startTime || Date.now());
+                      trackImageLoad(e.target.src, loadTime);
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`hero-${heroProduct.id}`]: false
+                      }));
+                    }}
+                    onLoadStart={(e) => {
+                      e.target.dataset.startTime = Date.now();
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`hero-${heroProduct.id}`]: true
+                      }));
+                    }}
                     onError={(e) => {
+                      trackImageError(e.target.src);
                       // Fallback to local image if hero image fails to load
                       e.target.src = "banarasi.jpg";
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`hero-${heroProduct.id}`]: false
+                      }));
                     }}
                   />
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-transparent" style={{zIndex: 3}}></div>
                   
                   {/* Featured Badge */}
-                  <div className={`absolute top-3 sm:top-4 left-3 sm:left-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${isMobile ? '' : 'animate-bounce'}`}>
+                  <div className={`absolute top-3 sm:top-4 left-3 sm:left-4 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white px-3 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold shadow-lg ${isMobile ? '' : 'animate-bounce'}`} style={{zIndex: 4}}>
                     ✨ Latest
                   </div>
                   
                   {/* Price Badge */}
-                  <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/95 backdrop-blur-sm text-gray-900 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-bold shadow-lg text-sm sm:text-base">
+                  <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 bg-white/95 backdrop-blur-sm text-gray-900 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-bold shadow-lg text-sm sm:text-base" style={{zIndex: 4}}>
                     ₹{heroProduct.discount_price}
                   </div>
                 </div>
@@ -360,7 +403,7 @@ const Home = () => {
       >
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-3 sm:mb-4 font-heading">
-            Featured Collection
+            FEATURED COLLECTION
           </h2>
           <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto font-inter">
             Handpicked sarees that embody the perfect blend of traditional craftsmanship and contemporary elegance
@@ -395,34 +438,66 @@ const Home = () => {
                 className={`group bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden ${isMobile ? '' : 'hover:shadow-2xl hover:-translate-y-2'} transition-all duration-500 cursor-pointer animate-fade-in-up`}
               >
                 <div className="relative overflow-hidden">
+                  {/* Blur placeholder while image loads */}
+                  {imageLoadingStates[`product-${product.id}`] !== false && (
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `url(${createBlurPlaceholder(400, 320)})`,
+                        backgroundSize: 'cover',
+                        filter: 'blur(8px)',
+                        zIndex: 1
+                      }}
+                    />
+                  )}
                   <img
-                    src={product.hero_image_url}
+                    src={optimizeImage(product.hero_image_url, 'card')}
                     alt={product.title}
                     loading="lazy"
-                    width="300"
-                    height="400"
-                    className={`w-full h-82 sm:h-64 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
+                    width="400"
+                    height="320"
+                    className={`w-full h-82 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
+                    style={{
+                      zIndex: 2,
+                      position: 'relative'
+                    }}
+                    onLoad={() => {
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`product-${product.id}`]: false
+                      }));
+                    }}
+                    onLoadStart={() => {
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`product-${product.id}`]: true
+                      }));
+                    }}
                     onError={(e) => {
                       // Fallback to default image if product image fails
                       e.target.src = "Designer.jpg";
+                      setImageLoadingStates(prev => ({
+                        ...prev,
+                        [`product-${product.id}`]: false
+                      }));
                     }}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`}></div>
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`} style={{zIndex: 3}}></div>
                   
                   {/* New Tag */}
-                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold shadow-lg" style={{zIndex: 4}}>
                     New
                   </div>
                   
                   {/* Discount Badge */}
                   {product.original_price > product.discount_price && (
-                    <div className={`absolute top-2 sm:top-3 right-2 sm:right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg ${isMobile ? '' : 'animate-pulse'}`}>
+                    <div className={`absolute top-2 sm:top-3 right-2 sm:right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg ${isMobile ? '' : 'animate-pulse'}`} style={{zIndex: 4}}>
                       {Math.round(((product.original_price - product.discount_price) / product.original_price) * 100)}% OFF
                     </div>
                   )}
 
                   {/* Quick View Overlay */}
-                  <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? '' : 'opacity-0 group-hover:opacity-100'} transition-all duration-300`}>
+                  <div className={`absolute inset-0 flex items-center justify-center ${isMobile ? '' : 'opacity-0 group-hover:opacity-100'} transition-all duration-300`} style={{zIndex: 5}}>
                     <div className={`bg-white/95 backdrop-blur-sm text-fuchsia-600 px-3 sm:px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg ${isMobile ? '' : 'transform scale-90 group-hover:scale-100'} transition-transform duration-300`}>
                       <Sparkles className="w-4 h-4" />
                       <span className="text-sm">Quick View</span>
@@ -482,7 +557,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-3 sm:mb-4 font-heading">
-              Search by Categories
+              SEARCH BY CATEGORIES
             </h2>
             <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-inter">
               Explore our diverse collection of traditional and contemporary sarees
@@ -545,7 +620,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-3 sm:mb-4 font-heading">
-              What Our Customers Say
+              WHAT OUR CUSTOMERS SAY
             </h2>
             <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-inter">
               Real stories from real customers who love Ashok Kumar Textiles
