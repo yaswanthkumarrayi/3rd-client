@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
-import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE } from "../utils/imageOptimizer";
+import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE, getThumbnail } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const testimonials = [
@@ -104,7 +104,7 @@ const Home = () => {
   const [imageLoadingStates, setImageLoadingStates] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const PRODUCTS_PER_PAGE = 8; // Reduced from showing all products
+  const PRODUCTS_PER_PAGE = 8; // Show only 8 products on home page
   const navigate = useNavigate();
   
   // ✅ Simple performance monitoring
@@ -153,17 +153,17 @@ const Home = () => {
     };
   }, [isMobile]);
 
-  // ✅ OPTIMIZED: Combined query instead of two separate queries
+  // ✅ OPTIMIZED: Fetch only 8 products for home page with thumbnails
   async function fetchAllProducts() {
     try {
       const startTime = Date.now();
       
-      // Get 13 products in one query (1 for hero + 12 for grid)
+      // Get 9 products in one query (1 for hero + 8 for grid)
       const { data, error } = await supabase
         .from("products")
         .select("id, title, hero_image_url, discount_price, original_price, fabric, category")
         .order("created_at", { ascending: false })
-        .range(0, 12); // Get 13 products total
+        .range(0, 8); // Get 9 products total (1 hero + 8 for grid)
       
       const responseTime = Date.now() - startTime;
       trackApiCall('products-combined', responseTime);
@@ -172,12 +172,12 @@ const Home = () => {
         // First product for hero
         setHeroProduct(data[0]);
         
-        // Rest for grid
+        // Rest for grid (max 8 products)
         setProducts(data.slice(1));
         
-        // Preload critical images
+        // Preload critical thumbnail images
         const criticalImages = data.slice(0, 4).map(p => p.hero_image_url);
-        preloadImages(criticalImages);
+        preloadImages(criticalImages, 'thumbnail');
         
         console.log(`✅ Products loaded in ${responseTime}ms`);
       } else {
@@ -222,6 +222,10 @@ const Home = () => {
     document.getElementById('featured-collection')?.scrollIntoView({
       behavior: 'smooth'
     });
+  };
+
+  const handleViewAllProducts = () => {
+    navigate('/products');
   };
 
   return (
@@ -451,11 +455,11 @@ const Home = () => {
                     />
                   )}
                   <img
-                    src={optimizeImage(product.hero_image_url, 'card')}
+                    src={getThumbnail(product.hero_image_url)}
                     alt={product.title}
                     loading="lazy"
-                    width="400"
-                    height="320"
+                    width="200"
+                    height="200"
                     className={`w-full h-82 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
                     style={{
                       zIndex: 2,
@@ -543,6 +547,19 @@ const Home = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* View All Products Button */}
+        {!loading && products.length > 0 && (
+          <div className="text-center mt-8 sm:mt-12">
+            <button
+              onClick={handleViewAllProducts}
+              className={`bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-fuchsia-700 hover:to-pink-700 ${isMobile ? '' : 'hover:scale-105'} transition-all duration-300 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl mx-auto`}
+            >
+              View All Products
+              <ArrowRight className={`w-5 h-5 ${isMobile ? '' : 'group-hover:translate-x-1'} transition-transform duration-300`} />
+            </button>
           </div>
         )}
       </section>

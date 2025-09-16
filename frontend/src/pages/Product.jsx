@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import { ArrowLeft, Star, Heart, Share2, DollarSign, Shield, RotateCcw, ChevronLeft, ChevronRight, Minus, Plus, CreditCard, Check } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { optimizeImage, createBlurPlaceholder, preloadImages } from "../utils/imageOptimizer";
+import { optimizeImage, createBlurPlaceholder, preloadImages, getThumbnail, getFullQualityImage } from "../utils/imageOptimizer";
 
 const Product = () => {
   const { id } = useParams();
@@ -68,15 +68,17 @@ const Product = () => {
   const images = product
     ? [product.hero_image_url, ...(product.featured_images || [])].map(img => ({
         original: img,
-        optimized: optimizeImage(img, 'product'),
-        thumbnail: optimizeImage(img, 'thumbnail')
+        optimized: optimizeImage(img, 'product'), // Medium quality for fast loading
+        thumbnail: getThumbnail(img) // Fast loading thumbnail for small previews
       }))
     : [];
 
-  // ✅ Preload first image when product loads
+  // ✅ Preload images when product loads for fast display
   useEffect(() => {
     if (product && images.length > 0) {
-      preloadImages([images[0].optimized]);
+      // Preload the first 3 images for fast switching
+      const imagesToPreload = images.slice(0, 3).map(img => img.optimized || img.original);
+      preloadImages(imagesToPreload, 'product');
     }
   }, [product]);
 
@@ -267,7 +269,7 @@ const Product = () => {
                     src={images[activeImg]?.optimized || images[activeImg]}
                     alt={product.title}
                     loading="eager"
-                    className="w-full h-full object-contain p-4 transition-opacity duration-300"
+                    className="w-full h-full object-contain p-4 transition-opacity duration-200"
                     style={{ opacity: imageLoading ? 0 : 1 }}
                     onLoad={() => setImageLoading(false)}
                     onLoadStart={() => setImageLoading(true)}

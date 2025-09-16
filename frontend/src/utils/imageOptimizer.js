@@ -11,18 +11,25 @@ const DEFAULT_TRANSFORMATIONS = {
 };
 
 // Different sizes for different use cases
+// Thumbnail: 200px, 55% quality, WebP - optimized for MAX 200KB for ultra-fast loading on home/list pages
+// Card: 250px, 60% quality, WebP - for home page cards if needed
+// Hero: 800px, 80% quality, WebP - for hero sections
+// Product: 600px, 75% quality, WebP - optimized for fast product page loading (good balance)
+// ProductHigh: 1200px, 90% quality, WebP - highest quality for product details (only when needed)
+// Category: 300px, 70% quality, WebP - for category images
 const IMAGE_SIZES = {
-  thumbnail: { width: 150, quality: 70, format: 'webp' },
-  card: { width: 400, quality: 70, format: 'webp' },
+  thumbnail: { width: 200, quality: 55, format: 'webp' }, // Optimized for MAX 200KB
+  card: { width: 250, quality: 60, format: 'webp' }, // For home page cards
   hero: { width: 800, quality: 80, format: 'webp' },
-  product: { width: 600, quality: 75, format: 'webp' },
+  product: { width: 600, quality: 75, format: 'webp' }, // Fast loading for product page
+  productHigh: { width: 1200, quality: 90, format: 'webp' }, // Highest quality for product details
   category: { width: 300, quality: 70, format: 'webp' }
 };
 
 /**
  * Optimizes image URL with Supabase transformations
  * @param {string} imageUrl - Original image URL
- * @param {string} size - Size preset (thumbnail, card, hero, product, category)
+ * @param {string} size - Size preset (thumbnail, card, hero, product, productHigh, category)
  * @param {object} customParams - Custom transformation parameters
  * @returns {string} Optimized image URL
  */
@@ -49,6 +56,24 @@ export function optimizeImage(imageUrl, size = 'card', customParams = {}) {
 }
 
 /**
+ * Get optimized thumbnail for ultra-fast loading (max 200KB)
+ * @param {string} imageUrl - Original image URL
+ * @returns {string} Optimized thumbnail URL
+ */
+export function getThumbnail(imageUrl) {
+  return optimizeImage(imageUrl, 'thumbnail');
+}
+
+/**
+ * Get full quality image for product details
+ * @param {string} imageUrl - Original image URL
+ * @returns {string} High quality image URL
+ */
+export function getFullQualityImage(imageUrl) {
+  return optimizeImage(imageUrl, 'productHigh');
+}
+
+/**
  * Creates a blur placeholder data URL
  * @param {number} width - Placeholder width
  * @param {number} height - Placeholder height
@@ -72,14 +97,15 @@ export function createBlurPlaceholder(width = 40, height = 40) {
 /**
  * Preloads critical images for better performance
  * @param {Array} imageUrls - Array of image URLs to preload
+ * @param {string} quality - Quality preset for preloading ('thumbnail' or 'product')
  */
-export function preloadImages(imageUrls) {
+export function preloadImages(imageUrls, quality = 'thumbnail') {
   imageUrls.forEach(url => {
     if (url) {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = optimizeImage(url, 'card');
+      link.href = quality === 'thumbnail' ? getThumbnail(url) : optimizeImage(url, quality);
       document.head.appendChild(link);
     }
   });

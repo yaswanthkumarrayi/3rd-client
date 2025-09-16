@@ -24,6 +24,7 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailure from "./pages/PaymentFailure";
 import Category from "./pages/Category";
+import ViewAllProducts from "./pages/ViewAllProducts";
 
 // WhatsApp phone number
 const WHATSAPP_NUMBER = "9704447158";
@@ -49,6 +50,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/products" element={<ViewAllProducts />} />
         <Route path="/category/:name" element={<Category />} />
         <Route path="/footer" element={<Footer />} />
         <Route path="/contact" element={<Contact />} />
