@@ -396,6 +396,15 @@ async function fetchOrders(email) {
                                           {item.title || 'Product Title Unavailable'}
                                         </h5>
                                         <div className="flex flex-wrap gap-2 mb-3">
+                                          {item.selectedColor && (
+                                            <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                              <div 
+                                                className="w-3 h-3 rounded-full mr-2 border border-gray-300"
+                                                style={{ backgroundColor: item.selectedColor.color }}
+                                              ></div>
+                                              {item.selectedColor.name}
+                                            </div>
+                                          )}
                                           {item.fabric && (
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200">
                                               {item.fabric}

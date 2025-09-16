@@ -1,12 +1,13 @@
-// Send email API endpoint for Vercel
+// Backend API for sending emails using Gmail + Nodemailer
 import nodemailer from 'nodemailer';
 
 export default async function handler(req, res) {
-  // Set CORS headers
+  // Set CORS headers for all requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -33,16 +34,29 @@ export default async function handler(req, res) {
       });
     }
 
-    // Gmail SMTP configuration
-    const transporter = nodemailer.createTransporter({
+    // Check Gmail credentials
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error('❌ Gmail credentials missing');
+      return res.status(500).json({
+        success: false,
+        error: 'Gmail credentials not configured'
+      });
+    }
+
+    // Gmail SMTP configuration - Vercel optimized
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
       },
+      secure: true, // Use SSL
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 25000, // 25 seconds
+      greetingTimeout: 25000,
+      socketTimeout: 25000
     });
 
     // Email configuration
@@ -63,9 +77,13 @@ export default async function handler(req, res) {
     };
 
     // Send email
+    console.log('📧 Attempting to send email to:', to);
     const info = await transporter.sendMail(mailOptions);
+    
+    console.log('✅ Email sent successfully:', info.messageId);
 
-    res.status(200).json({
+    // Return success response
+    return res.status(200).json({
       success: true,
       messageId: info.messageId,
       message: 'Email sent successfully via Gmail'
@@ -74,16 +92,23 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error('❌ Email sending error:', error);
     
+    // Provide more specific error messages
     let errorMessage = 'Failed to send email';
+    
     if (error.code === 'EAUTH') {
       errorMessage = 'Gmail authentication failed. Check email and app password.';
     } else if (error.code === 'ENOTFOUND') {
       errorMessage = 'Network error. Check internet connection.';
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = 'Email sending timed out. Please try again.';
+    } else if (error.responseCode === 535) {
+      errorMessage = 'Gmail authentication error. Verify app password.';
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      error: errorMessage
+      error: errorMessage,
+      details: error.message
     });
   }
 }

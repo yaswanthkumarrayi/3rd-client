@@ -1,4 +1,5 @@
 // Secure Razorpay order creation endpoint for Vercel
+import Razorpay from 'razorpay';
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -27,9 +28,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Dynamic import for Razorpay (ES module compatibility)
-    const { default: Razorpay } = await import('razorpay');
-    
     // Check environment variables
     const keyId = process.env.VITE_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;

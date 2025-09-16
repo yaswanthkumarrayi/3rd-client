@@ -506,13 +506,22 @@ function Payment() {
         original_price: Number(item.original_price),
         hero_image_url: item.hero_image_url,
         fabric: item.fabric,
-        category: item.category
+        category: item.category,
+        selectedColor: item.selectedColor // Include selected color information
       }));
 
       // Calculate totals
       const subtotal = getSubtotal();
       const shipping = getShipping();
       const totalAmount = getTotal();
+
+      // Extract selected colors for orders table JSONB fields
+      const selectedColors = cartItems
+        .filter(item => item.selectedColor)
+        .map(item => item.selectedColor.color);
+      const selectedColorNames = cartItems
+        .filter(item => item.selectedColor)
+        .map(item => item.selectedColor.name);
 
       // Create order record
       const { data: orderData, error: orderError } = await supabase
@@ -526,6 +535,8 @@ function Payment() {
           pincode: userDetails.pincode,
           items: formattedItems, // Pass as object for jsonb column
           amount: totalAmount,
+          color: selectedColors, // Store selected color hex codes
+          code: selectedColorNames, // Store selected color names
           status: 'pending',
           created_at: new Date().toISOString()
         })
@@ -573,8 +584,17 @@ function Payment() {
         original_price: Number(item.original_price),
         hero_image_url: item.hero_image_url,
         fabric: item.fabric,
-        category: item.category
+        category: item.category,
+        selectedColor: item.selectedColor // Include selected color information
       }));
+
+      // Extract selected colors for orders table JSONB fields
+      const selectedColors = cartItems
+        .filter(item => item.selectedColor)
+        .map(item => item.selectedColor.color);
+      const selectedColorNames = cartItems
+        .filter(item => item.selectedColor)
+        .map(item => item.selectedColor.name);
 
       // Prepare minimal required order data
       const orderData = {
@@ -589,9 +609,12 @@ function Payment() {
           title: item.title,
           quantity: item.quantity,
           price: item.price || item.discount_price,
-          sku: item.sku || ''
+          sku: item.sku || '',
+          selectedColor: item.selectedColor // Include selected color in items
         })),
         amount: Number(getTotal()),
+        color: selectedColors, // Store selected color hex codes
+        code: selectedColorNames, // Store selected color names
         status: "paid",
         payment_id: String(payment_id),
         created_at: new Date().toISOString()
@@ -672,7 +695,8 @@ function Payment() {
             color: '',
             size: '',
             fabric: item.fabric || '',
-            category: item.category || ''
+            category: item.category || '',
+            selectedColor: item.selectedColor // Include selected color information
           })),
           totalAmount: Number(data.amount) || 0, // Using amount from order schema
           shippingAmount: Number(data.shipping) || 0, // Include shipping amount
@@ -686,24 +710,68 @@ function Payment() {
           paymentId: data.payment_id || payment_id
         };
 
-        // Send admin notification email
-        console.log('📧 Sending admin notification email via Gmail...');
-        const adminEmailSent = await emailService.sendOrderNotificationToAdmin(emailData);
-        if (adminEmailSent) {
-          console.log('✅ Admin notification email sent successfully via Gmail');
-        } else {
-          console.warn('⚠️ Admin notification email failed');
+        // Prepare order data for backend email APIs (using database schema)
+        const emailOrderData = {
+          id: data.id || Date.now(), // Order ID from database
+          user_email: userDetails.email || user?.email || '',
+          amount: Number(data.amount) || 0,
+          status: "paid",
+          phone: userDetails.phone || profile?.phone || '',
+          address: userDetails.address || profile?.address || '',
+          city: userDetails.city || profile?.city || '',
+          state: userDetails.state || profile?.state || '',
+          pincode: userDetails.pincode || profile?.pincode || '',
+          payment_id: data.payment_id || payment_id,
+          items: formattedItems.map(item => ({
+            name: item.title || 'Product',
+            price: Number(item.discount_price) || 0,
+            quantity: Number(item.quantity) || 1,
+            fabric: item.fabric || '',
+            category: item.category || '',
+            selectedColor: item.selectedColor // Include selected color information
+          }))
+        };
+
+        // Send admin notification email via backend API
+        try {
+          console.log('📧 Sending admin notification email via Gmail...');
+          const adminResponse = await fetch('http://localhost:5000/api/send-admin-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orderData: emailOrderData })
+          });
+          
+          if (adminResponse.ok) {
+            const adminResult = await adminResponse.json();
+            console.log('✅ Admin notification email sent successfully:', adminResult.messageId);
+          } else {
+            console.warn('⚠️ Admin notification email failed:', adminResponse.status);
+          }
+        } catch (adminEmailError) {
+          console.error('❌ Admin email error:', adminEmailError);
         }
 
-        // Send customer confirmation email
-        if (emailData.customerEmail) {
+        // Send customer confirmation email via backend API
+        try {
           console.log('📧 Sending customer confirmation email via Gmail...');
-          const customerEmailSent = await emailService.sendOrderConfirmationToCustomer(emailData);
-          if (customerEmailSent) {
-            console.log('✅ Customer confirmation email sent successfully via Gmail');
+          const customerResponse = await fetch('http://localhost:5000/api/send-customer-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ orderData: emailOrderData })
+          });
+          
+          if (customerResponse.ok) {
+            const customerResult = await customerResponse.json();
+            console.log('✅ Customer confirmation email sent successfully:', customerResult.messageId);
           } else {
-            console.warn('⚠️ Customer confirmation email failed');
+            console.warn('⚠️ Customer confirmation email failed:', customerResponse.status);
           }
+        } catch (customerEmailError) {
+          console.error('❌ Customer email error:', customerEmailError);
         }
 
       } catch (emailError) {
@@ -749,6 +817,7 @@ function Payment() {
           // Prepare email data for fallback
           const emailData = {
             orderNumber: `AKT-${fallbackData.id}`, // Using order ID as order number
+            customerName: extractCustomerName(user, profile, userDetails),
             customerEmail: userDetails.email || user?.email || '',
             customerPhone: userDetails.phone || '',
             items: cartItems.map(item => ({

@@ -245,6 +245,15 @@ function getTotal() {
                             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
                               {item.category}
                             </span>
+                            {item.selectedColor && (
+                              <span className="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-fuchsia-300"
+                                  style={{ backgroundColor: item.selectedColor.color }}
+                                ></div>
+                                {item.selectedColor.name}
+                              </span>
+                            )}
                           </div>
                         </div>
                         

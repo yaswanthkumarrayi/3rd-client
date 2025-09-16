@@ -3,6 +3,8 @@
  * Applies ?width=400&quality=70&format=webp for fast loading
  */
 
+import React from 'react';
+
 // Default optimization parameters for fast loading
 const DEFAULT_TRANSFORMATIONS = {
   width: 400,
@@ -102,19 +104,75 @@ export function createBlurPlaceholder(width = 40, height = 40) {
 }
 
 /**
- * Preloads critical images for better performance
+ * Preloads critical images for better performance with smart caching
  * @param {Array} imageUrls - Array of image URLs to preload
  * @param {string} quality - Quality preset for preloading ('thumbnail' or 'product')
  */
 export function preloadImages(imageUrls, quality = 'thumbnail') {
-  imageUrls.forEach(url => {
+  imageUrls.forEach((url, index) => {
     if (url) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = quality === 'thumbnail' ? getThumbnail(url) : optimizeImage(url, quality);
-      document.head.appendChild(link);
+      // Use requestIdleCallback for non-critical preloading
+      const preloadFn = () => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = quality === 'thumbnail' ? getThumbnail(url) : optimizeImage(url, quality);
+        link.onload = () => {
+          // Remove link after loading to avoid memory leaks
+          setTimeout(() => {
+            if (link.parentNode) {
+              link.parentNode.removeChild(link);
+            }
+          }, 1000);
+        };
+        document.head.appendChild(link);
+      };
+
+      if (index < 3) {
+        // Preload first 3 images immediately
+        preloadFn();
+      } else {
+        // Delay preload for remaining images
+        if (window.requestIdleCallback) {
+          window.requestIdleCallback(preloadFn, { timeout: 2000 });
+        } else {
+          setTimeout(preloadFn, 500 + (index * 100));
+        }
+      }
     }
+  });
+}
+
+/**
+ * Advanced image preloading with priority and batch processing
+ * @param {Array} imageUrls - Array of image URLs to preload
+ * @param {Object} options - Preload options
+ */
+export function preloadImagesAdvanced(imageUrls, options = {}) {
+  const {
+    quality = 'product',
+    priority = false,
+    batchSize = 3,
+    delay = 100
+  } = options;
+
+  // Split into batches for better performance
+  const batches = [];
+  for (let i = 0; i < imageUrls.length; i += batchSize) {
+    batches.push(imageUrls.slice(i, i + batchSize));
+  }
+
+  batches.forEach((batch, batchIndex) => {
+    const batchDelay = priority ? 0 : batchIndex * delay;
+    
+    setTimeout(() => {
+      batch.forEach(url => {
+        if (url) {
+          const img = new Image();
+          img.src = optimizeImage(url, quality);
+        }
+      });
+    }, batchDelay);
   });
 }
 
@@ -196,3 +254,56 @@ export const LOADED_IMAGE_STYLE = {
   filter: 'blur(0px)',
   transition: 'filter 0.3s ease-out'
 };
+
+/**
+ * Cache management utilities
+ */
+export function clearImageCache() {
+  IMAGE_CACHE.clear();
+}
+
+export function getCacheSize() {
+  return IMAGE_CACHE.size;
+}
+
+export function getCacheStats() {
+  let totalSize = 0;
+  let expired = 0;
+  const now = Date.now();
+  
+  IMAGE_CACHE.forEach(cached => {
+    totalSize++;
+    if (now - cached.timestamp > CACHE_EXPIRY) {
+      expired++;
+    }
+  });
+  
+  return { totalSize, expired, hitRate: totalSize > 0 ? ((totalSize - expired) / totalSize * 100).toFixed(1) : 0 };
+}
+
+/**
+ * Responsive image sources with different sizes for different devices
+ * @param {string} imageUrl - Original image URL
+ * @param {Object} options - Configuration options
+ * @returns {Object} Responsive image object with srcSet
+ */
+export function createResponsiveImage(imageUrl, options = {}) {
+  const { 
+    sizes = ['thumbnail', 'card', 'product', 'productHigh'],
+    defaultSize = 'product'
+  } = options;
+
+  const srcSet = sizes.map(size => {
+    const config = IMAGE_SIZES[size];
+    if (!config) return '';
+    
+    const optimizedUrl = optimizeImage(imageUrl, size);
+    return `${optimizedUrl} ${config.width}w`;
+  }).filter(Boolean).join(', ');
+
+  return {
+    src: optimizeImage(imageUrl, defaultSize),
+    srcSet,
+    sizes: "(max-width: 480px) 150px, (max-width: 768px) 250px, (max-width: 1024px) 500px, 1000px"
+  };
+}

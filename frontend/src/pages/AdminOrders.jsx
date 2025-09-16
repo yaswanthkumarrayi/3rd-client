@@ -105,6 +105,12 @@ async function fetchAllOrders() {
                     });
                   }
 
+                  // If item has selectedColor from order, prioritize that
+                  let itemSelectedColor = null;
+                  if (item?.selectedColor) {
+                    itemSelectedColor = item.selectedColor;
+                  }
+
                   return {
                     ...item,
                     id: item?.id || "",
@@ -116,6 +122,7 @@ async function fetchAllOrders() {
                     original_price: safeNumber(item?.original_price || item?.price, 0),
                     hero_image_url: productImage,
                     colors: productColors, // Array of color objects
+                    selectedColor: itemSelectedColor, // User's selected color for this order
                     amount: price * quantity,
                   };
                 })
@@ -129,11 +136,27 @@ async function fetchAllOrders() {
         const subtotal = safeNumber(order.amount, 0);
         const total = subtotal ;
 
+        // Process order-level colors from the orders table
+        let orderColors = [];
+        if (order.color && order.code) {
+          const colorArray = Array.isArray(order.color) ? order.color : [];
+          const codeArray = Array.isArray(order.code) ? order.code : [];
+          const maxLength = Math.max(colorArray.length, codeArray.length);
+          
+          for (let i = 0; i < maxLength; i++) {
+            orderColors.push({
+              color: colorArray[i] || "#000000",
+              name: codeArray[i] || ""
+            });
+          }
+        }
+
         return {
           ...order,
           items: parsedItems,
           subtotal,
           total,
+          orderColors: orderColors, // Add order-level selected colors
           created_at: order.created_at || new Date().toISOString(),
           updated_at: order.updated_at || order.created_at || new Date().toISOString(),
           status: order.status || "paid",
@@ -303,9 +326,22 @@ async function fetchAllOrders() {
                                         <p className="text-xs text-gray-500">Product ID: {item.id}</p>
                                         <p className="text-xs text-gray-500">Category: {item.category}</p>
                                         <p className="text-xs text-gray-500">Fabric: {item.fabric}</p>
+                                        {item.selectedColor && (
+                                          <div className="mt-1">
+                                            <span className="text-xs text-gray-500">Selected Color:</span>
+                                            <div className="flex items-center gap-1 mt-1">
+                                              <div 
+                                                className="w-3 h-3 rounded-full border border-gray-300"
+                                                style={{ backgroundColor: item.selectedColor.color }}
+                                                title={item.selectedColor.name}
+                                              ></div>
+                                              <span className="text-xs text-gray-700 font-medium">{item.selectedColor.name}</span>
+                                            </div>
+                                          </div>
+                                        )}
                                         {item.colors && item.colors.length > 0 && (
                                           <div className="mt-1">
-                                            <span className="text-xs text-gray-500">Colors:</span>
+                                            <span className="text-xs text-gray-500">All Colors:</span>
                                             <div className="flex flex-wrap gap-1 mt-1">
                                               {item.colors.map((colorItem, colorIdx) => (
                                                 <div key={colorIdx} className="flex items-center gap-1">
@@ -470,9 +506,22 @@ async function fetchAllOrders() {
                                     <div className="text-xs text-gray-500">
                                       {item.fabric} | {item.category}
                                     </div>
+                                    {item.selectedColor && (
+                                      <div className="mt-1">
+                                        <span className="text-xs text-gray-500">Selected Color:</span>
+                                        <div className="flex items-center gap-1 mt-1">
+                                          <div 
+                                            className="w-3 h-3 rounded-full border border-gray-300"
+                                            style={{ backgroundColor: item.selectedColor.color }}
+                                            title={item.selectedColor.name}
+                                          ></div>
+                                          <span className="text-xs text-gray-700 font-medium">{item.selectedColor.name}</span>
+                                        </div>
+                                      </div>
+                                    )}
                                     {item.colors && item.colors.length > 0 && (
                                       <div className="mt-1">
-                                        <span className="text-xs text-gray-500">Colors:</span>
+                                        <span className="text-xs text-gray-500">All Colors:</span>
                                         <div className="flex flex-wrap gap-1 mt-1">
                                           {item.colors.map((colorItem, colorIdx) => (
                                             <div key={colorIdx} className="flex items-center gap-1">

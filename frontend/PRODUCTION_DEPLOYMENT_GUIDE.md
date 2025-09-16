@@ -22,11 +22,18 @@ npx vercel --prod
 
 Go to your Vercel dashboard > Project Settings > Environment Variables and add:
 
-**Payment Gateway Variables:**
+**Payment Gateway Variables (Use LIVE keys for production):**
 ```
 VITE_RAZORPAY_KEY_ID=rzp_live_R7aFZXp7D1g5yb
 RAZORPAY_KEY_ID=rzp_live_R7aFZXp7D1g5yb
 RAZORPAY_KEY_SECRET=[your-razorpay-secret]
+```
+
+**For localhost testing, use test keys:**
+```
+VITE_RAZORPAY_KEY_ID=rzp_test_R6NmIHLl4TZltu
+RAZORPAY_KEY_ID=rzp_test_R6NmIHLl4TZltu
+RAZORPAY_KEY_SECRET=iVUQFNIpSYhyhfUa15zQ0ubB
 ```
 
 **HDFC Variables:**
