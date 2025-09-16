@@ -41,6 +41,11 @@ export function optimizeImage(imageUrl, size = 'card', customParams = {}) {
     return imageUrl;
   }
   
+  // Check if it's a Supabase URL that supports transformations
+  if (!imageUrl.includes('supabase.co') && !imageUrl.includes('supabase.com')) {
+    return imageUrl;
+  }
+  
   // Get size preset or use default
   const sizeConfig = IMAGE_SIZES[size] || DEFAULT_TRANSFORMATIONS;
   
@@ -52,7 +57,9 @@ export function optimizeImage(imageUrl, size = 'card', customParams = {}) {
   
   // Add transformations to Supabase URL
   const separator = imageUrl.includes('?') ? '&' : '?';
-  return `${imageUrl}${separator}${queryParams}`;
+  const optimizedUrl = `${imageUrl}${separator}${queryParams}`;
+  
+  return optimizedUrl;
 }
 
 /**

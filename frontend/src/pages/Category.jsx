@@ -4,6 +4,7 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Sparkles, ArrowRight, Filter, Grid, List, Search, ShoppingBag, Star, Heart, Eye } from "lucide-react";
+import { getThumbnail, createBlurPlaceholder } from "../utils/imageOptimizer";
 
 const Category = () => {
   const { name } = useParams();
@@ -13,6 +14,7 @@ const Category = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
   const [isVisible, setIsVisible] = useState(false);
+  const [imageLoadingStates, setImageLoadingStates] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,11 +27,36 @@ const Category = () => {
   async function fetchProducts() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First try exact match
+      let { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("category", name)
         .order("created_at", { ascending: false });
+      
+      // If no results, try case-insensitive search
+      if (!error && (!data || data.length === 0)) {
+        const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
+          .from("products")
+          .select("*")
+          .ilike("category", name)
+          .order("created_at", { ascending: false });
+        
+        data = caseInsensitiveData;
+        error = caseInsensitiveError;
+      }
+      
+      // If still no results, try partial match
+      if (!error && (!data || data.length === 0)) {
+        const { data: partialData, error: partialError } = await supabase
+          .from("products")
+          .select("*")
+          .ilike("category", `%${name}%`)
+          .order("created_at", { ascending: false });
+        
+        data = partialData;
+        error = partialError;
+      }
       
       if (!error) {
         setProducts(data || []);
@@ -74,7 +101,7 @@ const Category = () => {
       >
         <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200">
           <img
-            src={product.hero_image_url}
+            src={getThumbnail(product.hero_image_url)}
             alt={product.title}
             className="h-full w-full object-cover object-center group-hover:opacity-75"
           />
@@ -142,7 +169,7 @@ const Category = () => {
               <span className="text-fuchsia-600 font-medium text-sm">Premium Collection</span>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4 font-heading">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-4 font-heading uppercase">
               {name} Sarees
             </h1>
             
@@ -184,7 +211,7 @@ const Category = () => {
             {/* Loading Grid */}
             <div className={`grid gap-6 ${
               viewMode === "grid" 
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                 : "grid-cols-1"
             }`}>
               {[...Array(8)].map((_, idx) => (
@@ -202,7 +229,7 @@ const Category = () => {
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-6">🔍</div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">
+            <h3 className="text-2xl font-bold text-gray-800 mb-4 font-heading">
               {searchTerm ? "No products match your search" : "No products found"}
             </h3>
             <p className="text-gray-600 text-lg mb-8">
@@ -237,7 +264,7 @@ const Category = () => {
             {/* Products Grid */}
             <div className={`grid gap-6 ${
               viewMode === "grid" 
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                 : "grid-cols-1 max-w-4xl mx-auto"
             }`}>
               {filteredProducts.map((product, idx) => (
@@ -251,12 +278,51 @@ const Category = () => {
                   <div className={`relative overflow-hidden ${
                     viewMode === "list" ? "w-64 flex-shrink-0" : ""
                   }`}>
+                    {/* Blur placeholder while image loads */}
+                    {imageLoadingStates[`product-${product.id}`] !== false && (
+                      <div 
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `url(${createBlurPlaceholder(200, 200)})`,
+                          backgroundSize: 'cover',
+                          filter: 'blur(8px)',
+                          zIndex: 1
+                        }}
+                      />
+                    )}
                     <img
-                      src={product.hero_image_url}
+                      src={getThumbnail(product.hero_image_url)}
                       alt={product.title}
+                      loading="lazy"
+                      width="200"
+                      height="200"
                       className={`object-cover group-hover:scale-105 transition-transform duration-500 ${
                         viewMode === "list" ? "w-full h-48" : "w-full h-64"
-                      }`}
+                      } ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
+                      style={{
+                        zIndex: 2,
+                        position: 'relative'
+                      }}
+                      onLoad={() => {
+                        setImageLoadingStates(prev => ({
+                          ...prev,
+                          [`product-${product.id}`]: false
+                        }));
+                      }}
+                      onLoadStart={() => {
+                        setImageLoadingStates(prev => ({
+                          ...prev,
+                          [`product-${product.id}`]: true
+                        }));
+                      }}
+                      onError={(e) => {
+                        // Fallback to default image if product image fails
+                        e.target.src = "Designer.jpg";
+                        setImageLoadingStates(prev => ({
+                          ...prev,
+                          [`product-${product.id}`]: false
+                        }));
+                      }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     
@@ -282,7 +348,7 @@ const Category = () => {
                   </div>
                   
                   <div className={`p-5 space-y-3 ${viewMode === "list" ? "flex-1" : ""}`}>
-                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-fuchsia-600 transition-colors duration-300 line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-fuchsia-600 transition-colors duration-300 line-clamp-2 font-heading uppercase">
                       {product.title}
                     </h3>
                     

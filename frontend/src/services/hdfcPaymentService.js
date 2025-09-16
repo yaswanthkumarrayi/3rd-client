@@ -110,8 +110,7 @@ class HDFCPaymentService {
   // Handle payment redirection (Updated for HDFC form-based integration)
   initiatePayment(paymentData, paymentUrl, redirectForm) {
     console.log('🏦 Initiating HDFC payment...');
-    console.log('🔗 Payment URL:', paymentUrl);
-    console.log('📋 Payment data:', paymentData);
+    console.log(' Payment data:', paymentData);
 
     try {
       // If redirect_form HTML is provided, use it by replacing current page content

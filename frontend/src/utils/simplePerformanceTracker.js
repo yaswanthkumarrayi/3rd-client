@@ -15,7 +15,7 @@ export const simplePerformanceTracker = {
     if (loadTime > THRESHOLDS.IMAGE_LOAD) {
       console.warn(`🐌 Slow image: ${src} (${loadTime}ms)`);
     } else if (loadTime < 500) {
-      console.log(`⚡ Fast image: ${src} (${loadTime}ms)`);
+      console.log(`⚡ Fast image loaded (${loadTime}ms)`);
     }
   },
 

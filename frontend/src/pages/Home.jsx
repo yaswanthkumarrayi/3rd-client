@@ -415,7 +415,7 @@ const Home = () => {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {[...Array(6)].map((_, idx) => (
               <div key={idx} className="animate-pulse">
                 <div className="bg-gray-200 h-48 sm:h-64 rounded-xl mb-4"></div>
@@ -434,7 +434,7 @@ const Home = () => {
             <p className="text-gray-600 text-base sm:text-lg">Please check back later for new arrivals!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" id="featured-collection">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6" id="featured-collection">
             {products.map((product, idx) => (
               <div 
                 key={product.id} 
@@ -458,9 +458,9 @@ const Home = () => {
                     src={getThumbnail(product.hero_image_url)}
                     alt={product.title}
                     loading="lazy"
-                    width="200"
-                    height="200"
-                    className={`w-full h-82 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
+                    width="400"
+                    height="320"
+                    className={`w-full h-48 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
                     style={{
                       zIndex: 2,
                       position: 'relative'
@@ -509,8 +509,8 @@ const Home = () => {
                   </div>
                 </div>
                 
-                <div className="p-4 sm:p-5 space-y-3">
-                  <h3 className={`text-base sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 line-clamp-2`}>
+                <div className="p-3 sm:p-5 space-y-2 sm:space-y-3">
+                  <h3 className={`text-sm sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 line-clamp-2`}>
                     {product.title}
                   </h3>
                   
@@ -519,16 +519,16 @@ const Home = () => {
                       <div className="text-gray-500">
                         <span className="font-medium text-gray-700">Fabric:</span> {product.fabric}
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-gray-500 hidden sm:block">
                         <span className="font-medium text-gray-700">Category:</span> {product.category}
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-100">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg sm:text-xl font-bold text-green-600">₹{product.discount_price}</span>
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-sm sm:text-xl font-bold text-green-600">₹{product.discount_price}</span>
                         {product.original_price > product.discount_price && (
                           <span className="text-xs sm:text-sm text-gray-500 line-through">₹{product.original_price}</span>
                         )}
@@ -541,7 +541,7 @@ const Home = () => {
                     </div>
                     
                     <div className={`${isMobile ? '' : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1'} transition-all duration-300`}>
-                      <ArrowRight className="w-5 h-5 text-fuchsia-600" />
+                      <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-fuchsia-600" />
                     </div>
                   </div>
                 </div>
@@ -581,22 +581,21 @@ const Home = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
             {categories.map((category, idx) => (
               <div
                 key={category.name}
                 onClick={() => handleCategoryClick(category.name)}
                 className={`group cursor-pointer bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden ${isMobile ? '' : 'hover:shadow-2xl hover:-translate-y-3'} transition-all duration-500 animate-fade-in-up`}
               >
-                <div className="relative overflow-hidden">
+                <div className="relative overflow-hidden h-40 sm:h-48 bg-gray-50">
                   <img
-                    src={category.image}
+                    src={getThumbnail(category.image)}
                     alt={category.name}
                     loading="lazy"
                     width="300"
-                    height="420"
-                    className={`w-full h-92 sm:h-44 object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
-                    style={{ minHeight: 420, maxHeight: 620 }}
+                    height="200"
+                    className={`w-full h-full object-cover ${isMobile ? '' : 'group-hover:scale-110'} transition-transform duration-${isMobile ? '300' : '700'}`}
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent ${isMobile ? '' : 'group-hover:from-black/70'} transition-all duration-300`}></div>
                   
@@ -614,7 +613,7 @@ const Home = () => {
                   </div>
                 </div>
                 <div className="p-3 sm:p-4 text-center">
-                  <h3 className={`text-base sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 mb-1 sm:mb-2`}>
+                  <h3 className={`text-sm sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 mb-1 sm:mb-2`}>
                     {category.name}
                   </h3>
                   <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">

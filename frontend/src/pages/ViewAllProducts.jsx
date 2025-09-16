@@ -164,7 +164,7 @@ const ViewAllProducts = () => {
         <Header />
         <div className="pt-20 pb-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(12)].map((_, idx) => (
                 <div key={idx} className="animate-pulse">
                   <div className="bg-gray-200 h-48 sm:h-64 rounded-xl mb-4"></div>
@@ -299,7 +299,7 @@ const ViewAllProducts = () => {
             <>
               <div className={`grid gap-4 sm:gap-6 mb-8 ${
                 viewMode === "grid" 
-                  ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                  ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
                   : "grid-cols-1 lg:grid-cols-2"
               }`}>
                 {filteredProducts.map((product) => (
@@ -329,8 +329,8 @@ const ViewAllProducts = () => {
                         src={getThumbnail(product.hero_image_url)}
                         alt={product.title}
                         loading="lazy"
-                        width="200"
-                        height="200"
+                        width="400"
+                        height="320"
                         className={`w-full ${viewMode === "list" ? "h-48" : "h-48 sm:h-64"} object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
                         style={{
                           zIndex: 2,
@@ -373,8 +373,8 @@ const ViewAllProducts = () => {
                       </div>
                     </div>
                     
-                    <div className={`p-4 sm:p-5 space-y-3 ${viewMode === "list" ? "flex-1" : ""}`}>
-                      <h3 className={`text-base sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 line-clamp-2`}>
+                    <div className={`p-3 sm:p-5 space-y-2 sm:space-y-3 ${viewMode === "list" ? "flex-1" : ""}`}>
+                      <h3 className={`text-sm sm:text-lg font-bold text-gray-900 ${isMobile ? '' : 'group-hover:text-fuchsia-600'} transition-colors duration-300 line-clamp-2`}>
                         {product.title}
                       </h3>
                       
@@ -383,16 +383,16 @@ const ViewAllProducts = () => {
                           <div className="text-gray-500">
                             <span className="font-medium text-gray-700">Fabric:</span> {product.fabric}
                           </div>
-                          <div className="text-gray-500">
+                          <div className="text-gray-500 hidden sm:block">
                             <span className="font-medium text-gray-700">Category:</span> {product.category}
                           </div>
                         </div>
                       </div>
                       
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-gray-100">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg sm:text-xl font-bold text-green-600">₹{product.discount_price}</span>
+                          <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="text-sm sm:text-xl font-bold text-green-600">₹{product.discount_price}</span>
                             {product.original_price > product.discount_price && (
                               <span className="text-xs sm:text-sm text-gray-500 line-through">₹{product.original_price}</span>
                             )}
@@ -405,7 +405,7 @@ const ViewAllProducts = () => {
                         </div>
                         
                         <div className={`${isMobile ? '' : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1'} transition-all duration-300`}>
-                          <ArrowRight className="w-5 h-5 text-fuchsia-600" />
+                          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-fuchsia-600" />
                         </div>
                       </div>
                     </div>

@@ -18,6 +18,7 @@ const Product = () => {
   );
   const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState(true);
+  const [loadedImages, setLoadedImages] = useState(new Set());
   const [addedToCart, setAddedToCart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -81,6 +82,19 @@ const Product = () => {
       preloadImages(imagesToPreload, 'product');
     }
   }, [product]);
+
+  // Handle active image change
+  useEffect(() => {
+    if (images[activeImg]) {
+      const currentImageUrl = images[activeImg]?.optimized || images[activeImg];
+      // Only show loading if image hasn't been loaded before
+      if (!loadedImages.has(currentImageUrl)) {
+        setImageLoading(true);
+      } else {
+        setImageLoading(false);
+      }
+    }
+  }, [activeImg, images, loadedImages]);
 
   function addToCart() {
     if (!product) return;
@@ -271,8 +285,11 @@ const Product = () => {
                     loading="eager"
                     className="w-full h-full object-contain p-4 transition-opacity duration-200"
                     style={{ opacity: imageLoading ? 0 : 1 }}
-                    onLoad={() => setImageLoading(false)}
-                    onLoadStart={() => setImageLoading(true)}
+                    onLoad={(e) => {
+                      const imageUrl = e.target.src;
+                      setLoadedImages(prev => new Set(prev).add(imageUrl));
+                      setImageLoading(false);
+                    }}
                   />
                   
                   {/* Navigation Arrows */}
@@ -330,7 +347,7 @@ const Product = () => {
                       <img
                         src={img.thumbnail || img.optimized || img}
                         alt={`View ${idx + 1}`}
-                        loading="lazy"
+                        loading={idx < 3 ? "eager" : "lazy"}
                         className="w-full h-full object-cover transition-opacity duration-200"
                       />
                     </button>
@@ -351,7 +368,7 @@ const Product = () => {
                   <span className="text-sm text-gray-500">SKU: {String(product.id).slice(0, 8)}</span>
                 </div>
                 
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight font-heading uppercase">
                   {product.title}
                 </h1>
                 
@@ -384,10 +401,10 @@ const Product = () => {
 
               {/* Product Info */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-4">Product Details</h3>
+                <h3 className="font-semibold text-gray-900 mb-4 font-heading uppercase text-xl">Product Details</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500 block">Fabric</span>
+                    <span className="text-gray-500 block ">Fabric</span>
                     <span className="font-medium text-gray-900">{product.fabric}</span>
                   </div>
                   <div>
@@ -399,7 +416,7 @@ const Product = () => {
 
               {/* Product Description Section */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-4">Product Description</h3>
+                <h3 className="font-semibold text-gray-900 mb-4 font-heading text-xl uppercase">Product Description</h3>
                 <p className="text-gray-600 leading-relaxed">
                   {product.description}
                 </p>
@@ -503,7 +520,7 @@ const Product = () => {
 
               {/* Features */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                <h3 className="font-semibold text-gray-900 mb-4">Why Choose Us</h3>
+                <h3 className="font-semibold text-gray-900 mb-4 font-heading text-2xl uppercase underline">Why Choose Us</h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
