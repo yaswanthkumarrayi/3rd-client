@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, Building2, Shield, Zap } from 'lucide-react';
+import { CreditCard, Shield, Zap } from 'lucide-react';
 
 const PaymentGatewaySelector = ({ onGatewaySelect, selectedGateway }) => {
   const gateways = [
@@ -12,16 +12,6 @@ const PaymentGatewaySelector = ({ onGatewaySelect, selectedGateway }) => {
       color: 'bg-blue-50 border-blue-200 text-blue-800',
       activeColor: 'bg-blue-100 border-blue-400',
       processing: 'Instant processing'
-    },
-    {
-      id: 'hdfc',
-      name: 'HDFC Bank',
-      description: 'Secure bank-grade payment processing',
-      icon: Building2,
-      features: ['Credit/Debit Cards', 'Net Banking', 'Bank Security'],
-      color: 'bg-green-50 border-green-200 text-green-800',
-      activeColor: 'bg-green-100 border-green-400',
-      processing: 'Bank-grade security'
     }
   ];
 
@@ -32,7 +22,7 @@ const PaymentGatewaySelector = ({ onGatewaySelect, selectedGateway }) => {
         <h3 className="text-lg font-semibold text-gray-900">Choose Payment Gateway</h3>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4">
         {gateways.map((gateway) => {
           const Icon = gateway.icon;
           const isSelected = selectedGateway === gateway.id;
@@ -96,7 +86,7 @@ const PaymentGatewaySelector = ({ onGatewaySelect, selectedGateway }) => {
           <div className="flex items-center space-x-2">
             <CreditCard className="h-4 w-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">
-              {selectedGateway === 'razorpay' ? 'Razorpay' : 'HDFC Bank'} gateway selected
+              Razorpay gateway selected
             </span>
           </div>
           <p className="text-xs text-blue-600 mt-1">

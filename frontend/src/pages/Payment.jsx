@@ -4,7 +4,6 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import PaymentGatewaySelector from "../components/PaymentGatewaySelector";
 import { supabase } from "../supabaseClient";
-import HDFCPaymentService from "../services/hdfcPaymentService";
 import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
 import { emailService } from "../services/emailService";
 
@@ -206,92 +205,11 @@ function Payment() {
     setError("");
 
     try {
-      if (selectedPaymentGateway === 'hdfc') {
-        await handleHDFCPayment();
-      } else {
-        await handleRazorpayPayment();
-      }
+      await handleRazorpayPayment();
     } catch (error) {
       console.error("Payment error:", error);
       setError(error.message || "Payment failed. Please try again.");
       setProcessing(false);
-    }
-  };
-
-  const handleHDFCPayment = async () => {
-    try {
-      // Create order in our database first
-      const orderData = await createOrderInDatabase();
-      if (!orderData.success) {
-        throw new Error("Failed to create order");
-      }
-
-      // Prepare HDFC payment data
-      const hdfcOrderData = {
-        amount: getTotal(),
-        productinfo: `Order #${orderData.orderId} - ${cartItems.length} items`,
-        firstname: userDetails.full_name.split(' ')[0] || 'Customer',
-        lastname: userDetails.full_name.split(' ').slice(1).join(' ') || '',
-        email: userDetails.email,
-        phone: userDetails.phone,
-        address: userDetails.address,
-        city: userDetails.city,
-        state: userDetails.state,
-        pincode: userDetails.pincode
-      };
-
-      // Create HDFC payment order
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://textilesbackend.vercel.app';
-      const hdfcRes = await fetch(`${apiBaseUrl}/api/hdfc-create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(hdfcOrderData)
-      });
-
-      if (!hdfcRes.ok) {
-        throw new Error(`HDFC payment creation failed: ${hdfcRes.status}`);
-      }
-
-      const hdfcData = await hdfcRes.json();
-      
-      if (!hdfcData.success) {
-        throw new Error(hdfcData.error || "Failed to create HDFC payment");
-      }
-
-      // Update order with HDFC transaction ID
-      const updateResult = await supabase
-        .from('orders')
-        .update({ 
-          payment_id: hdfcData.order_id
-        })
-        .eq('id', orderData.orderId);
-
-      if (updateResult.error) {
-        console.error('❌ Failed to update order with HDFC details:', updateResult.error);
-        throw new Error('Failed to update order with payment details');
-      }
-
-      // Redirect to HDFC payment page
-      console.log('🏦 HDFC Response received:', hdfcData);
-      
-      if (!hdfcData.success) {
-        throw new Error(hdfcData.error || "Failed to create HDFC payment");
-      }
-
-      if (!hdfcData.payment_url && !hdfcData.redirect_form) {
-        throw new Error("Invalid HDFC payment response - missing payment URL or redirect form");
-      }
-      
-      console.log('🔗 Initiating HDFC payment...');
-      HDFCPaymentService.initiatePayment(
-        hdfcData.payment_data, 
-        hdfcData.payment_url, 
-        hdfcData.redirect_form
-      );
-      
-    } catch (error) {
-      console.error("HDFC payment error:", error);
-      throw error;
     }
   };
 

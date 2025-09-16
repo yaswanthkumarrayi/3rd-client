@@ -10,7 +10,7 @@ const PaymentSuccess = () => {
   const txnid = searchParams.get('txnid') || searchParams.get('order_id');
   const status = searchParams.get('status');
   const amount = searchParams.get('amount');
-  const gateway = searchParams.get('gateway') || 'HDFC';
+  const gateway = searchParams.get('gateway') || 'Razorpay';
   const message = searchParams.get('message');
 
   useEffect(() => {
