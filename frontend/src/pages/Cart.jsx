@@ -156,28 +156,28 @@ function getTotal() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
-      <main className="pt-20 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 pt-16 sm:pt-20 pb-4 sm:pb-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 sm:mb-8">
             <div className="flex items-center gap-3 mb-4">
               <button
                 onClick={() => navigate("/")}
-                className="flex items-center gap-2 text-gray-600 hover:text-fuchsia-600 transition-colors duration-200"
+                className="flex items-center gap-2 text-gray-600 hover:text-fuchsia-600 transition-colors duration-200 p-2 rounded-lg hover:bg-gray-100"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="hidden sm:inline">Continue Shopping</span>
+                <span className="hidden sm:inline text-sm sm:text-base">Continue Shopping</span>
               </button>
             </div>
             <div className="flex items-center gap-3 mb-2">
-              <ShoppingCart className="w-7 h-7 text-fuchsia-600" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Shopping Cart</h1>
+              <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 text-fuchsia-600" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Shopping Cart</h1>
             </div>
             {cartItems.length > 0 && (
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 {cartItems.length} item{cartItems.length !== 1 ? 's' : ''} • {cartItems.reduce((sum, item) => sum + item.quantity, 0)} pieces
               </p>
             )}
@@ -185,12 +185,12 @@ function getTotal() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+            <div className="mb-4 sm:mb-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-red-800 mb-1">Attention Required</h3>
-                  <p className="text-red-700 text-sm">{error}</p>
+                  <h3 className="font-medium text-red-800 mb-1 text-sm sm:text-base">Attention Required</h3>
+                  <p className="text-red-700 text-xs sm:text-sm">{error}</p>
                 </div>
               </div>
             </div>
@@ -198,57 +198,57 @@ function getTotal() {
 
           {cartItems.length === 0 ? (
             /* Empty Cart State */
-            <div className="text-center py-16">
-              <div className="max-w-sm mx-auto">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <ShoppingCart className="w-12 h-12 text-gray-400" />
+            <div className="text-center py-12 sm:py-16">
+              <div className="max-w-sm mx-auto px-4">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <ShoppingCart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Your cart is empty</h3>
-                <p className="text-gray-600 mb-8">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Your cart is empty</h3>
+                <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">
                   Add some beautiful sarees and lehengas to get started
                 </p>
                 <button
                   onClick={() => navigate("/")}
-                  className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+                  className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200 text-sm sm:text-base"
                 >
                   Start Shopping
                 </button>
               </div>
             </div>
           ) : (
-            <div className="lg:grid lg:grid-cols-3 lg:gap-8">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 lg:gap-6 xl:gap-8">
               {/* Cart Items */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="lg:col-span-2 space-y-3 sm:space-y-4 mb-6 lg:mb-0">
                 {cartItems.map((item, idx) => (
-                  <div key={idx} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
+                  <div key={idx} className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4 lg:p-6">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                       {/* Product Image */}
                       <div className="flex-shrink-0 mx-auto sm:mx-0">
                         <img
                           src={item.hero_image_url}
                           alt={item.title}
-                          className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg"
+                          className="w-20 h-20 sm:w-24 sm:h-24 lg:w-32 lg:h-32 object-cover rounded-lg"
                         />
                       </div>
                       
                       {/* Product Details */}
-                      <div className="flex-1 space-y-3">
+                      <div className="flex-1 space-y-2 sm:space-y-3">
                         <div className="text-center sm:text-left">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
                             {item.title}
                           </h3>
                           
-                          <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-3">
-                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                          <div className="flex flex-wrap justify-center sm:justify-start gap-1 sm:gap-2 mb-2 sm:mb-3">
+                            <span className="bg-gray-100 text-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                               {item.fabric}
                             </span>
-                            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                            <span className="bg-gray-100 text-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
                               {item.category}
                             </span>
                             {item.selectedColor && (
-                              <span className="bg-fuchsia-100 text-fuchsia-700 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+                              <span className="bg-fuchsia-100 text-fuchsia-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm flex items-center gap-1 sm:gap-2">
                                 <div 
-                                  className="w-3 h-3 rounded-full border border-fuchsia-300"
+                                  className="w-2 h-2 sm:w-3 sm:h-3 rounded-full border border-fuchsia-300"
                                   style={{ backgroundColor: item.selectedColor.color }}
                                 ></div>
                                 {item.selectedColor.name}
@@ -259,19 +259,19 @@ function getTotal() {
                         
                         {/* Price */}
                         <div className="text-center sm:text-left">
-                          <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-                            <span className="text-xl font-bold text-gray-900">₹{item.discount_price}</span>
+                          <div className="flex items-center justify-center sm:justify-start gap-2 mb-1 sm:mb-2">
+                            <span className="text-lg sm:text-xl font-bold text-gray-900">₹{item.discount_price}</span>
                             {item.original_price > item.discount_price && (
                               <>
-                                <span className="text-sm text-gray-500 line-through">₹{item.original_price}</span>
-                                <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">
+                                <span className="text-xs sm:text-sm text-gray-500 line-through">₹{item.original_price}</span>
+                                <span className="bg-green-100 text-green-800 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs font-medium">
                                   {Math.round(((item.original_price - item.discount_price) / item.original_price) * 100)}% OFF
                                 </span>
                               </>
                             )}
                           </div>
                           {item.original_price > item.discount_price && (
-                            <p className="text-green-600 text-sm">
+                            <p className="text-green-600 text-xs sm:text-sm">
                               You save ₹{item.original_price - item.discount_price}
                             </p>
                           )}
@@ -285,9 +285,9 @@ function getTotal() {
                               className="p-2 hover:bg-gray-100 rounded-l-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                               disabled={item.quantity <= 1}
                             >
-                              <Minus className="w-4 h-4 text-gray-600" />
+                              <Minus className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
                             </button>
-                            <span className="px-4 py-2 font-medium text-gray-900 min-w-[3rem] text-center">
+                            <span className="px-3 sm:px-4 py-2 font-medium text-gray-900 min-w-[2.5rem] sm:min-w-[3rem] text-center text-sm sm:text-base">
                               {item.quantity}
                             </span>
                             <button
@@ -295,23 +295,23 @@ function getTotal() {
                               className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors duration-200"
                               disabled={item.quantity >= item.availableQuantity}
                             >
-                              <Plus className="w-4 h-4 text-gray-600" />
+                              <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600" />
                             </button>
                           </div>
                           
                           <button
                             onClick={() => handleRemove(idx)}
-                            className="flex items-center gap-2 text-red-600 hover:text-red-700 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors duration-200"
+                            className="flex items-center gap-1 sm:gap-2 text-red-600 hover:text-red-700 px-2 sm:px-3 py-2 rounded-lg hover:bg-red-50 transition-colors duration-200"
                           >
-                            <Trash2 className="w-4 h-4" />
-                            <span className="text-sm font-medium">Remove</span>
+                            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="text-xs sm:text-sm font-medium">Remove</span>
                           </button>
                         </div>
 
                         {/* Item Total */}
-                        <div className="bg-gray-50 rounded-lg p-3 text-center sm:text-left">
-                          <span className="text-gray-600 text-sm">Item Total: </span>
-                          <span className="font-semibold text-gray-900">₹{item.discount_price * item.quantity}</span>
+                        <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center sm:text-left">
+                          <span className="text-gray-600 text-xs sm:text-sm">Item Total: </span>
+                          <span className="font-semibold text-gray-900 text-sm sm:text-base">₹{item.discount_price * item.quantity}</span>
                         </div>
                       </div>
                     </div>
@@ -320,14 +320,14 @@ function getTotal() {
               </div>
 
               {/* Order Summary */}
-              <div className="mt-8 lg:mt-0">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 lg:sticky lg:top-24">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Package className="w-5 h-5 text-fuchsia-600" />
                     Order Summary
                   </h3>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
                       <span className="font-medium">₹{getTotal()}</span>
@@ -339,13 +339,13 @@ function getTotal() {
                     </div>
                     
                     {getTotalSavings() > 0 && (
-                      <div className="flex justify-between text-sm bg-green-50 p-3 rounded-lg">
+                      <div className="flex justify-between text-sm bg-green-50 p-2 sm:p-3 rounded-lg">
                         <span className="text-green-700 font-medium">Total Savings</span>
                         <span className="font-semibold text-green-700">₹{getTotalSavings()}</span>
                       </div>
                     )}
                     
-                    <div className="border-t pt-4">
+                    <div className="border-t pt-3 sm:pt-4">
                       <div className="flex justify-between">
                         <span className="text-lg font-semibold text-gray-900">Total</span>
                         <span className="text-xl font-bold text-fuchsia-600">₹{getTotal()}</span>
@@ -355,7 +355,7 @@ function getTotal() {
                     <button
                       onClick={handleBuyNow}
                       disabled={isLoading}
-                      className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:bg-fuchsia-400 text-white py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
+                      className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:bg-fuchsia-400 text-white py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
                     >
                       {isLoading ? (
                         <>
@@ -371,7 +371,7 @@ function getTotal() {
                     </button>
                     
                     <div className="text-center pt-2">
-                      <div className="flex items-center justify-center gap-2 text-green-600 text-sm mb-1">
+                      <div className="flex items-center justify-center gap-2 text-green-600 text-xs sm:text-sm mb-1">
                         <CheckCircle className="w-4 h-4" />
                         <span>Secure Checkout</span>
                       </div>
