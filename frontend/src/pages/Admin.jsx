@@ -24,6 +24,7 @@ const initialProduct = {
   original_price: "",
   discount_price: "",
   category: "",
+  colors: [], // Array of color objects: [{color: "#000000", name: "Black"}] - will be converted to JSONB fields
   hero_image: null,
   hero_image_url: "",
   featured_images: [],
@@ -60,7 +61,31 @@ const Admin = () => {
   async function fetchProducts() {
     setLoading(true);
     const { data, error } = await supabase.from("products").select("*");
-    if (!error) setProducts(data || []);
+    if (!error) {
+      // Convert JSONB color and code fields to colors array format for display
+      const processedProducts = (data || []).map(product => {
+        let colors = [];
+        if (product.color && product.code) {
+          const colorArray = Array.isArray(product.color) ? product.color : [];
+          const codeArray = Array.isArray(product.code) ? product.code : [];
+          const maxLength = Math.max(colorArray.length, codeArray.length);
+          
+          for (let i = 0; i < maxLength; i++) {
+            colors.push({
+              color: colorArray[i] || "#000000",
+              name: codeArray[i] || ""
+            });
+          }
+        }
+        
+        return {
+          ...product,
+          colors: colors
+        };
+      });
+      
+      setProducts(processedProducts);
+    }
     setLoading(false);
   }
 
@@ -82,6 +107,32 @@ const Admin = () => {
     }
   };
 
+  // Add a new color
+  const addColor = () => {
+    setForm(prev => ({
+      ...prev,
+      colors: [...prev.colors, { color: "#000000", name: "" }]
+    }));
+  };
+
+  // Remove a color
+  const removeColor = (index) => {
+    setForm(prev => ({
+      ...prev,
+      colors: prev.colors.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Update a specific color
+  const updateColor = (index, field, value) => {
+    setForm(prev => ({
+      ...prev,
+      colors: prev.colors.map((color, i) => 
+        i === index ? { ...color, [field]: value } : color
+      )
+    }));
+  };
+
   // Upload image to Supabase Storage
   async function uploadImage(file) {
     const fileName = `${Date.now()}_${file.name}`;
@@ -92,9 +143,24 @@ const Admin = () => {
     return supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
   }
 
-  // Handle edit click - FIXED
+  // Handle edit click - FIXED for JSONB structure
   const handleEdit = (product) => {
     console.log("Editing product:", product); // Debug log
+    
+    // Convert color and code JSONB arrays back to colors array format
+    let colors = [];
+    if (product.color && product.code) {
+      const colorArray = Array.isArray(product.color) ? product.color : [];
+      const codeArray = Array.isArray(product.code) ? product.code : [];
+      const maxLength = Math.max(colorArray.length, codeArray.length);
+      
+      for (let i = 0; i < maxLength; i++) {
+        colors.push({
+          color: colorArray[i] || "#000000",
+          name: codeArray[i] || ""
+        });
+      }
+    }
     
     setForm({
       id: product.id,
@@ -105,6 +171,7 @@ const Admin = () => {
       original_price: product.original_price?.toString() || "",
       discount_price: product.discount_price?.toString() || "",
       category: product.category || "",
+      colors: colors,
       hero_image: null,
       hero_image_url: product.hero_image_url || "",
       existingFeaturedImages: product.featured_images || [],
@@ -151,6 +218,8 @@ const Admin = () => {
         original_price: parseFloat(form.original_price) || 0,
         discount_price: parseFloat(form.discount_price) || 0,
         category: form.category,
+        color: form.colors.map(item => item.color), // Extract colors as JSONB array
+        code: form.colors.map(item => item.name),   // Extract names as JSONB array
         hero_image_url: heroImageUrl,
         featured_images: finalFeaturedImages,
       };
@@ -439,6 +508,70 @@ const Admin = () => {
                     </div>
                   </div>
 
+                  {/* Multiple Colors Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="block text-sm font-medium text-slate-700">
+                        <span className="inline-block w-4 h-4 mr-1 rounded-full border bg-gradient-to-r from-red-500 via-blue-500 to-green-500"></span>
+                        Product Colors
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addColor}
+                        className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg transition-colors"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Color
+                      </button>
+                    </div>
+                    
+                    {form.colors.length === 0 ? (
+                      <div className="text-center py-8 border-2 border-dashed border-slate-300 rounded-lg">
+                        <div className="text-slate-400 mb-2">No colors added yet</div>
+                        <button
+                          type="button"
+                          onClick={addColor}
+                          className="text-blue-500 hover:text-blue-600 font-medium"
+                        >
+                          Click to add your first color
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {form.colors.map((colorItem, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
+                              <input
+                                type="color"
+                                value={colorItem.color}
+                                onChange={(e) => updateColor(index, 'color', e.target.value)}
+                                className="w-12 h-12 rounded-lg border border-slate-300 cursor-pointer"
+                              />
+                              <div className="px-2 py-1 bg-white rounded text-xs font-mono text-slate-600 border">
+                                {colorItem.color}
+                              </div>
+                            </div>
+                            <input
+                              type="text"
+                              value={colorItem.name}
+                              onChange={(e) => updateColor(index, 'name', e.target.value)}
+                              placeholder="Color name (e.g., Royal Blue)"
+                              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-slate-900"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeColor(index)}
+                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       <FileText className="inline h-4 w-4 mr-1" />
@@ -663,6 +796,24 @@ const Admin = () => {
                               <Package className="h-4 w-4 text-slate-400" />
                               <span className="text-slate-600">Qty: <span className="font-medium text-slate-900">{product.quantity}</span></span>
                             </div>
+                            {product.colors && product.colors.length > 0 && (
+                              <div className="sm:col-span-2 lg:col-span-3">
+                                <span className="text-slate-600 block mb-2">Colors:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {product.colors.map((colorItem, idx) => (
+                                    <div key={idx} className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
+                                      <div 
+                                        className="w-3 h-3 rounded-full border border-slate-300"
+                                        style={{ backgroundColor: colorItem.color }}
+                                        title={colorItem.name}
+                                      ></div>
+                                      <span className="text-xs font-medium text-slate-900">{colorItem.name}</span>
+                                      <span className="text-xs text-slate-400 font-mono">({colorItem.color})</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap gap-4 mt-3">

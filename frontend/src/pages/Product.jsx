@@ -11,6 +11,7 @@ const Product = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [activeImg, setActiveImg] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(null); // New state for selected color
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [cartCount, setCartCount] = useState(
@@ -53,7 +54,32 @@ const Product = () => {
         .select("*")
         .eq("id", id)
         .single();
-      if (!error) setProduct(data);
+      if (!error && data) {
+        // Convert JSONB color and code fields to colors array format
+        let colors = [];
+        if (data.color && data.code) {
+          const colorArray = Array.isArray(data.color) ? data.color : [];
+          const codeArray = Array.isArray(data.code) ? data.code : [];
+          const maxLength = Math.max(colorArray.length, codeArray.length);
+          
+          for (let i = 0; i < maxLength; i++) {
+            colors.push({
+              color: colorArray[i] || "#000000",
+              name: codeArray[i] || ""
+            });
+          }
+        }
+        
+        setProduct({
+          ...data,
+          colors: colors
+        });
+        
+        // Set the first color as default selected color
+        if (colors.length > 0) {
+          setSelectedColor(colors[0]);
+        }
+      }
     } catch (error) {
       console.error("Error fetching product:", error);
     } finally {
@@ -132,6 +158,7 @@ const Product = () => {
         availableQuantity: product.quantity,
         fabric: product.fabric,
         category: product.category,
+        selectedColor: selectedColor, // Add selected color to cart item
         addedAt: new Date().toISOString() // Add timestamp to track when item was added
       });
     }
@@ -162,6 +189,7 @@ const Product = () => {
       quantity: 1,
       fabric: product.fabric,
       category: product.category,
+      selectedColor: selectedColor, // Add selected color to wishlist item
     });
     localStorage.setItem("wishlistItems", JSON.stringify(wishlist));
     setIsWishlisted(true);
@@ -185,6 +213,20 @@ const Product = () => {
   const decreaseQuantity = () => {
     if (quantity > 1) {
       setQuantity(prev => prev - 1);
+    }
+  };
+
+  // Handle color selection and switch to corresponding image
+  const handleColorSelect = (colorItem, colorIndex) => {
+    setSelectedColor(colorItem);
+    
+    // Switch to the corresponding image (assuming each color corresponds to an image index)
+    // If there are multiple images, map color index to image index
+    if (images.length > colorIndex) {
+      setActiveImg(colorIndex);
+    } else if (images.length > 0) {
+      // If there are fewer images than colors, cycle through available images
+      setActiveImg(colorIndex % images.length);
     }
   };
 
@@ -411,8 +453,30 @@ const Product = () => {
                     <span className="text-gray-500 block">Stock</span>
                     <span className="font-medium text-green-600">{product.quantity} available</span>
                   </div>
+                  {product.colors && product.colors.length > 0 && (
+                    <div className="col-span-2">
+                      <span className="text-gray-800 block mb-2 font-heading text-2xl">Available Colors</span>
+                      <div className="flex flex-wrap gap-3">
+                        {product.colors.map((colorItem, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleColorSelect(colorItem, idx)}
+                            className={`w-8 h-8 rounded-full border-2 shadow-sm transition-all cursor-pointer hover:scale-110 ${
+                              selectedColor?.color === colorItem.color 
+                                ? 'border-fuchsia-500 ring-2 ring-fuchsia-200 scale-110' 
+                                : 'border-gray-300 hover:border-fuchsia-300'
+                            }`}
+                            style={{ backgroundColor: colorItem.color }}
+                            title={colorItem.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
+
+
 
               {/* Product Description Section */}
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
@@ -482,6 +546,7 @@ const Product = () => {
         fabric: product.fabric,
         category: product.category,
         availableQuantity: product.quantity,
+        selectedColor: selectedColor, // Add selected color to buy now item
       };
       localStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
       navigate("/payment"); // ✅ Redirect to payment page

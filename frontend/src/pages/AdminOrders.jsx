@@ -61,6 +61,7 @@ async function fetchAllOrders() {
 
                   // add image from products table if missing
                   let productImage = item?.hero_image_url || item?.image_url || item?.image || "";
+                  let productColors = [];
 
                   if (!productImage && item?.id) {
                     const { data: product } = await supabase
@@ -74,6 +75,36 @@ async function fetchAllOrders() {
                     }
                   }
 
+                  // Fetch current color information from products table
+                  if (item?.id) {
+                    const { data: product } = await supabase
+                      .from("products")
+                      .select("color, code")
+                      .eq("id", item.id)
+                      .single();
+
+                    if (product && product.color && product.code) {
+                      const colorArray = Array.isArray(product.color) ? product.color : [];
+                      const codeArray = Array.isArray(product.code) ? product.code : [];
+                      const maxLength = Math.max(colorArray.length, codeArray.length);
+                      
+                      for (let i = 0; i < maxLength; i++) {
+                        productColors.push({
+                          color: colorArray[i] || "#000000",
+                          name: codeArray[i] || ""
+                        });
+                      }
+                    }
+                  }
+
+                  // Fallback to old single color format if no colors from DB
+                  if (productColors.length === 0 && item?.color && item?.code) {
+                    productColors.push({
+                      color: item.color,
+                      name: item.code
+                    });
+                  }
+
                   return {
                     ...item,
                     id: item?.id || "",
@@ -84,6 +115,7 @@ async function fetchAllOrders() {
                     discount_price: price,
                     original_price: safeNumber(item?.original_price || item?.price, 0),
                     hero_image_url: productImage,
+                    colors: productColors, // Array of color objects
                     amount: price * quantity,
                   };
                 })
@@ -271,6 +303,23 @@ async function fetchAllOrders() {
                                         <p className="text-xs text-gray-500">Product ID: {item.id}</p>
                                         <p className="text-xs text-gray-500">Category: {item.category}</p>
                                         <p className="text-xs text-gray-500">Fabric: {item.fabric}</p>
+                                        {item.colors && item.colors.length > 0 && (
+                                          <div className="mt-1">
+                                            <span className="text-xs text-gray-500">Colors:</span>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                              {item.colors.map((colorItem, colorIdx) => (
+                                                <div key={colorIdx} className="flex items-center gap-1">
+                                                  <div 
+                                                    className="w-3 h-3 rounded-full border border-gray-300"
+                                                    style={{ backgroundColor: colorItem.color }}
+                                                    title={colorItem.name}
+                                                  ></div>
+                                                  <span className="text-xs text-gray-700 font-medium">{colorItem.name}</span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                       <div className="text-right">
                                         <p className="text-sm font-medium text-gray-900">
@@ -421,6 +470,23 @@ async function fetchAllOrders() {
                                     <div className="text-xs text-gray-500">
                                       {item.fabric} | {item.category}
                                     </div>
+                                    {item.colors && item.colors.length > 0 && (
+                                      <div className="mt-1">
+                                        <span className="text-xs text-gray-500">Colors:</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {item.colors.map((colorItem, colorIdx) => (
+                                            <div key={colorIdx} className="flex items-center gap-1">
+                                              <div 
+                                                className="w-3 h-3 rounded-full border border-gray-300"
+                                                style={{ backgroundColor: colorItem.color }}
+                                                title={colorItem.name}
+                                              ></div>
+                                              <span className="text-xs text-gray-700 font-medium">{colorItem.name}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                     <div className="mt-2 text-sm text-gray-600">
                                       Quantity: {item.quantity}
                                     </div>
