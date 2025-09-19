@@ -181,25 +181,15 @@ const Home = () => {
         
         console.log(`✅ Products loaded in ${responseTime}ms`);
       } else {
-        // Fallback to static data if database fails
-        setHeroProduct({
-          id: "hero-fallback",
-          title: "Premium Banarasi Silk Saree",
-          hero_image_url: "banarasi.jpg",
-          discount_price: "2999"
-        });
+        // No products found - don't show any hero product or fallback
+        setHeroProduct(null);
         setProducts([]);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
       trackApiCall('products-combined-error', Date.now() - startTime);
-      // Fallback to static data
-      setHeroProduct({
-        id: "hero-fallback",
-        title: "Premium Banarasi Silk Saree",
-        hero_image_url: "banarasi.jpg",
-        discount_price: "2999"
-      });
+      // No products available - don't show fallback
+      setHeroProduct(null);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -207,11 +197,7 @@ const Home = () => {
   }
 
   const handleProductClick = (productId) => {
-    if (productId === "hero-fallback") {
-      navigate('/category/Banarasi');
-    } else {
-      navigate(`/product/${productId}`);
-    }
+    navigate(`/product/${productId}`);
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -360,9 +346,15 @@ const Home = () => {
                 </div>
               </div>
             ) : (
-              // Loading skeleton for hero image
-              <div className="relative order-first lg:order-last animate-pulse">
-                <div className="w-full h-64 sm:h-80 lg:h-[500px] bg-gray-200 rounded-2xl"></div>
+              // No hero product available - show placeholder or empty space
+              <div className="relative order-first lg:order-last animate-fade-in-up">
+                <div className="w-full h-64 sm:h-80 lg:h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="text-center p-8">
+                    <div className="text-4xl sm:text-6xl mb-4">📦</div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-600 mb-2">No Featured Product</h3>
+                    <p className="text-gray-500 text-sm sm:text-base">Upload products to showcase here</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
