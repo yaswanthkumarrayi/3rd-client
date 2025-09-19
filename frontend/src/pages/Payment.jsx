@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import PaymentGatewaySelector from "../components/PaymentGatewaySelector";
 import { supabase } from "../supabaseClient";
-import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail } from "lucide-react";
+import { Check, ShoppingCart, User, CreditCard, MapPin, Phone, Mail, AlertCircle } from "lucide-react";
 import { emailService } from "../services/emailService";
+import { scrollToElement } from "../utils/scrollToTop";
 
 function Payment() {
   const navigate = useNavigate();
+  const errorRef = useRef(null);
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [cartItems, setCartItems] = useState([]);
@@ -17,7 +18,6 @@ function Payment() {
   const [loading, setLoading] = useState(true);
   const [orderDetails, setOrderDetails] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('razorpay');
   const [userDetails, setUserDetails] = useState({
     full_name: "",
     email: "",
@@ -27,6 +27,16 @@ function Payment() {
     state: "",
     pincode: ""
   });
+
+  // Auto-scroll to error when error occurs
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  }, [error]);
 
   const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
@@ -930,12 +940,10 @@ function Payment() {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
+            <div ref={errorRef} className="bg-red-50 border-l-4 border-red-500 p-3 sm:p-4 rounded-lg mb-4 sm:mb-6 animate-pulse">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
+                  <AlertCircle className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
                   <p className="text-red-800 font-medium text-sm sm:text-base">{error}</p>
@@ -1080,17 +1088,9 @@ function Payment() {
                         </div>
                       </div>
                       <div className="text-center">
-                        <p className="text-gray-700 font-medium text-sm sm:text-base">🔒 SSL Secured Payment Gateway</p>
+                        <p className="text-gray-700 font-medium text-sm sm:text-base">🔒 Secure Razorpay Payment</p>
                         <p className="text-xs sm:text-sm text-gray-600 mt-1">Your payment information is encrypted and secure</p>
                       </div>
-                    </div>
-
-                    {/* Payment Gateway Selection */}
-                    <div className="mb-4 sm:mb-6">
-                      <PaymentGatewaySelector 
-                        selectedGateway={selectedPaymentGateway}
-                        onGatewaySelect={setSelectedPaymentGateway}
-                      />
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3">

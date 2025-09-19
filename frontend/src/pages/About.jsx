@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Footer from "../components/Footer"
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Shield, 
@@ -7,7 +9,6 @@ import {
   Truck, 
   Award, 
   Heart, 
-  CheckCircle, 
   Users, 
   TrendingUp,
   Instagram,
@@ -39,7 +40,7 @@ const values = [
   {
     title: "Reliable Delivery",
     desc: "Fast and secure shipping ensures your sarees reach you in perfect condition.",
-    icon: CheckCircle,
+    icon: Award,
   },
 ];
 
@@ -52,31 +53,32 @@ const features = [
 
 const About = () => {
   const [visible, setVisible] = useState(false);
-const [hoveredCard, setHoveredCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(timer);
+    
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
-  const handleBackToHome = () => {
-    // This would typically use React Router navigation
-    console.log("Navigate to home");
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-fuchsia-50">
+    <div className="min-h-screen bg-gradient-to-br from-white to-fuchsia-50 flex flex-col">
+      <Header />
+      
       {/* Header with Back Button */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-fuchsia-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="sticky top-16 sm:top-20 z-50 bg-white/80 backdrop-blur-md border-b border-fuchsia-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <button
-                      onClick={() => window.history.back()}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-fuchsia-600 text-white font-medium hover:bg-fuchsia-700 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:ring-offset-2"
-                    >
-                      <ArrowLeft size={18} />
-                      <span className="hidden sm:inline">Back to Home</span>
-                      <span className="sm:hidden">Back</span>
-                    </button>
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-fuchsia-600 text-white font-medium hover:bg-fuchsia-700 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 focus:ring-offset-2 text-sm sm:text-base"
+          >
+            <ArrowLeft size={16} className="sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Back to Home</span>
+            <span className="sm:hidden">Back</span>
+          </button>
         </div>
       </div>
 

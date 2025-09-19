@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
+import { scrollToTop } from "./utils/scrollToTop";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -29,6 +30,17 @@ import ViewAllProducts from "./pages/ViewAllProducts";
 // WhatsApp phone number
 const WHATSAPP_NUMBER = "9704447158";
 
+// Component to handle scroll to top on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    scrollToTop('instant');
+  }, [pathname]);
+
+  return null;
+}
+
 // Protected Route for Admin
 const ProtectedAdminRoute = ({ children }) => {
   const location = useLocation();
@@ -44,6 +56,7 @@ const ProtectedAdminRoute = ({ children }) => {
 const App = () => {
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />

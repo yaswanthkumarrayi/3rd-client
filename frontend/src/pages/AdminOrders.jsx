@@ -25,15 +25,28 @@ async function fetchAllOrders() {
     const ordersWithUserDetails = await Promise.all(
       orders.map(async (order) => {
         if (order.user_email) {
-          const { data: userData } = await supabase
-            .from("users")
-            .select("full_name")
-            .eq("email", order.user_email)
-            .single();
-          return {
-            ...order,
-            users: userData || null
-          };
+          try {
+            const { data: userData, error } = await supabase
+              .from("users")
+              .select("full_name")
+              .eq("email", order.user_email)
+              .maybeSingle();
+            
+            if (error) {
+              console.warn("Error fetching user data for email:", order.user_email, error);
+            }
+            
+            return {
+              ...order,
+              users: userData || null
+            };
+          } catch (error) {
+            console.warn("Failed to fetch user data for email:", order.user_email, error);
+            return {
+              ...order,
+              users: null
+            };
+          }
         }
         return order;
       })
