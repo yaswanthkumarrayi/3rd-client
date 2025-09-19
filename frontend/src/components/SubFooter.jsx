@@ -22,7 +22,7 @@ const Developer = () => {
               This website is made by{' '}
               <span
                 onClick={() => setShowModal(true)}
-                className="cursor-pointer text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-300 underline"
+                className="cursor-pointer text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-300 underline font-heading text-2xl"
               >
                 YASH
               </span>
