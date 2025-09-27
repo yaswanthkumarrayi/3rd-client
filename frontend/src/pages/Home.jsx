@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import FastImage from "../components/FastImage";
 import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
 import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE, getThumbnail, getUltraFastThumbnail } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
@@ -101,7 +102,6 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState({});
   const [isMobile, setIsMobile] = useState(false);
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const PRODUCTS_PER_PAGE = 6; // Show only 6 featured products on home page
@@ -290,53 +290,16 @@ const Home = () => {
               <div className="relative group cursor-pointer order-first lg:order-last animate-fade-in-up"
                    onClick={() => handleProductClick(heroProduct.id)}>
                 <div className="relative">
-                  {/* Blur placeholder while image loads */}
-                  {imageLoadingStates[`hero-${heroProduct.id}`] !== false && (
-                    <div 
-                      className="absolute inset-0 rounded-2xl"
-                      style={{
-                        backgroundImage: `url(${createBlurPlaceholder(800, 500)})`,
-                        backgroundSize: 'cover',
-                        filter: 'blur(10px)',
-                        zIndex: 1
-                      }}
-                    />
-                  )}
-                  <img
-                    src={optimizeImage(heroProduct.hero_image_url, 'hero')}
+                  <FastImage
+                    src={heroProduct.hero_image_url}
                     alt={heroProduct.title}
-                    loading="eager"
+                    size="hero"
+                    className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 transition-all duration-${isMobile ? '300' : '500'} ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'}`}
+                    priority={true}
+                    showLoader={true}
+                    fallback="/banarasi.jpg"
                     width="800"
                     height="500"
-                    className={`w-full h-64 sm:h-80 lg:h-[500px] object-cover rounded-2xl shadow-xl border border-gray-200 transition-all duration-${isMobile ? '300' : '500'} ${isMobile ? '' : 'group-hover:shadow-2xl group-hover:scale-[1.02]'} ${imageLoadingStates[`hero-${heroProduct.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
-                    style={{
-                      zIndex: 2,
-                      position: 'relative'
-                    }}
-                    onLoad={(e) => {
-                      const loadTime = Date.now() - (e.target.dataset.startTime || Date.now());
-                      trackImageLoad(e.target.src, loadTime);
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`hero-${heroProduct.id}`]: false
-                      }));
-                    }}
-                    onLoadStart={(e) => {
-                      e.target.dataset.startTime = Date.now();
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`hero-${heroProduct.id}`]: true
-                      }));
-                    }}
-                    onError={(e) => {
-                      trackImageError(e.target.src);
-                      // Fallback to local image if hero image fails to load
-                      e.target.src = "banarasi.jpg";
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`hero-${heroProduct.id}`]: false
-                      }));
-                    }}
                   />
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/30 via-transparent to-transparent" style={{zIndex: 3}}></div>
                   
@@ -440,49 +403,16 @@ const Home = () => {
                 className={`group bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden ${isMobile ? '' : 'hover:shadow-2xl hover:-translate-y-2'} transition-all duration-500 cursor-pointer animate-fade-in-up`}
               >
                 <div className="relative overflow-hidden">
-                  {/* Blur placeholder while image loads */}
-                  {imageLoadingStates[`product-${product.id}`] !== false && (
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        backgroundImage: `url(${createBlurPlaceholder(400, 320)})`,
-                        backgroundSize: 'cover',
-                        filter: 'blur(8px)',
-                        zIndex: 1
-                      }}
-                    />
-                  )}
-                  <img
-                    src={getUltraFastThumbnail(product.hero_image_url)}
+                  <FastImage
+                    src={product.hero_image_url}
                     alt={product.title}
-                    loading="lazy"
+                    size="thumbnail"
+                    className={`w-full h-48 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'}`}
+                    showLoader={true}
+                    priority={idx < 3}
+                    fallback="/Designer.jpg"
                     width="400"
                     height="320"
-                    className={`w-full h-48 sm:h-64 object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
-                    style={{
-                      zIndex: 2,
-                      position: 'relative'
-                    }}
-                    onLoad={() => {
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`product-${product.id}`]: false
-                      }));
-                    }}
-                    onLoadStart={() => {
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`product-${product.id}`]: true
-                      }));
-                    }}
-                    onError={(e) => {
-                      // Fallback to default image if product image fails
-                      e.target.src = "Designer.jpg";
-                      setImageLoadingStates(prev => ({
-                        ...prev,
-                        [`product-${product.id}`]: false
-                      }));
-                    }}
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`} style={{zIndex: 3}}></div>
                   
@@ -703,86 +633,6 @@ const Home = () => {
 
       <Footer />
 
-      <style jsx>{`
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fade-in-up {
-          animation: fade-in-up 0.8s ease-out forwards;
-        }
-        
-        /* Mobile performance optimizations */
-        @media (max-width: 768px) {
-          .animate-fade-in-up {
-            animation-duration: 0.4s;
-          }
-          
-          /* Disable complex animations on mobile for performance */
-          .animate-pulse {
-            animation: none;
-          }
-          
-          .animate-bounce {
-            animation: none;
-          }
-          
-          /* Optimize transitions for mobile */
-          * {
-            transition-duration: 0.2s !important;
-          }
-          
-          /* Image optimization for mobile */
-          img {
-            image-rendering: optimizeSpeed;
-            image-rendering: -moz-crisp-edges;
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: optimize-contrast;
-            /* Force browser to use faster rendering */
-            transform: translateZ(0);
-            backface-visibility: hidden;
-          }
-        }
-        
-        /* Optimize all images for faster loading */
-        img {
-          /* Enable hardware acceleration */
-          transform: translateZ(0);
-          /* Optimize for speed over quality on mobile */
-          image-rendering: optimizeSpeed;
-        }
-        
-        /* Preload hero image optimization */
-        .hero-image {
-          content-visibility: auto;
-          contain-intrinsic-size: 500px;
-        }
-        
-        /* Smooth scrolling */
-        html {
-          scroll-behavior: smooth;
-        }
-        
-        /* Backdrop blur support */
-        .backdrop-blur-sm {
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
-        }
-      `}</style>
     </div>
   );
 };

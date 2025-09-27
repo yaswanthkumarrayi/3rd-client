@@ -110,12 +110,26 @@ const Product = () => {
 
   async function fetchProduct() {
     try {
-      // Fetch all product data to avoid column mismatch issues
-      const { data, error } = await supabase
+      // First try with basic columns, fallback to * if needed
+      let { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select(`
+          id, title, price, description, fabric, quantity,
+          color, code, created_at
+        `)
         .eq("id", id)
         .single();
+      
+      // If specific columns fail, try fetching all columns
+      if (error) {
+        const result = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", id)
+          .single();
+        data = result.data;
+        error = result.error;
+      }
       
       if (!error && data) {
         // Convert JSONB color and code fields to colors array format
@@ -166,6 +180,15 @@ const Product = () => {
     const wishlist = JSON.parse(localStorage.getItem("wishlistItems") || "[]");
     setIsWishlisted(wishlist.some(item => item.id === product?.id));
   }, [product]);
+
+  function addToCart() {
+    if (!product) return;
+    
+    const cart = JSON.parse(localStorage.getItem("cartItems") || "[]");
+    const existingIndex = cart.findIndex(item => item.id === product.id);
+
+    // Check if item is already in cart
+    if (existingIndex !== -1) {
 
   function addToCart() {
     if (!product) return;

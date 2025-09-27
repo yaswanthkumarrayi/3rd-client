@@ -25,7 +25,8 @@ const initialProduct = {
   original_price: "",
   discount_price: "",
   category: "",
-  colors: [], // Array of color objects: [{color: "#000000", name: "Black", images: []}] - will be converted to JSONB fields
+  colors: [], // Array of color objects: [{color: "#000000", name: "Black"}]
+  images: [], // Maximum 4 images total (including hero)
   hero_image: null,
   hero_image_url: "",
   isEditing: false
@@ -96,14 +97,12 @@ const Admin = () => {
         if (product.color && product.code) {
           const colorArray = Array.isArray(product.color) ? product.color : [];
           const codeArray = Array.isArray(product.code) ? product.code : [];
-          const imagesArray = Array.isArray(product.color_images) ? product.color_images : [];
           const maxLength = Math.max(colorArray.length, codeArray.length);
           
           for (let i = 0; i < maxLength; i++) {
             colors.push({
               color: colorArray[i] || "#000000",
-              name: codeArray[i] || "",
-              images: imagesArray[i] || []
+              name: codeArray[i] || ""
             });
           }
         }
@@ -140,16 +139,28 @@ const Admin = () => {
     }
   };
 
-  // Handle color image upload (max 4 images per color)
-  const handleColorImageUpload = (colorIndex, files) => {
-    const selectedFiles = Array.from(files).slice(0, 4); // Limit to 4 images
+  // Handle multiple image upload (max 4 total including hero)
+  const handleImageUpload = (files) => {
+    const currentImageCount = (form.images?.length || 0) + (form.hero_image ? 1 : 0);
+    const availableSlots = 4 - currentImageCount;
+    
+    if (availableSlots <= 0) {
+      alert("Maximum 4 images allowed (including hero image)");
+      return;
+    }
+    
+    const selectedFiles = Array.from(files).slice(0, availableSlots);
     setForm(prev => ({
       ...prev,
-      colors: prev.colors.map((color, index) => 
-        index === colorIndex 
-          ? { ...color, images: selectedFiles }
-          : color
-      )
+      images: [...(prev.images || []), ...selectedFiles]
+    }));
+  };
+
+  // Remove an image from the list
+  const removeImage = (index) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
     }));
   };
 
@@ -157,7 +168,7 @@ const Admin = () => {
   const addColor = () => {
     setForm(prev => ({
       ...prev,
-      colors: [...prev.colors, { color: "#000000", name: "", images: [] }]
+      colors: [...prev.colors, { color: "#000000", name: "" }]
     }));
   };
 
@@ -189,7 +200,7 @@ const Admin = () => {
     return supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
   }
 
-  // Handle edit click - FIXED for JSONB structure with color images
+  // Handle edit click - SIMPLIFIED structure
   const handleEdit = (product) => {
     console.log("Editing product:", product); // Debug log
     
@@ -198,15 +209,12 @@ const Admin = () => {
     if (product.color && product.code) {
       const colorArray = Array.isArray(product.color) ? product.color : [];
       const codeArray = Array.isArray(product.code) ? product.code : [];
-      const imagesArray = Array.isArray(product.color_images) ? product.color_images : [];
       const maxLength = Math.max(colorArray.length, codeArray.length);
       
       for (let i = 0; i < maxLength; i++) {
         colors.push({
           color: colorArray[i] || "#000000",
-          name: codeArray[i] || "",
-          images: [], // Reset images for editing
-          existingImages: imagesArray[i] || [] // Store existing images separately
+          name: codeArray[i] || ""
         });
       }
     }
@@ -221,6 +229,8 @@ const Admin = () => {
       discount_price: product.discount_price?.toString() || "",
       category: product.category || "",
       colors: colors,
+      images: [], // Reset for new uploads
+      existingImages: Array.isArray(product.featured_images) ? product.featured_images : [],
       hero_image: null,
       hero_image_url: product.hero_image_url || "",
       isEditing: true
@@ -228,7 +238,7 @@ const Admin = () => {
     setShowForm(true);
   };
 
-  // Add or update product - FIXED with color images
+  // Add or update product - SIMPLIFIED with max 4 images total
   async function handleSubmit(e) {
     e.preventDefault();
     setUploading(true);
@@ -236,30 +246,29 @@ const Admin = () => {
     console.log("Submitting form:", form); // Debug log
 
     try {
-      // Upload hero image only if a new one is selected
+      // Upload hero image if provided
       let heroImageUrl = form.hero_image_url;
       if (form.hero_image) {
         heroImageUrl = await uploadImage(form.hero_image);
       }
 
-      // Upload images for each color (max 4 per color)
-      const colorImagesArrays = [];
-      for (let i = 0; i < form.colors.length; i++) {
-        const color = form.colors[i];
-        let colorImages = [];
+      // Upload additional images (max 3 more to make total 4 with hero)
+      const uploadedImages = [];
+      if (form.images && form.images.length > 0) {
+        const maxAdditionalImages = 3; // 4 total - 1 hero = 3 additional
+        const imagesToUpload = form.images.slice(0, maxAdditionalImages);
         
-        if (color.images && color.images.length > 0) {
-          // Upload new images for this color
-          colorImages = await Promise.all(
-            color.images.slice(0, 4).map(uploadImage) // Ensure max 4 images
-          );
-        } else if (color.existingImages && color.existingImages.length > 0) {
-          // Keep existing images if no new ones uploaded
-          colorImages = color.existingImages;
+        for (const imageFile of imagesToUpload) {
+          const imageUrl = await uploadImage(imageFile);
+          uploadedImages.push(imageUrl);
         }
-        
-        colorImagesArrays.push(colorImages);
       }
+
+      // Combine new uploaded images with existing ones
+      const allImages = [
+        ...(form.existingImages || []),
+        ...uploadedImages
+      ].slice(0, 3); // Ensure max 3 additional images
 
       const productData = {
         title: form.title,
@@ -271,8 +280,8 @@ const Admin = () => {
         category: form.category,
         color: form.colors.map(item => item.color), // Extract colors as JSONB array
         code: form.colors.map(item => item.name),   // Extract names as JSONB array
-        color_images: colorImagesArrays,            // Array of arrays - each color has up to 4 images
         hero_image_url: heroImageUrl,
+        featured_images: allImages.length > 0 ? allImages : null, // Use featured_images column
       };
 
       console.log("Product data to save:", productData); // Debug log
@@ -625,82 +634,75 @@ const Admin = () => {
                                 <X className="h-4 w-4" />
                               </button>
                             </div>
-
-                            {/* Color Images Upload */}
-                            <div className="mt-4">
-                              <div className="flex items-center justify-between mb-3">
-                                <label className="text-sm font-medium text-slate-700">
-                                  <ImageIcon className="inline h-4 w-4 mr-1" />
-                                  Images for {colorItem.name || 'this color'} (Max 4)
-                                </label>
-                                <span className="text-xs text-slate-500">
-                                  {colorItem.images?.length || 0}/4 uploaded
-                                </span>
-                              </div>
-                              
-                              {/* Existing Images (if editing) */}
-                              {form.isEditing && colorItem.existingImages && colorItem.existingImages.length > 0 && (
-                                <div className="mb-3">
-                                  <p className="text-xs text-slate-600 mb-2">Current images:</p>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {colorItem.existingImages.map((img, imgIdx) => (
-                                      <img
-                                        key={imgIdx}
-                                        src={optimizeImage(img, 'thumbnail')}
-                                        alt={`${colorItem.name} ${imgIdx + 1}`}
-                                        className="w-16 h-16 object-cover rounded border border-slate-200"
-                                        loading="lazy"
-                                      />
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Image Upload */}
-                              <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-slate-400 transition-colors">
-                                <div className="text-center">
-                                  <ImageIcon className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={(e) => handleColorImageUpload(index, e.target.files)}
-                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-600 file:text-white hover:file:bg-slate-700 file:cursor-pointer"
-                                  />
-                                  <p className="text-xs text-slate-500 mt-1">
-                                    {form.isEditing ? 'Upload new images (will replace existing)' : 'Select up to 4 images for this color'}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Preview selected images */}
-                              {colorItem.images && colorItem.images.length > 0 && (
-                                <div className="mt-3">
-                                  <p className="text-xs text-slate-600 mb-2">Selected images:</p>
-                                  <div className="flex gap-2 flex-wrap">
-                                    {Array.from(colorItem.images).slice(0, 4).map((file, imgIdx) => (
-                                      <div key={imgIdx} className="relative">
-                                        <img
-                                          src={URL.createObjectURL(file)}
-                                          alt={`Preview ${imgIdx + 1}`}
-                                          className="w-16 h-16 object-cover rounded border border-slate-200"
-                                        />
-                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
-                                          {imgIdx + 1}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  {colorItem.images.length > 4 && (
-                                    <p className="text-xs text-orange-600 mt-1">
-                                      Only first 4 images will be uploaded
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Product Images Section */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <ImageIcon className="inline h-4 w-4 mr-1" />
+                      Product Images (Max 4 total including hero image)
+                    </label>
+                    
+                    {/* Show existing images if editing */}
+                    {form.isEditing && form.existingImages && form.existingImages.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-slate-600 mb-2">Current images ({form.existingImages.length}):</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {form.existingImages.map((img, idx) => (
+                            <img
+                              key={idx}
+                              src={optimizeImage(img, 'thumbnail')}
+                              alt={`Current ${idx + 1}`}
+                              className="w-16 h-16 object-cover rounded border border-slate-200"
+                              loading="lazy"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-slate-400 transition-colors">
+                      <div className="text-center">
+                        <ImageIcon className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => handleImageUpload(e.target.files)}
+                          className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-600 file:text-white hover:file:bg-slate-700 file:cursor-pointer"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">
+                          Select additional images (Max 4 total including hero)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Preview new images */}
+                    {form.images && form.images.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs text-slate-600 mb-2">New images to upload ({form.images.length}):</p>
+                        <div className="flex gap-2 flex-wrap">
+                          {form.images.map((file, idx) => (
+                            <div key={idx} className="relative">
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={`New ${idx + 1}`}
+                                className="w-16 h-16 object-cover rounded border border-slate-200"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(idx)}
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center hover:bg-red-600"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

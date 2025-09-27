@@ -36,6 +36,18 @@
   transition: filter 0.3s ease-out;
 }
 
+/* Shimmer animation for image loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
 /* Text utilities */
 .line-clamp-2 {
   display: -webkit-box;
@@ -49,6 +61,79 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Animation utilities */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s ease-out forwards;
+}
+
+/* Mobile performance optimizations */
+@media (max-width: 768px) {
+  .animate-fade-in-up {
+    animation-duration: 0.4s;
+  }
+  
+  /* Disable complex animations on mobile for performance */
+  .animate-pulse {
+    animation: none !important;
+  }
+  
+  .animate-bounce {
+    animation: none !important;
+  }
+  
+  /* Optimize transitions for mobile */
+  * {
+    transition-duration: 0.2s !important;
+  }
+  
+  /* Image optimization for mobile */
+  img {
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    /* Force browser to use faster rendering */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* Optimize all images for faster loading */
+img {
+  /* Enable hardware acceleration */
+  transform: translateZ(0);
+  /* Optimize for speed over quality on mobile */
+  image-rendering: optimizeSpeed;
+}
+
+/* Preload hero image optimization */
+.hero-image {
+  content-visibility: auto;
+  contain-intrinsic-size: 500px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Backdrop blur support */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* Mobile viewport fix */
