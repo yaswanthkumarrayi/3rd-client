@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { Sparkles, ArrowRight, Filter, Grid, List, Search, ShoppingBag, Star, Heart, Eye } from "lucide-react";
-import { getThumbnail, createBlurPlaceholder } from "../utils/imageOptimizer";
+import { getThumbnail, getUltraFastThumbnail, createBlurPlaceholder } from "../utils/imageOptimizer";
 
 const Category = () => {
   const { name } = useParams();
@@ -30,7 +30,7 @@ const Category = () => {
       // First try exact match
       let { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("id, title, hero_image_url, discount_price, original_price, fabric, category, quantity")
         .eq("category", name)
         .order("created_at", { ascending: false });
       
@@ -38,7 +38,7 @@ const Category = () => {
       if (!error && (!data || data.length === 0)) {
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
           .from("products")
-          .select("*")
+          .select("id, title, hero_image_url, discount_price, original_price, fabric, category, quantity")
           .ilike("category", name)
           .order("created_at", { ascending: false });
         
@@ -50,7 +50,7 @@ const Category = () => {
       if (!error && (!data || data.length === 0)) {
         const { data: partialData, error: partialError } = await supabase
           .from("products")
-          .select("*")
+          .select("id, title, hero_image_url, discount_price, original_price, fabric, category, quantity")
           .ilike("category", `%${name}%`)
           .order("created_at", { ascending: false });
         
@@ -101,7 +101,7 @@ const Category = () => {
       >
         <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200">
           <img
-            src={getThumbnail(product.hero_image_url)}
+            src={getUltraFastThumbnail(product.hero_image_url)}
             alt={product.title}
             className="h-full w-full object-cover object-center group-hover:opacity-75"
           />
@@ -291,7 +291,7 @@ const Category = () => {
                       />
                     )}
                     <img
-                      src={getThumbnail(product.hero_image_url)}
+                      src={getUltraFastThumbnail(product.hero_image_url)}
                       alt={product.title}
                       loading="lazy"
                       width="200"

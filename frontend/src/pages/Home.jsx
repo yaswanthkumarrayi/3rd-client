@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
-import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE, getThumbnail } from "../utils/imageOptimizer";
+import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE, getThumbnail, getUltraFastThumbnail } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const testimonials = [
@@ -104,7 +104,7 @@ const Home = () => {
   const [imageLoadingStates, setImageLoadingStates] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const PRODUCTS_PER_PAGE = 8; // Show only 8 products on home page
+  const PRODUCTS_PER_PAGE = 6; // Show only 6 featured products on home page
   const navigate = useNavigate();
   
   // ✅ Simple performance monitoring
@@ -153,33 +153,39 @@ const Home = () => {
     };
   }, [isMobile]);
 
-  // ✅ OPTIMIZED: Fetch only 8 products for home page with thumbnails
+  // ✅ OPTIMIZED: Fetch only 7 products for home page (1 hero + 6 featured)
   async function fetchAllProducts() {
     try {
       const startTime = Date.now();
       
-      // Get 9 products in one query (1 for hero + 8 for grid)
+      // Get exactly 7 unique products in one optimized query
       const { data, error } = await supabase
         .from("products")
         .select("id, title, hero_image_url, discount_price, original_price, fabric, category")
         .order("created_at", { ascending: false })
-        .range(0, 8); // Get 9 products total (1 hero + 8 for grid)
+        .limit(7); // Get 7 products total (1 hero + 6 for featured grid)
       
       const responseTime = Date.now() - startTime;
-      trackApiCall('products-combined', responseTime);
+      trackApiCall('products-home', responseTime);
       
       if (!error && data && data.length > 0) {
+        // Remove duplicates by ID (just in case)
+        const uniqueProducts = data.filter((product, index, self) => 
+          index === self.findIndex(p => p.id === product.id)
+        );
+        
         // First product for hero
-        setHeroProduct(data[0]);
+        setHeroProduct(uniqueProducts[0]);
         
-        // Rest for grid (max 8 products)
-        setProducts(data.slice(1));
+        // Rest for featured grid (max 6 products)
+        setProducts(uniqueProducts.slice(1, 7));
         
-        // Preload critical thumbnail images
-        const criticalImages = data.slice(0, 4).map(p => p.hero_image_url);
+        // Preload critical thumbnail images (first 3 only)
+        const criticalImages = uniqueProducts.slice(0, 3).map(p => p.hero_image_url);
+        preloadImages(criticalImages, 'thumbnail');
         preloadImages(criticalImages, 'thumbnail');
         
-        console.log(`✅ Products loaded in ${responseTime}ms`);
+        console.log(`✅ Products loaded in ${responseTime}ms - Hero: 1, Featured: ${uniqueProducts.length - 1}`);
       } else {
         // No products found - don't show any hero product or fallback
         setHeroProduct(null);
@@ -187,7 +193,7 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Error fetching products:", error);
-      trackApiCall('products-combined-error', Date.now() - startTime);
+      trackApiCall('products-home-error', Date.now() - startTime);
       // No products available - don't show fallback
       setHeroProduct(null);
       setProducts([]);
@@ -447,7 +453,7 @@ const Home = () => {
                     />
                   )}
                   <img
-                    src={getThumbnail(product.hero_image_url)}
+                    src={getUltraFastThumbnail(product.hero_image_url)}
                     alt={product.title}
                     loading="lazy"
                     width="400"
@@ -582,7 +588,7 @@ const Home = () => {
               >
                 <div className="relative overflow-hidden h-40 sm:h-48 bg-gray-50">
                   <img
-                    src={getThumbnail(category.image)}
+                    src={getUltraFastThumbnail(category.image)}
                     alt={category.name}
                     loading="lazy"
                     width="300"

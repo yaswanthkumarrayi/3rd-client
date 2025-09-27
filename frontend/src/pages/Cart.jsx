@@ -63,7 +63,7 @@ const Cart = () => {
   async function fetchProfile(email) {
     const { data, error } = await supabase
       .from("users")
-      .select("*")
+      .select("full_name, email, phone")
       .eq("email", email)
       .single();
     if (!error && data) setProfile(data);

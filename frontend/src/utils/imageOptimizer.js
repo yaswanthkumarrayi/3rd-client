@@ -7,25 +7,25 @@ import React from 'react';
 
 // Default optimization parameters for fast loading
 const DEFAULT_TRANSFORMATIONS = {
-  width: 400,
-  quality: 70,
+  width: 300,
+  quality: 50,
   format: 'webp'
 };
 
-// Different sizes for different use cases
-// Thumbnail: 200px, 55% quality, WebP - optimized for MAX 200KB for ultra-fast loading on home/list pages
-// Card: 250px, 60% quality, WebP - for home page cards if needed
-// Hero: 800px, 80% quality, WebP - for hero sections
-// Product: 600px, 75% quality, WebP - optimized for fast product page loading (good balance)
-// ProductHigh: 1200px, 90% quality, WebP - highest quality for product details (only when needed)
-// Category: 300px, 70% quality, WebP - for category images
+// Different sizes for different use cases - HEAVILY OPTIMIZED FOR SPEED
+// Thumbnail: 150px, 45% quality, WebP - optimized for MAX 100KB for ultra-fast loading
+// Card: 200px, 50% quality, WebP - for home page cards 
+// Hero: 600px, 65% quality, WebP - for hero sections
+// Product: 400px, 60% quality, WebP - optimized for fast product page loading
+// ProductHigh: 800px, 75% quality, WebP - highest quality for product details
+// Category: 250px, 55% quality, WebP - for category images
 const IMAGE_SIZES = {
-  thumbnail: { width: 200, quality: 55, format: 'webp' }, // Optimized for MAX 200KB
-  card: { width: 250, quality: 60, format: 'webp' }, // For home page cards
-  hero: { width: 800, quality: 80, format: 'webp' },
-  product: { width: 600, quality: 75, format: 'webp' }, // Fast loading for product page
-  productHigh: { width: 1200, quality: 90, format: 'webp' }, // Highest quality for product details
-  category: { width: 300, quality: 70, format: 'webp' }
+  thumbnail: { width: 150, quality: 45, format: 'webp' }, // Optimized for MAX 100KB
+  card: { width: 200, quality: 50, format: 'webp' }, // For home page cards
+  hero: { width: 600, quality: 65, format: 'webp' },
+  product: { width: 400, quality: 60, format: 'webp' }, // Fast loading for product page
+  productHigh: { width: 800, quality: 75, format: 'webp' }, // Highest quality for product details
+  category: { width: 250, quality: 55, format: 'webp' }
 };
 
 /**
@@ -65,7 +65,16 @@ export function optimizeImage(imageUrl, size = 'card', customParams = {}) {
 }
 
 /**
- * Get optimized thumbnail for ultra-fast loading (max 200KB)
+ * Get super-fast loading thumbnail for ultra performance (max 50KB)
+ * @param {string} imageUrl - Original image URL
+ * @returns {string} Ultra-fast thumbnail URL
+ */
+export function getUltraFastThumbnail(imageUrl) {
+  return optimizeImage(imageUrl, 'thumbnail', { width: 120, quality: 35 });
+}
+
+/**
+ * Get optimized thumbnail for ultra-fast loading (max 100KB)
  * @param {string} imageUrl - Original image URL
  * @returns {string} Optimized thumbnail URL
  */

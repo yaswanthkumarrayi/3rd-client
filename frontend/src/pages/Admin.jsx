@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { optimizeImage } from "../utils/imageOptimizer";
 import { 
   Plus, 
   Upload, 
@@ -24,11 +25,9 @@ const initialProduct = {
   original_price: "",
   discount_price: "",
   category: "",
-  colors: [], // Array of color objects: [{color: "#000000", name: "Black"}] - will be converted to JSONB fields
+  colors: [], // Array of color objects: [{color: "#000000", name: "Black", images: []}] - will be converted to JSONB fields
   hero_image: null,
   hero_image_url: "",
-  featured_images: [],
-  existingFeaturedImages: [],
   isEditing: false
 };
 
@@ -47,33 +46,64 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMoreProducts, setHasMoreProducts] = useState(true);
   const navigate = useNavigate();
+  const PRODUCTS_PER_PAGE = 10;
 
-  // Fetch products
+  // Fetch products and orders
   useEffect(() => {
-    fetchProducts();
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          fetchProducts(),
+          fetchOrders()
+        ]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  async function fetchProducts() {
-    setLoading(true);
-    const { data, error } = await supabase.from("products").select("*");
+  async function fetchProducts(pageNum = 0) {
+    const offset = pageNum * PRODUCTS_PER_PAGE;
+    
+    const { data, error } = await supabase
+      .from("products")
+      .select("id, title, description, quantity, fabric, original_price, discount_price, category, hero_image_url, created_at")
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PRODUCTS_PER_PAGE - 1);
+    
     if (!error) {
+      // Debug: Log available columns
+      if (data && data.length > 0) {
+        console.log('Available product columns:', Object.keys(data[0]));
+      }
+      
+      // Check if we have more products
+      setHasMoreProducts(data && data.length === PRODUCTS_PER_PAGE);
+      setPage(pageNum);
+      
       // Convert JSONB color and code fields to colors array format for display
       const processedProducts = (data || []).map(product => {
         let colors = [];
+        // Only process colors if the fields exist
         if (product.color && product.code) {
           const colorArray = Array.isArray(product.color) ? product.color : [];
           const codeArray = Array.isArray(product.code) ? product.code : [];
+          const imagesArray = Array.isArray(product.color_images) ? product.color_images : [];
           const maxLength = Math.max(colorArray.length, codeArray.length);
           
           for (let i = 0; i < maxLength; i++) {
             colors.push({
               color: colorArray[i] || "#000000",
-              name: codeArray[i] || ""
+              name: codeArray[i] || "",
+              images: imagesArray[i] || []
             });
           }
         }
@@ -84,13 +114,18 @@ const Admin = () => {
         };
       });
       
-      setProducts(processedProducts);
+      setProducts(pageNum === 0 ? processedProducts : [...products, ...processedProducts]);
+    } else {
+      console.error('Error fetching products:', error);
     }
-    setLoading(false);
   }
 
   async function fetchOrders() {
-    const { data, error } = await supabase.from("orders").select("*");
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, status, created_at, amount, user_email")
+      .order('created_at', { ascending: false })
+      .limit(10); // Limit to recent orders for admin dashboard
     if (!error) setOrders(data || []);
   }
 
@@ -100,18 +135,29 @@ const Admin = () => {
     
     if (name === "hero_image") {
       setForm(prevForm => ({ ...prevForm, hero_image: files[0] }));
-    } else if (name === "featured_images") {
-      setForm(prevForm => ({ ...prevForm, featured_images: Array.from(files) }));
     } else {
       setForm(prevForm => ({ ...prevForm, [name]: value }));
     }
+  };
+
+  // Handle color image upload (max 4 images per color)
+  const handleColorImageUpload = (colorIndex, files) => {
+    const selectedFiles = Array.from(files).slice(0, 4); // Limit to 4 images
+    setForm(prev => ({
+      ...prev,
+      colors: prev.colors.map((color, index) => 
+        index === colorIndex 
+          ? { ...color, images: selectedFiles }
+          : color
+      )
+    }));
   };
 
   // Add a new color
   const addColor = () => {
     setForm(prev => ({
       ...prev,
-      colors: [...prev.colors, { color: "#000000", name: "" }]
+      colors: [...prev.colors, { color: "#000000", name: "", images: [] }]
     }));
   };
 
@@ -143,7 +189,7 @@ const Admin = () => {
     return supabase.storage.from("product-images").getPublicUrl(fileName).data.publicUrl;
   }
 
-  // Handle edit click - FIXED for JSONB structure
+  // Handle edit click - FIXED for JSONB structure with color images
   const handleEdit = (product) => {
     console.log("Editing product:", product); // Debug log
     
@@ -152,12 +198,15 @@ const Admin = () => {
     if (product.color && product.code) {
       const colorArray = Array.isArray(product.color) ? product.color : [];
       const codeArray = Array.isArray(product.code) ? product.code : [];
+      const imagesArray = Array.isArray(product.color_images) ? product.color_images : [];
       const maxLength = Math.max(colorArray.length, codeArray.length);
       
       for (let i = 0; i < maxLength; i++) {
         colors.push({
           color: colorArray[i] || "#000000",
-          name: codeArray[i] || ""
+          name: codeArray[i] || "",
+          images: [], // Reset images for editing
+          existingImages: imagesArray[i] || [] // Store existing images separately
         });
       }
     }
@@ -174,14 +223,12 @@ const Admin = () => {
       colors: colors,
       hero_image: null,
       hero_image_url: product.hero_image_url || "",
-      existingFeaturedImages: product.featured_images || [],
-      featured_images: [],
       isEditing: true
     });
     setShowForm(true);
   };
 
-  // Add or update product - FIXED
+  // Add or update product - FIXED with color images
   async function handleSubmit(e) {
     e.preventDefault();
     setUploading(true);
@@ -195,19 +242,23 @@ const Admin = () => {
         heroImageUrl = await uploadImage(form.hero_image);
       }
 
-      // Upload featured images
-      let featuredImageUrls = [];
-      if (form.featured_images.length > 0) {
-        featuredImageUrls = await Promise.all(
-          form.featured_images.map(uploadImage)
-        );
-      }
-
-      // Prepare the final featured images array
-      let finalFeaturedImages = form.existingFeaturedImages || [];
-      if (featuredImageUrls.length > 0) {
-        // If new images were uploaded, they replace the existing ones
-        finalFeaturedImages = featuredImageUrls;
+      // Upload images for each color (max 4 per color)
+      const colorImagesArrays = [];
+      for (let i = 0; i < form.colors.length; i++) {
+        const color = form.colors[i];
+        let colorImages = [];
+        
+        if (color.images && color.images.length > 0) {
+          // Upload new images for this color
+          colorImages = await Promise.all(
+            color.images.slice(0, 4).map(uploadImage) // Ensure max 4 images
+          );
+        } else if (color.existingImages && color.existingImages.length > 0) {
+          // Keep existing images if no new ones uploaded
+          colorImages = color.existingImages;
+        }
+        
+        colorImagesArrays.push(colorImages);
       }
 
       const productData = {
@@ -220,8 +271,8 @@ const Admin = () => {
         category: form.category,
         color: form.colors.map(item => item.color), // Extract colors as JSONB array
         code: form.colors.map(item => item.name),   // Extract names as JSONB array
+        color_images: colorImagesArrays,            // Array of arrays - each color has up to 4 images
         hero_image_url: heroImageUrl,
-        featured_images: finalFeaturedImages,
       };
 
       console.log("Product data to save:", productData); // Debug log
@@ -337,6 +388,12 @@ const Admin = () => {
       console.error("Delete error:", error);
     }
   }
+
+  const loadMoreProducts = () => {
+    if (!loading && hasMoreProducts) {
+      fetchProducts(page + 1);
+    }
+  };
 
   const handleCancelEdit = () => {
     setForm(initialProduct);
@@ -508,12 +565,12 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {/* Multiple Colors Section */}
+                  {/* Multiple Colors Section with Images */}
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <label className="block text-sm font-medium text-slate-700">
                         <span className="inline-block w-4 h-4 mr-1 rounded-full border bg-gradient-to-r from-red-500 via-blue-500 to-green-500"></span>
-                        Product Colors
+                        Product Colors & Images
                       </label>
                       <button
                         type="button"
@@ -537,10 +594,11 @@ const Admin = () => {
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-6">
                         {form.colors.map((colorItem, index) => (
-                          <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border">
-                            <div className="flex items-center gap-2">
+                          <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            {/* Color Header */}
+                            <div className="flex items-center gap-3 mb-4">
                               <span className="text-sm font-medium text-slate-600 w-8">#{index + 1}</span>
                               <input
                                 type="color"
@@ -551,21 +609,96 @@ const Admin = () => {
                               <div className="px-2 py-1 bg-white rounded text-xs font-mono text-slate-600 border">
                                 {colorItem.color}
                               </div>
+                              <input
+                                type="text"
+                                value={colorItem.name}
+                                onChange={(e) => updateColor(index, 'name', e.target.value)}
+                                placeholder="Color name (e.g., Royal Blue)"
+                                required
+                                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-slate-900"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeColor(index)}
+                                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
-                            <input
-                              type="text"
-                              value={colorItem.name}
-                              onChange={(e) => updateColor(index, 'name', e.target.value)}
-                              placeholder="Color name (e.g., Royal Blue)"
-                              className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white text-slate-900"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeColor(index)}
-                              className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
+
+                            {/* Color Images Upload */}
+                            <div className="mt-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <label className="text-sm font-medium text-slate-700">
+                                  <ImageIcon className="inline h-4 w-4 mr-1" />
+                                  Images for {colorItem.name || 'this color'} (Max 4)
+                                </label>
+                                <span className="text-xs text-slate-500">
+                                  {colorItem.images?.length || 0}/4 uploaded
+                                </span>
+                              </div>
+                              
+                              {/* Existing Images (if editing) */}
+                              {form.isEditing && colorItem.existingImages && colorItem.existingImages.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs text-slate-600 mb-2">Current images:</p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {colorItem.existingImages.map((img, imgIdx) => (
+                                      <img
+                                        key={imgIdx}
+                                        src={optimizeImage(img, 'thumbnail')}
+                                        alt={`${colorItem.name} ${imgIdx + 1}`}
+                                        className="w-16 h-16 object-cover rounded border border-slate-200"
+                                        loading="lazy"
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Image Upload */}
+                              <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 hover:border-slate-400 transition-colors">
+                                <div className="text-center">
+                                  <ImageIcon className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(e) => handleColorImageUpload(index, e.target.files)}
+                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-600 file:text-white hover:file:bg-slate-700 file:cursor-pointer"
+                                  />
+                                  <p className="text-xs text-slate-500 mt-1">
+                                    {form.isEditing ? 'Upload new images (will replace existing)' : 'Select up to 4 images for this color'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Preview selected images */}
+                              {colorItem.images && colorItem.images.length > 0 && (
+                                <div className="mt-3">
+                                  <p className="text-xs text-slate-600 mb-2">Selected images:</p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {Array.from(colorItem.images).slice(0, 4).map((file, imgIdx) => (
+                                      <div key={imgIdx} className="relative">
+                                        <img
+                                          src={URL.createObjectURL(file)}
+                                          alt={`Preview ${imgIdx + 1}`}
+                                          className="w-16 h-16 object-cover rounded border border-slate-200"
+                                        />
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 text-white text-xs rounded-full flex items-center justify-center">
+                                          {imgIdx + 1}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  {colorItem.images.length > 4 && (
+                                    <p className="text-xs text-orange-600 mt-1">
+                                      Only first 4 images will be uploaded
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -609,9 +742,10 @@ const Admin = () => {
                         {form.isEditing && form.hero_image_url ? (
                           <div className="space-y-4">
                             <img 
-                              src={form.hero_image_url} 
+                              src={optimizeImage(form.hero_image_url, 'product')} 
                               alt="Current hero" 
                               className="w-48 h-48 object-cover rounded-lg border border-slate-200 mx-auto"
+                              loading="lazy"
                             />
                             <p className="text-sm text-slate-600">Current Hero Image</p>
                           </div>
@@ -635,68 +769,19 @@ const Admin = () => {
                     </div>
                   </div>
 
-                  {/* Featured Images Section */}
-                  <div>
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                      <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center gap-2">
-                        <Upload className="h-5 w-5" />
-                        Featured Images Section
-                      </h3>
-                      <p className="text-sm text-green-600">Upload additional product images to showcase different angles and details</p>
-                    </div>
-                    <label className="block text-sm font-medium text-slate-700 mb-3">
-                      <Upload className="inline h-4 w-4 mr-1" />
-                      Additional Product Images (Optional)
-                    </label>
-                    <div className="border-2 border-dashed border-green-300 rounded-lg p-8 hover:border-green-500 transition-colors bg-green-50/30">
-                      <div className="text-center">
-                        {form.isEditing && form.existingFeaturedImages && form.existingFeaturedImages.length > 0 ? (
-                          <div className="space-y-4 mb-6">
-                            <p className="text-sm font-medium text-slate-700">Current Featured Images</p>
-                            <div className="flex flex-wrap gap-4 justify-center">
-                              {form.existingFeaturedImages.map((img, i) => (
-                                <img
-                                  key={i}
-                                  src={img}
-                                  alt={`Featured ${i + 1}`}
-                                  className="w-24 h-24 object-cover rounded-lg border border-slate-200"
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <Upload className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                        )}
-                        <div className="space-y-2">
-                          <input
-                            type="file"
-                            name="featured_images"
-                            accept="image/*"
-                            multiple
-                            onChange={handleChange}
-                            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-600 file:text-white hover:file:bg-green-700 file:cursor-pointer"
-                          />
-                          <p className="text-sm text-slate-500">
-                            {form.isEditing 
-                              ? 'Upload new featured images (will replace existing ones)'
-                              : 'Select multiple images - PNG, JPG, GIF up to 10MB each'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preview Section */}
+                  {/* Image Upload Tips */}
                   <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
                       <ImageIcon className="h-4 w-4" />
-                      Image Upload Tips
+                      Image Upload Guidelines
                     </h4>
                     <ul className="text-xs text-slate-600 space-y-1">
-                      <li>• Hero image will be the main product photo</li>
-                      <li>• Featured images show additional product details</li>
+                      <li>• Hero image: Main product photo (required)</li>
+                      <li>• Color images: Up to 4 images per color variation</li>
+                      <li>• Each color can have different images showing that specific color</li>
                       <li>• Use high-quality images for best results</li>
                       <li>• Square images work best for consistent display</li>
+                      <li>• JPG, PNG, GIF formats supported</li>
                     </ul>
                   </div>
                 </div>
@@ -763,16 +848,18 @@ const Admin = () => {
               <p className="text-slate-600">No products found. Add your first product to get started.</p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-200">
-              {products.map((product) => (
+            <>
+              <div className="divide-y divide-slate-200">
+                {products.map((product) => (
                 <div key={product.id} className="p-6 hover:bg-slate-50 transition-colors">
                   <div className="flex flex-col lg:flex-row gap-6">
                     {/* Product Image */}
                     <div className="flex-shrink-0">
                       <img
-                        src={product.hero_image_url}
+                        src={optimizeImage(product.hero_image_url, 'thumbnail')}
                         alt={product.title}
                         className="w-full lg:w-32 h-48 lg:h-32 object-cover rounded-lg border border-slate-200"
+                        loading="lazy"
                       />
                     </div>
 
@@ -872,6 +959,27 @@ const Admin = () => {
                 </div>
               ))}
             </div>
+            
+            {/* Load More Button */}
+            {hasMoreProducts && (
+              <div className="p-6 text-center border-t border-slate-200">
+                <button
+                  onClick={loadMoreProducts}
+                  disabled={loading}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Products'
+                  )}
+                </button>
+              </div>
+            )}
+            </>
           )}
         </div>
       </div>

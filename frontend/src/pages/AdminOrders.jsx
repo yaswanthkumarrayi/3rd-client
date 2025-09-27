@@ -1,64 +1,103 @@
 import React, { useEffect, useState } from "react";
 import { ShoppingBag, Package, User, Phone, MapPin, DollarSign } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { optimizeImage } from "../utils/imageOptimizer";
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const ORDERS_PER_PAGE = 20;
 
   useEffect(() => {
     fetchAllOrders();
   }, []);
 
-async function fetchAllOrders() {
+  const loadMoreOrders = () => {
+    if (!loading && hasMore) {
+      fetchAllOrders(page + 1);
+    }
+  };
+
+async function fetchAllOrders(pageNum = 0) {
   setLoading(true);
   try {
-    // First, get all orders
+    const offset = pageNum * ORDERS_PER_PAGE;
+    
+    // Start with minimal query to avoid column errors
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false });
+      .select("id, user_email, items, amount, status, created_at")
+      .order("created_at", { ascending: false })
+      .range(offset, offset + ORDERS_PER_PAGE - 1);
 
     if (ordersError) throw ordersError;
 
-    // Then fetch user details for each order
-    const ordersWithUserDetails = await Promise.all(
-      orders.map(async (order) => {
-        if (order.user_email) {
-          try {
-            const { data: userData, error } = await supabase
-              .from("users")
-              .select("full_name")
-              .eq("email", order.user_email)
-              .maybeSingle();
-            
-            if (error) {
-              console.warn("Error fetching user data for email:", order.user_email, error);
-            }
-            
-            return {
-              ...order,
-              users: userData || null
-            };
-          } catch (error) {
-            console.warn("Failed to fetch user data for email:", order.user_email, error);
-            return {
-              ...order,
-              users: null
-            };
-          }
-        }
-        return order;
-      })
-    );
+    // Debug: Log available columns
+    if (orders && orders.length > 0) {
+      console.log('Available order columns:', Object.keys(orders[0]));
+    }
+
+    // Check if we have more orders
+    setHasMore(orders && orders.length === ORDERS_PER_PAGE);
+    setPage(pageNum);
+
+    // Batch fetch user details for all unique emails
+    const uniqueEmails = [...new Set(orders.filter(o => o.user_email).map(o => o.user_email))];
+    let userDetailsMap = {};
+    
+    if (uniqueEmails.length > 0) {
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("email, full_name")
+        .in("email", uniqueEmails);
+      
+      if (usersData) {
+        userDetailsMap = usersData.reduce((acc, user) => {
+          acc[user.email] = user;
+          return acc;
+        }, {});
+      }
+    }
 
     const safeNumber = (val, fallback = 0) => {
       const num = Number(val);
       return isNaN(num) ? fallback : num;
     };
 
-    const formattedOrders = await Promise.all(
-      ordersWithUserDetails.map(async (order) => {
+    // Get unique product IDs from all orders to batch fetch product data
+    const allProductIds = new Set();
+    orders.forEach(order => {
+      try {
+        const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
+        if (Array.isArray(items)) {
+          items.forEach(item => {
+            if (item?.id) allProductIds.add(item.id);
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing items for order:", order.id, e);
+      }
+    });
+
+    // Batch fetch product data
+    let productsMap = {};
+    if (allProductIds.size > 0) {
+      const { data: productsData } = await supabase
+        .from("products")
+        .select("id, hero_image_url")
+        .in("id", Array.from(allProductIds));
+      
+      if (productsData) {
+        productsMap = productsData.reduce((acc, product) => {
+          acc[product.id] = product;
+          return acc;
+        }, {});
+      }
+    }
+
+    const formattedOrders = orders.map(order => {
         let parsedItems = [];
         try {
           const items = typeof order.items === "string"
@@ -66,80 +105,51 @@ async function fetchAllOrders() {
             : order.items;
 
           parsedItems = Array.isArray(items)
-            ? await Promise.all(
-                items.map(async (item) => {
-                  // keep original price/amount logic
-                  const quantity = safeNumber(item?.quantity, 1);
-                  const price = safeNumber(item?.discount_price || item?.price, 0);
+            ? items.map(item => {
+                // keep original price/amount logic
+                const quantity = safeNumber(item?.quantity, 1);
+                const price = safeNumber(item?.discount_price || item?.price, 0);
 
-                  // add image from products table if missing
-                  let productImage = item?.hero_image_url || item?.image_url || item?.image || "";
-                  let productColors = [];
+                // Get product data from batch fetch
+                const productData = productsMap[item?.id];
+                let productImage = item?.hero_image_url || item?.image_url || item?.image || "";
+                let productColors = [];
 
-                  if (!productImage && item?.id) {
-                    const { data: product } = await supabase
-                      .from("products")
-                      .select("hero_image_url")
-                      .eq("id", item.id)
-                      .single();
+                if (productData) {
+                  productImage = productImage || productData.hero_image_url || "";
+                  
+                  // Color information is handled from the individual item data
+                }
 
-                    if (product) {
-                      productImage = product.hero_image_url || "";
-                    }
-                  }
+                // Fallback to old single color format if no colors from DB
+                if (productColors.length === 0 && item?.color && item?.code) {
+                  productColors.push({
+                    color: item.color,
+                    name: item.code
+                  });
+                }
 
-                  // Fetch current color information from products table
-                  if (item?.id) {
-                    const { data: product } = await supabase
-                      .from("products")
-                      .select("color, code")
-                      .eq("id", item.id)
-                      .single();
+                // If item has selectedColor from order, prioritize that
+                let itemSelectedColor = null;
+                if (item?.selectedColor) {
+                  itemSelectedColor = item.selectedColor;
+                }
 
-                    if (product && product.color && product.code) {
-                      const colorArray = Array.isArray(product.color) ? product.color : [];
-                      const codeArray = Array.isArray(product.code) ? product.code : [];
-                      const maxLength = Math.max(colorArray.length, codeArray.length);
-                      
-                      for (let i = 0; i < maxLength; i++) {
-                        productColors.push({
-                          color: colorArray[i] || "#000000",
-                          name: codeArray[i] || ""
-                        });
-                      }
-                    }
-                  }
-
-                  // Fallback to old single color format if no colors from DB
-                  if (productColors.length === 0 && item?.color && item?.code) {
-                    productColors.push({
-                      color: item.color,
-                      name: item.code
-                    });
-                  }
-
-                  // If item has selectedColor from order, prioritize that
-                  let itemSelectedColor = null;
-                  if (item?.selectedColor) {
-                    itemSelectedColor = item.selectedColor;
-                  }
-
-                  return {
-                    ...item,
-                    id: item?.id || "",
-                    title: item?.title || item?.name || "Unknown Product",
-                    category: item?.category || "",
-                    fabric: item?.fabric || "",
-                    quantity,
-                    discount_price: price,
-                    original_price: safeNumber(item?.original_price || item?.price, 0),
-                    hero_image_url: productImage,
-                    colors: productColors, // Array of color objects
-                    selectedColor: itemSelectedColor, // User's selected color for this order
-                    amount: price * quantity,
-                  };
-                })
-              )
+                return {
+                  ...item,
+                  id: item?.id || "",
+                  title: item?.title || item?.name || "Unknown Product",
+                  category: item?.category || "",
+                  fabric: item?.fabric || "",
+                  quantity,
+                  discount_price: price,
+                  original_price: safeNumber(item?.original_price || item?.price, 0),
+                  hero_image_url: productImage,
+                  colors: productColors, // Array of color objects
+                  selectedColor: itemSelectedColor, // User's selected color for this order
+                  amount: price * quantity,
+                };
+              })
             : [];
         } catch (e) {
           console.error("Error parsing items for order:", order.id, e);
@@ -147,10 +157,11 @@ async function fetchAllOrders() {
 
         // keep your amount/shipping/total logic as-is
         const subtotal = safeNumber(order.amount, 0);
-        const total = subtotal ;
+        const total = subtotal;
 
-        // Process order-level colors from the orders table
+        // Process order-level colors from the orders table (if they exist)
         let orderColors = [];
+        // Only process colors if the fields exist
         if (order.color && order.code) {
           const colorArray = Array.isArray(order.color) ? order.color : [];
           const codeArray = Array.isArray(order.code) ? order.code : [];
@@ -174,22 +185,21 @@ async function fetchAllOrders() {
           updated_at: order.updated_at || order.created_at || new Date().toISOString(),
           status: order.status || "paid",
           user_details: {
-            full_name: order.users?.full_name || order.user_name || order.full_name || "",
+            full_name: userDetailsMap[order.user_email]?.full_name || order.user_email || "Guest User",
             email: order.user_email || "",
-            phone: order.phone || "",
-            address: order.address || "",
-            city: order.city || "",
-            state: order.state || "",
-            pincode: order.pincode || "",
+            phone: order.phone || "Not provided",
+            address: order.address || "Not provided",
+            city: order.city || "Not provided",
+            state: order.state || "Not provided",
+            pincode: order.pincode || "Not provided",
           },
-          payment_id: order.payment_id || "",
-          razorpay_order_id: order.razorpay_order_id || "",
-          tracking_id: order.tracking_id || "",
+          payment_id: order.payment_id || "Not available",
+          razorpay_order_id: order.razorpay_order_id || "Not available",
+          tracking_id: order.tracking_id || "Not available",
         };
-      })
-    );
+      });
 
-    setOrders(formattedOrders);
+    setOrders(pageNum === 0 ? formattedOrders : [...orders, ...formattedOrders]);
   } catch (error) {
     console.error("Error fetching orders:", error);
   } finally {
@@ -319,9 +329,10 @@ async function fetchAllOrders() {
                                   <div className="w-16 h-16 bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
                                     {item.hero_image_url ? (
                                       <img 
-                                        src={item.hero_image_url} 
+                                        src={optimizeImage(item.hero_image_url, 'thumbnail')} 
                                         alt={item.title} 
                                         className="w-full h-full object-cover"
+                                        loading="lazy"
                                         onError={(e) => {
                                           e.target.style.display = 'none';
                                           e.target.nextSibling.style.display = 'flex';
@@ -431,6 +442,26 @@ async function fetchAllOrders() {
                   </tbody>
                 </table>
               </div>
+              
+              {/* Load More Button for Desktop */}
+              {hasMore && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={loadMoreOrders}
+                    disabled={loading}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                        Loading...
+                      </>
+                    ) : (
+                      'Load More Orders'
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Mobile Card View */}
@@ -496,9 +527,10 @@ async function fetchAllOrders() {
                               <div className="w-16 h-16 bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {item.hero_image_url ? (
                                   <img 
-                                    src={item.hero_image_url} 
+                                    src={optimizeImage(item.hero_image_url, 'thumbnail')} 
                                     alt={item.title} 
                                     className="w-full h-full object-cover"
+                                    loading="lazy"
                                     onError={(e) => {
                                       e.target.style.display = 'none';
                                       e.target.nextSibling.style.display = 'flex';
@@ -617,6 +649,26 @@ async function fetchAllOrders() {
                 </div>
               ))}
             </div>
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="mt-8 text-center">
+                <button
+                  onClick={loadMoreOrders}
+                  disabled={loading}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-lg transition-colors"
+                >
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More Orders'
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

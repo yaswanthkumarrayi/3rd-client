@@ -31,7 +31,6 @@ const Product = () => {
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 3000);
   }
-  const SHIPPING_CHARGE = 100;
 
   function handleShare() {
     navigator.clipboard.writeText(window.location.href)
@@ -49,12 +48,15 @@ const Product = () => {
 
   async function fetchProduct() {
     try {
+      // Temporarily fetch all fields to debug what's available
       const { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("id", id)
         .single();
       if (!error && data) {
+        console.log("Product data from database:", data); // Debug log to see all available fields
+        
         // Convert JSONB color and code fields to colors array format
         let colors = [];
         if (data.color && data.code) {
@@ -75,6 +77,8 @@ const Product = () => {
           colors: colors
         });
         
+        console.log("Processed product with colors:", { ...data, colors }); // Debug log
+        
         // Set the first color as default selected color
         if (colors.length > 0) {
           setSelectedColor(colors[0]);
@@ -93,11 +97,74 @@ const Product = () => {
 }, [product]);
 
   const images = product
-    ? [product.hero_image_url, ...(product.featured_images || [])].map(img => ({
-        original: img,
-        optimized: optimizeImage(img, 'product'), // Medium quality for fast loading
-        thumbnail: getThumbnail(img) // Fast loading thumbnail for small previews
-      }))
+    ? (() => {
+        // Collect all possible images from different fields
+        const allImages = [];
+        
+        console.log("Processing images for product:", product.id); // Debug log
+        console.log("Full product data:", product); // Debug log - see ALL fields
+        
+        // Function to safely parse potential JSON strings or arrays
+        const parseImageField = (field) => {
+          if (!field) return [];
+          if (Array.isArray(field)) return field;
+          if (typeof field === 'string') {
+            try {
+              const parsed = JSON.parse(field);
+              return Array.isArray(parsed) ? parsed : [parsed];
+            } catch (e) {
+              // If not JSON, treat as single image URL
+              return [field];
+            }
+          }
+          return [];
+        };
+        
+        // Check all possible field names that might contain images
+        const possibleImageFields = [
+          'hero_image_url',
+          'image_urls', 
+          'featured_images',
+          'gallery_images',
+          'images',
+          'product_images',
+          'image_array',
+          'image_list'
+        ];
+        
+        possibleImageFields.forEach(fieldName => {
+          const fieldValue = product[fieldName];
+          if (fieldValue) {
+            const parsedImages = parseImageField(fieldValue);
+            parsedImages.forEach(img => {
+              if (img && typeof img === 'string' && !allImages.includes(img)) {
+                allImages.push(img);
+              }
+            });
+          }
+        });
+        
+        // Also check for any field that might contain "image" in its name
+        Object.keys(product).forEach(key => {
+          if (key.toLowerCase().includes('image') && !possibleImageFields.includes(key)) {
+            console.log(`Found additional image field: ${key}`, product[key]);
+            const parsedImages = parseImageField(product[key]);
+            parsedImages.forEach(img => {
+              if (img && typeof img === 'string' && !allImages.includes(img)) {
+                allImages.push(img);
+              }
+            });
+          }
+        });
+        
+        console.log("Final processed images array:", allImages); // Debug log
+        
+        return allImages.map(img => ({
+          original: img,
+          optimized: optimizeImage(img, 'product'),
+          thumbnail: getThumbnail(img)
+        }));
+      })()
     : [];
 
   // ✅ Preload images when product loads for fast display
@@ -322,7 +389,7 @@ const Product = () => {
                     </div>
                   )}
                   <img
-                    src={images[activeImg]?.optimized || images[activeImg]}
+                    src={optimizeImage(images[activeImg]?.optimized || images[activeImg], 'product')}
                     alt={product.title}
                     loading="eager"
                     className="w-full h-full object-contain p-4 transition-opacity duration-200"
@@ -387,7 +454,7 @@ const Product = () => {
                       }`}
                     >
                       <img
-                        src={img.thumbnail || img.optimized || img}
+                        src={getThumbnail(img.thumbnail || img.optimized || img)}
                         alt={`View ${idx + 1}`}
                         loading={idx < 3 ? "eager" : "lazy"}
                         className="w-full h-full object-cover transition-opacity duration-200"
@@ -423,16 +490,13 @@ const Product = () => {
               <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
   <div className="flex items-center gap-4 mb-2">
     <span className="text-3xl font-bold text-green-600">
-      ₹{(product.discount_price + SHIPPING_CHARGE).toLocaleString()}
+      ₹{product.discount_price.toLocaleString()}
     </span>
     {discountPercentage > 0 && (
       <span className="text-xl text-gray-500 line-through">
-        ₹{(product.original_price + SHIPPING_CHARGE).toLocaleString()}
+        ₹{product.original_price.toLocaleString()}
       </span>
     )}
-  </div>
-  <div className="text-sm text-gray-600">
-    <span className="font-semibold">₹{product.discount_price.toLocaleString()}</span> + <span className="font-semibold">₹{SHIPPING_CHARGE}</span> shipping
   </div>
   {discountPercentage > 0 && (
     <p className="text-green-600 font-medium">

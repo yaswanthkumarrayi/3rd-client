@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ArrowRight, Search, Filter, Grid, List, ArrowLeft } from "lucide-react";
-import { optimizeImage, createBlurPlaceholder, getThumbnail } from "../utils/imageOptimizer";
+import { optimizeImage, createBlurPlaceholder, getThumbnail, getUltraFastThumbnail } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const ViewAllProducts = () => {
@@ -326,7 +326,7 @@ const ViewAllProducts = () => {
                         />
                       )}
                       <img
-                        src={getThumbnail(product.hero_image_url)}
+                        src={getUltraFastThumbnail(product.hero_image_url)}
                         alt={product.title}
                         loading="lazy"
                         width="400"
