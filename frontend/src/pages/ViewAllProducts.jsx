@@ -4,7 +4,8 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { ArrowRight, Search, Filter, Grid, List, ArrowLeft } from "lucide-react";
-import { optimizeImage, createBlurPlaceholder, getThumbnail, getUltraFastThumbnail } from "../utils/imageOptimizer";
+import FastImage from "../components/FastImage";
+import { preloadCriticalImages } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const ViewAllProducts = () => {
@@ -15,7 +16,7 @@ const ViewAllProducts = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -70,6 +71,14 @@ const ViewAllProducts = () => {
         setProducts(data);
         setTotalPages(Math.ceil(data.length / PRODUCTS_PER_PAGE));
         console.log(`✅ All products loaded in ${responseTime}ms`);
+        
+        // Preload first batch of product images for instant visual feedback
+        if (data && data.length > 0) {
+          const firstPageImages = data.slice(0, PRODUCTS_PER_PAGE).map(product => product.hero_image_url).filter(Boolean);
+          if (firstPageImages.length > 0) {
+            preloadCriticalImages(firstPageImages, { maxConcurrent: 4, useUltraFast: true });
+          }
+        }
       } else {
         console.error("Error fetching products:", error);
         setProducts([]);
@@ -313,50 +322,16 @@ const ViewAllProducts = () => {
                     }`}
                   >
                     <div className={`relative overflow-hidden ${viewMode === "list" ? "w-48 flex-shrink-0" : ""}`}>
-                      {/* Blur placeholder while image loads */}
-                      {imageLoadingStates[`product-${product.id}`] !== false && (
-                        <div 
-                          className="absolute inset-0"
-                          style={{
-                            backgroundImage: `url(${createBlurPlaceholder(200, 200)})`,
-                            backgroundSize: 'cover',
-                            filter: 'blur(8px)',
-                            zIndex: 1
-                          }}
-                        />
-                      )}
-                      <img
-                        src={getUltraFastThumbnail(product.hero_image_url)}
+                      <FastImage
+                        src={product.hero_image_url}
                         alt={product.title}
-                        loading="lazy"
-                        width="400"
-                        height="320"
-                        className={`w-full ${viewMode === "list" ? "h-48" : "h-48 sm:h-64"} object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'} ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
-                        style={{
-                          zIndex: 2,
-                          position: 'relative'
-                        }}
-                        onLoad={() => {
-                          setImageLoadingStates(prev => ({
-                            ...prev,
-                            [`product-${product.id}`]: false
-                          }));
-                          trackImageLoad(product.hero_image_url);
-                        }}
-                        onLoadStart={() => {
-                          setImageLoadingStates(prev => ({
-                            ...prev,
-                            [`product-${product.id}`]: true
-                          }));
-                        }}
-                        onError={(e) => {
-                          e.target.src = "Designer.jpg";
-                          trackImageError(product.hero_image_url);
-                          setImageLoadingStates(prev => ({
-                            ...prev,
-                            [`product-${product.id}`]: false
-                          }));
-                        }}
+                        size="card"
+                        className={`w-full ${viewMode === "list" ? "h-48" : "h-48 sm:h-64"} object-cover transition-all duration-${isMobile ? '300' : '700'} ${isMobile ? '' : 'group-hover:scale-110'}`}
+                        priority={false}
+                        showLoader={true}
+                        fallback="/Designer.jpg"
+                        onLoad={() => trackImageLoad(product.hero_image_url)}
+                        onError={() => trackImageError(product.hero_image_url)}
                       />
                       <div className={`absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent ${isMobile ? '' : 'group-hover:from-black/40'} transition-all duration-300`} style={{zIndex: 3}}></div>
                       

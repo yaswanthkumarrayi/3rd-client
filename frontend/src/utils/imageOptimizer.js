@@ -92,24 +92,57 @@ export function getFullQualityImage(imageUrl) {
 }
 
 /**
- * Creates a blur placeholder data URL
+ * Creates an enhanced blur placeholder data URL with realistic colors
  * @param {number} width - Placeholder width
  * @param {number} height - Placeholder height
+ * @param {string} colorScheme - Color scheme: 'light', 'warm', 'cool', 'product'
  * @returns {string} Data URL for blur placeholder
  */
-export function createBlurPlaceholder(width = 40, height = 40) {
-  // Create a simple blur placeholder
+export function createBlurPlaceholder(width = 40, height = 40, colorScheme = 'product') {
+  // Color schemes for different contexts
+  const colorSchemes = {
+    light: ['#f8fafc', '#f1f5f9', '#e2e8f0'],
+    warm: ['#fef7ed', '#fed7aa', '#fdba74'], 
+    cool: ['#f0f9ff', '#dbeafe', '#93c5fd'],
+    product: ['#fafaf9', '#f5f5f4', '#e7e5e4'], // Neutral for products
+    hero: ['#f9fafb', '#f3f4f6', '#d1d5db'] // Subtle for hero sections
+  };
+  
+  const colors = colorSchemes[colorScheme] || colorSchemes.product;
+  
+  // Create enhanced blur placeholder with subtle texture
   return `data:image/svg+xml;base64,${btoa(`
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#f3f4f6;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#e5e7eb;stop-opacity:1" />
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${colors[0]};stop-opacity:1" />
+          <stop offset="50%" style="stop-color:${colors[1]};stop-opacity:0.9" />
+          <stop offset="100%" style="stop-color:${colors[2]};stop-opacity:0.8" />
         </linearGradient>
+        <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2"/>
+        </filter>
       </defs>
-      <rect width="100%" height="100%" fill="url(#grad)" />
+      <rect width="100%" height="100%" fill="url(#grad1)" filter="url(#blur)" />
     </svg>
   `)}`;
+}
+
+/**
+ * Get an instant blur placeholder optimized for the image type
+ * @param {string} imageType - Type: 'hero', 'product', 'thumbnail', 'card'
+ * @returns {string} Optimized blur placeholder
+ */
+export function getInstantBlurPlaceholder(imageType = 'product') {
+  const configs = {
+    hero: { width: 80, height: 40, scheme: 'hero' },
+    product: { width: 60, height: 60, scheme: 'product' },
+    thumbnail: { width: 30, height: 30, scheme: 'light' },
+    card: { width: 40, height: 40, scheme: 'warm' }
+  };
+  
+  const config = configs[imageType] || configs.product;
+  return createBlurPlaceholder(config.width, config.height, config.scheme);
 }
 
 /**
@@ -150,6 +183,59 @@ export function preloadImages(imageUrls, quality = 'thumbnail') {
       }
     }
   });
+}
+
+/**
+ * Ultra-fast critical image preloading for instant visual feedback
+ * @param {Array} imageUrls - Array of critical image URLs to preload immediately
+ * @param {Object} options - Preload options
+ */
+export function preloadCriticalImages(imageUrls, options = {}) {
+  const {
+    maxConcurrent = 4, // Limit concurrent requests to avoid overwhelming
+    useUltraFast = true // Use ultra-fast thumbnails for immediate loading
+  } = options;
+
+  if (!imageUrls.length) return Promise.resolve([]);
+
+  // Split into batches for controlled loading
+  const batches = [];
+  for (let i = 0; i < imageUrls.length; i += maxConcurrent) {
+    batches.push(imageUrls.slice(i, i + maxConcurrent));
+  }
+
+  const loadBatch = (urls) => {
+    return Promise.all(
+      urls.map(url => {
+        if (!url) return Promise.resolve();
+        
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(url);
+          img.onerror = () => resolve(); // Don't fail entire batch on single error
+          
+          // Use ultra-fast thumbnail for immediate preload, then optimized
+          img.src = useUltraFast ? getUltraFastThumbnail(url) : optimizeImage(url, 'thumbnail');
+          
+          // Timeout after 2 seconds to prevent hanging
+          setTimeout(() => resolve(), 2000);
+        });
+      })
+    );
+  };
+
+  // Load first batch immediately, others with slight delay
+  return batches.reduce((promise, batch, index) => {
+    return promise.then(() => {
+      if (index === 0) {
+        return loadBatch(batch);
+      } else {
+        return new Promise(resolve => {
+          setTimeout(() => loadBatch(batch).then(resolve), index * 50);
+        });
+      }
+    });
+  }, Promise.resolve());
 }
 
 /**

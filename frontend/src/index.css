@@ -36,16 +36,50 @@
   transition: filter 0.3s ease-out;
 }
 
-/* Shimmer animation for image loading */
+/* Enhanced shimmer animation for ultra-fast image loading feedback */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { 
+    background-position: -200% 0;
+    opacity: 0.6;
+  }
+  50% { 
+    background-position: 0% 0;
+    opacity: 0.8;
+  }
+  100% { 
+    background-position: 200% 0;
+    opacity: 0.6;
+  }
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, 
+    rgba(240,240,240,0.8) 25%, 
+    rgba(255,255,255,0.9) 50%, 
+    rgba(240,240,240,0.8) 75%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+/* Progressive image loading states */
+.image-blur-placeholder {
+  filter: blur(8px);
+  transform: scale(1.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-loading {
+  filter: blur(2px);
+  opacity: 0.9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-loaded {
+  filter: blur(0px);
+  opacity: 1;
+  transform: scale(1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Text utilities */

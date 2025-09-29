@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import FastImage from "../components/FastImage";
 import { Sparkles, ArrowRight, Filter, Grid, List, Search, ShoppingBag, Star, Heart, Eye } from "lucide-react";
-import { getThumbnail, getUltraFastThumbnail, createBlurPlaceholder } from "../utils/imageOptimizer";
+import { preloadCriticalImages } from "../utils/imageOptimizer";
 
 const Category = () => {
   const { name } = useParams();
@@ -14,7 +15,7 @@ const Category = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState("grid");
   const [isVisible, setIsVisible] = useState(false);
-  const [imageLoadingStates, setImageLoadingStates] = useState({});
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -60,6 +61,14 @@ const Category = () => {
       
       if (!error) {
         setProducts(data || []);
+        
+        // Preload first few product images for instant visual feedback
+        if (data && data.length > 0) {
+          const imageUrls = data.slice(0, 6).map(product => product.hero_image_url).filter(Boolean);
+          if (imageUrls.length > 0) {
+            preloadCriticalImages(imageUrls, { maxConcurrent: 3, useUltraFast: true });
+          }
+        }
       }
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -100,10 +109,14 @@ const Category = () => {
         className="relative group cursor-pointer"
       >
         <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200">
-          <img
-            src={getUltraFastThumbnail(product.hero_image_url)}
+          <FastImage
+            src={product.hero_image_url}
             alt={product.title}
+            size="card"
             className="h-full w-full object-cover object-center group-hover:opacity-75"
+            priority={false}
+            showLoader={true}
+            fallback="/Designer.jpg"
           />
           {isSoldOut && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -278,51 +291,16 @@ const Category = () => {
                   <div className={`relative overflow-hidden ${
                     viewMode === "list" ? "w-64 flex-shrink-0" : ""
                   }`}>
-                    {/* Blur placeholder while image loads */}
-                    {imageLoadingStates[`product-${product.id}`] !== false && (
-                      <div 
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(${createBlurPlaceholder(200, 200)})`,
-                          backgroundSize: 'cover',
-                          filter: 'blur(8px)',
-                          zIndex: 1
-                        }}
-                      />
-                    )}
-                    <img
-                      src={getUltraFastThumbnail(product.hero_image_url)}
+                    <FastImage
+                      src={product.hero_image_url}
                       alt={product.title}
-                      loading="lazy"
-                      width="200"
-                      height="200"
+                      size="card"
                       className={`object-cover group-hover:scale-105 transition-transform duration-500 ${
                         viewMode === "list" ? "w-full h-48" : "w-full h-64"
-                      } ${imageLoadingStates[`product-${product.id}`] === false ? 'opacity-100' : 'opacity-0'}`}
-                      style={{
-                        zIndex: 2,
-                        position: 'relative'
-                      }}
-                      onLoad={() => {
-                        setImageLoadingStates(prev => ({
-                          ...prev,
-                          [`product-${product.id}`]: false
-                        }));
-                      }}
-                      onLoadStart={() => {
-                        setImageLoadingStates(prev => ({
-                          ...prev,
-                          [`product-${product.id}`]: true
-                        }));
-                      }}
-                      onError={(e) => {
-                        // Fallback to default image if product image fails
-                        e.target.src = "Designer.jpg";
-                        setImageLoadingStates(prev => ({
-                          ...prev,
-                          [`product-${product.id}`]: false
-                        }));
-                      }}
+                      }`}
+                      priority={false}
+                      showLoader={true}
+                      fallback="/Designer.jpg"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
                     
