@@ -20,6 +20,7 @@ const DEFAULT_TRANSFORMATIONS = {
 // ProductHigh: 800px, 75% quality, WebP - highest quality for product details
 // Category: 250px, 55% quality, WebP - for category images
 const IMAGE_SIZES = {
+  blur: { width: 100, quality: 20, format: 'webp' }, // Ultra-fast blur version for instant display
   thumbnail: { width: 150, quality: 45, format: 'webp' }, // Optimized for MAX 100KB
   card: { width: 200, quality: 50, format: 'webp' }, // For home page cards
   hero: { width: 600, quality: 65, format: 'webp' },
@@ -71,6 +72,15 @@ export function optimizeImage(imageUrl, size = 'card', customParams = {}) {
  */
 export function getUltraFastThumbnail(imageUrl) {
   return optimizeImage(imageUrl, 'thumbnail', { width: 120, quality: 35 });
+}
+
+/**
+ * Get ultra-fast blur version of image for instant display (max 20KB)
+ * @param {string} imageUrl - Original image URL
+ * @returns {string} Ultra-fast blur image URL
+ */
+export function getBlurVersion(imageUrl) {
+  return optimizeImage(imageUrl, 'blur');
 }
 
 /**

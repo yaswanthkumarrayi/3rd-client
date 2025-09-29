@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { optimizeImage, getThumbnail, getUltraFastThumbnail, getInstantBlurPlaceholder, getFullQualityImage } from '../utils/imageOptimizer';
+import { optimizeImage, getThumbnail, getUltraFastThumbnail, getBlurVersion, getFullQualityImage } from '../utils/imageOptimizer';
 
 /**
- * FastImage Component - Mobile-optimized with guaranteed fallbacks
- * Features: Always shows something, mobile-friendly loading, robust error handling
+ * FastImage Component - True blur-to-sharp progressive loading
+ * Shows blurred version of actual image first, then sharp version
  */
 const FastImage = ({
   src,
@@ -18,11 +18,12 @@ const FastImage = ({
   onError,
   ...props
 }) => {
-  const [loadState, setLoadState] = useState('loading'); // loading, loaded, error
+  const [loadState, setLoadState] = useState('blur'); // blur, loading, loaded, error
   const [isInView, setIsInView] = useState(priority);
-  const [currentSrc, setCurrentSrc] = useState('');
+  const [blurSrc, setBlurSrc] = useState('');
+  const [sharpSrc, setSharpSrc] = useState('');
+  const [showSharp, setShowSharp] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   
   const imgRef = useRef(null);
   const observerRef = useRef(null);
@@ -31,21 +32,26 @@ const FastImage = ({
   // Check if we're on mobile for different optimization strategy
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  // Mobile-optimized image sources with guaranteed fallbacks
-  const { thumbnailSrc, optimizedSrc, safeFallback } = useMemo(() => {
+  // Generate blur and sharp versions of the same image
+  const { blurImageSrc, sharpImageSrc, fallbackSrc } = useMemo(() => {
     if (!src) return { 
-      thumbnailSrc: fallback, 
-      optimizedSrc: fallback,
-      safeFallback: fallback
+      blurImageSrc: null, 
+      sharpImageSrc: null,
+      fallbackSrc: fallback
     };
     
-    // On mobile, use more aggressive optimization
-    const mobileOptimization = isMobile ? { quality: 40, width: 300 } : {};
+    // Create ultra-fast blur version (should load in ~50ms)
+    const blurVersion = getBlurVersion(src);
+    
+    // Create optimized sharp version
+    const sharpVersion = optimizeImage(src, size, 
+      isMobile ? { quality: 65, width: 400 } : { quality: 75 }
+    );
     
     return {
-      thumbnailSrc: isMobile ? getUltraFastThumbnail(src) : optimizeImage(src, 'thumbnail'),
-      optimizedSrc: optimizeImage(src, size, mobileOptimization),
-      safeFallback: fallback
+      blurImageSrc: blurVersion,
+      sharpImageSrc: sharpVersion,
+      fallbackSrc: fallback
     };
   }, [src, size, fallback, isMobile]);
 
@@ -84,99 +90,104 @@ const FastImage = ({
     };
   }, [priority, isMobile]);
 
-  // Simplified, robust image loading with mobile optimization
+  // Progressive loading: blur image first, then sharp image
   useEffect(() => {
     if (!isInView || !src || hasError) return;
     
-    setLoadState('loading');
+    setLoadState('blur');
     
-    // Set timeout for loading - more generous on mobile
-    const timeout = isMobile ? 8000 : 5000;
-    loadTimeoutRef.current = setTimeout(() => {
-      handleImageError();
-    }, timeout);
-    
-    // Try loading optimized image first
-    const img = new Image();
-    
-    img.onload = () => {
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-      }
-      setCurrentSrc(optimizedSrc);
-      setLoadState('loaded');
-      setHasError(false);
-      onLoad?.();
-    };
-    
-    img.onerror = () => {
-      if (loadTimeoutRef.current) {
-        clearTimeout(loadTimeoutRef.current);
-      }
+    // Step 1: Load blurred version immediately (should be very fast)
+    const blurImg = new Image();
+    blurImg.onload = () => {
+      setBlurSrc(blurImageSrc);
+      setLoadState('loading');
       
-      // Try thumbnail as fallback
-      if (thumbnailSrc !== optimizedSrc && retryCount === 0) {
-        setRetryCount(1);
-        const fallbackImg = new Image();
+      // Step 2: Load sharp version in background
+      const sharpImg = new Image();
+      
+      // Set timeout for sharp image loading
+      const timeout = isMobile ? 10000 : 7000; // Very generous timeout
+      loadTimeoutRef.current = setTimeout(() => {
+        // If sharp image takes too long, keep showing blur version
+        console.warn('Sharp image load timeout, keeping blur version');
+      }, timeout);
+      
+      sharpImg.onload = () => {
+        if (loadTimeoutRef.current) {
+          clearTimeout(loadTimeoutRef.current);
+        }
+        setSharpSrc(sharpImageSrc);
+        setLoadState('loaded');
         
-        fallbackImg.onload = () => {
-          setCurrentSrc(thumbnailSrc);
-          setLoadState('loaded');
-          setHasError(false);
+        // Smooth transition to sharp image
+        setTimeout(() => {
+          setShowSharp(true);
           onLoad?.();
-        };
+        }, 100);
+      };
+      
+      sharpImg.onerror = () => {
+        if (loadTimeoutRef.current) {
+          clearTimeout(loadTimeoutRef.current);
+        }
         
-        fallbackImg.onerror = () => {
-          handleImageError();
-        };
-        
-        fallbackImg.src = thumbnailSrc;
-      } else {
-        handleImageError();
-      }
+        // Sharp image failed, but we have blur version - that's okay
+        console.warn('Sharp image failed to load, keeping blur version');
+        setLoadState('loaded'); // Consider blur version as "loaded"
+        onLoad?.();
+      };
+      
+      sharpImg.src = sharpImageSrc;
     };
     
-    img.src = optimizedSrc;
+    blurImg.onerror = () => {
+      // Even blur version failed, try fallback
+      handleImageError();
+    };
+    
+    blurImg.src = blurImageSrc;
     
     return () => {
       if (loadTimeoutRef.current) {
         clearTimeout(loadTimeoutRef.current);
       }
     };
-  }, [isInView, src, optimizedSrc, thumbnailSrc, hasError, retryCount, isMobile, onLoad]);
+  }, [isInView, src, blurImageSrc, sharpImageSrc, hasError, isMobile, onLoad]);
 
   const handleImageError = useCallback(() => {
-    console.warn('FastImage: Failed to load image', src, 'using fallback:', safeFallback);
+    console.warn('FastImage: Failed to load image', src);
     
-    // Always try to show fallback image
-    if (safeFallback && currentSrc !== safeFallback) {
-      setCurrentSrc(safeFallback);
-      setLoadState('loaded');
-      setHasError(false);
-    } else {
-      setLoadState('error');
-      setHasError(true);
-    }
-    
+    // Only use fallback as absolute last resort - try to avoid Designer.jpg
+    setLoadState('error');
+    setHasError(true);
     onError?.();
-  }, [src, safeFallback, currentSrc, onError]);
+  }, [src, onError]);
 
   return (
     <div ref={imgRef} className={`relative overflow-hidden bg-gray-50 min-h-[150px] ${className}`}>
-      {/* Always show a placeholder background */}
+      {/* Background gradient placeholder */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200" />
       
-      {/* Loading shimmer */}
-      {loadState === 'loading' && showLoader && (
-        <div className="absolute inset-0 z-10 shimmer" />
+      {/* Blurred version of actual image (shows first) */}
+      {blurSrc && loadState !== 'error' && (
+        <img
+          src={blurSrc}
+          alt=""
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+            showSharp ? 'opacity-0 scale-105 blur-sm' : 'opacity-100 blur-sm'
+          }`}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          style={{ filter: 'blur(8px)' }}
+        />
       )}
       
-      {/* Main image */}
-      {currentSrc && loadState === 'loaded' && (
+      {/* Sharp version of image (shows after blur) */}
+      {sharpSrc && showSharp && (
         <img
-          src={currentSrc}
+          src={sharpSrc}
           alt={alt}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-100"
+          className="absolute inset-0 w-full h-full object-cover transition-all duration-500 opacity-100"
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
           onError={handleImageError}
@@ -184,22 +195,27 @@ const FastImage = ({
         />
       )}
       
-      {/* Error state with better fallback */}
+      {/* Loading shimmer overlay (only during loading state) */}
+      {loadState === 'loading' && showLoader && (
+        <div className="absolute inset-0 z-10 shimmer opacity-30" />
+      )}
+      
+      {/* Error state - avoid showing Designer.jpg unless absolutely necessary */}
       {loadState === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
           <div className="text-center p-4">
-            <div className="text-2xl mb-2 text-gray-400">🖼️</div>
-            <div className="text-xs font-medium">Image not available</div>
+            <div className="text-3xl mb-2 opacity-60">🖼️</div>
+            <div className="text-xs font-medium">Unable to load image</div>
           </div>
         </div>
       )}
       
-      {/* Loading state */}
-      {loadState === 'loading' && (
+      {/* Initial blur state indicator */}
+      {loadState === 'blur' && !blurSrc && (
         <div className="absolute inset-0 flex items-center justify-center text-gray-400">
           <div className="text-center">
-            <div className="text-xl mb-1">📷</div>
-            <div className="text-xs">Loading...</div>
+            <div className="text-2xl mb-1 opacity-50">�</div>
+            <div className="text-xs opacity-75">Loading...</div>
           </div>
         </div>
       )}
