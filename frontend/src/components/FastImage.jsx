@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { optimizeImage, getThumbnail, getUltraFastThumbnail, getInstantBlurPlaceholder, getFullQualityImage } from '../utils/imageOptimizer';
-import { imagePerformanceMonitor } from '../utils/imagePerformanceMonitor';
 
 /**
- * FastImage Component - Ultra-fast blur-to-sharp progressive loading
- * Features: Instant blur placeholder, progressive loading (blur->thumbnail->optimized->full), 
- *           aggressive preloading, lazy loading, error handling
+ * FastImage Component - Mobile-optimized with guaranteed fallbacks
+ * Features: Always shows something, mobile-friendly loading, robust error handling
  */
 const FastImage = ({
   src,
@@ -20,37 +18,47 @@ const FastImage = ({
   onError,
   ...props
 }) => {
-  const [loadState, setLoadState] = useState('blur'); // blur, thumbnail, loaded, error
+  const [loadState, setLoadState] = useState('loading'); // loading, loaded, error
   const [isInView, setIsInView] = useState(priority);
   const [currentSrc, setCurrentSrc] = useState('');
-  const [showBlur, setShowBlur] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   const imgRef = useRef(null);
   const observerRef = useRef(null);
+  const loadTimeoutRef = useRef(null);
 
-  // Memoized progressive loading sources for maximum performance
-  const { blurPlaceholder, thumbnailSrc, optimizedSrc, fullQualitySrc } = useMemo(() => {
+  // Check if we're on mobile for different optimization strategy
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // Mobile-optimized image sources with guaranteed fallbacks
+  const { thumbnailSrc, optimizedSrc, safeFallback } = useMemo(() => {
     if (!src) return { 
-      blurPlaceholder: getInstantBlurPlaceholder('card'), 
       thumbnailSrc: fallback, 
       optimizedSrc: fallback,
-      fullQualitySrc: fallback
+      safeFallback: fallback
     };
     
+    // On mobile, use more aggressive optimization
+    const mobileOptimization = isMobile ? { quality: 40, width: 300 } : {};
+    
     return {
-      blurPlaceholder: getInstantBlurPlaceholder(size), // Context-aware instant blur placeholder
-      thumbnailSrc: getUltraFastThumbnail(src), // Ultra fast 35% quality - ~50ms load time
-      optimizedSrc: optimizeImage(src, size), // Optimized for display size - ~200ms load time
-      fullQualitySrc: getFullQualityImage(src) // Full quality for zoom/detail views
+      thumbnailSrc: isMobile ? getUltraFastThumbnail(src) : optimizeImage(src, 'thumbnail'),
+      optimizedSrc: optimizeImage(src, size, mobileOptimization),
+      safeFallback: fallback
     };
-  }, [src, size, fallback]);
+  }, [src, size, fallback, isMobile]);
 
-  // Setup intersection observer for lazy loading with aggressive preloading
+  // Mobile-friendly intersection observer
   useEffect(() => {
     if (priority) {
       setIsInView(true);
       return;
     }
+
+    // More conservative settings for mobile to prevent overwhelming slow connections
+    const rootMargin = isMobile ? '100px' : '200px';
+    const threshold = isMobile ? 0.1 : 0.01;
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -61,10 +69,7 @@ const FastImage = ({
           }
         });
       },
-      { 
-        rootMargin: '200px', // Very aggressive preloading - start 200px before visible
-        threshold: 0.01 // Trigger as soon as any part enters the margin
-      }
+      { rootMargin, threshold }
     );
 
     if (imgRef.current) {
@@ -73,140 +78,133 @@ const FastImage = ({
 
     return () => {
       observerRef.current?.disconnect();
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
     };
-  }, [priority]);
+  }, [priority, isMobile]);
 
-  // Progressive loading with performance tracking: blur -> thumbnail -> optimized -> full quality
+  // Simplified, robust image loading with mobile optimization
   useEffect(() => {
-    if (!isInView || !src) return;
+    if (!isInView || !src || hasError) return;
     
-    // Start performance tracking
-    const perfTracker = imagePerformanceMonitor.trackImageStart(src);
+    setLoadState('loading');
     
-    // Stage 1: Blur placeholder is already shown by default
-    setLoadState('blur');
-    setShowBlur(true);
-    
-    // Stage 2: Load ultra-fast thumbnail immediately (target: 50ms)
-    const thumbnailImg = new Image();
-    thumbnailImg.onload = () => {
-      setCurrentSrc(thumbnailSrc);
-      setLoadState('thumbnail');
-      
-      // Stage 3: Load optimized image (target: 200ms)
-      const optimizedImg = new Image();
-      optimizedImg.onload = () => {
-        setCurrentSrc(optimizedSrc);
-        setLoadState('loaded');
-        setShowBlur(false);
-        
-        // Mark as successfully loaded
-        perfTracker.complete(true);
-        onLoad?.(); // Notify parent component
-        
-        // Stage 4: Preload full quality in background for potential zoom/detail view
-        if (size === 'product' || size === 'hero' || priority) {
-          // Use requestIdleCallback for non-blocking background preload
-          const preloadFullQuality = () => {
-            const fullQualityImg = new Image();
-            fullQualityImg.src = fullQualitySrc;
-          };
-          
-          if (window.requestIdleCallback) {
-            window.requestIdleCallback(preloadFullQuality, { timeout: 1000 });
-          } else {
-            setTimeout(preloadFullQuality, 300);
-          }
-        }
-      };
-      optimizedImg.onerror = () => {
-        perfTracker.complete(false);
-        handleImageError();
-      };
-      optimizedImg.src = optimizedSrc;
-    };
-    thumbnailImg.onerror = () => {
-      perfTracker.complete(false);
+    // Set timeout for loading - more generous on mobile
+    const timeout = isMobile ? 8000 : 5000;
+    loadTimeoutRef.current = setTimeout(() => {
       handleImageError();
-    };
-    thumbnailImg.src = thumbnailSrc;
+    }, timeout);
     
-  }, [isInView, src, thumbnailSrc, optimizedSrc, fullQualitySrc, size, priority, onLoad]);
+    // Try loading optimized image first
+    const img = new Image();
+    
+    img.onload = () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+      setCurrentSrc(optimizedSrc);
+      setLoadState('loaded');
+      setHasError(false);
+      onLoad?.();
+    };
+    
+    img.onerror = () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+      
+      // Try thumbnail as fallback
+      if (thumbnailSrc !== optimizedSrc && retryCount === 0) {
+        setRetryCount(1);
+        const fallbackImg = new Image();
+        
+        fallbackImg.onload = () => {
+          setCurrentSrc(thumbnailSrc);
+          setLoadState('loaded');
+          setHasError(false);
+          onLoad?.();
+        };
+        
+        fallbackImg.onerror = () => {
+          handleImageError();
+        };
+        
+        fallbackImg.src = thumbnailSrc;
+      } else {
+        handleImageError();
+      }
+    };
+    
+    img.src = optimizedSrc;
+    
+    return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current);
+      }
+    };
+  }, [isInView, src, optimizedSrc, thumbnailSrc, hasError, retryCount, isMobile, onLoad]);
 
   const handleImageError = useCallback(() => {
-    console.warn('FastImage: Failed to load image', src, 'using fallback:', fallback);
-    if (currentSrc !== fallback && fallback) {
-      setCurrentSrc(fallback);
-      setLoadState('thumbnail'); // Treat fallback as loaded thumbnail
+    console.warn('FastImage: Failed to load image', src, 'using fallback:', safeFallback);
+    
+    // Always try to show fallback image
+    if (safeFallback && currentSrc !== safeFallback) {
+      setCurrentSrc(safeFallback);
+      setLoadState('loaded');
+      setHasError(false);
     } else {
       setLoadState('error');
-      setShowBlur(false);
-      onError?.();
+      setHasError(true);
     }
-  }, [src, fallback, currentSrc, onError]);
-
-  // Get the appropriate image source for zoom/detail views
-  const getFullQualitySource = useCallback(() => {
-    return fullQualitySrc || currentSrc || fallback;
-  }, [fullQualitySrc, currentSrc, fallback]);
+    
+    onError?.();
+  }, [src, safeFallback, currentSrc, onError]);
 
   return (
-    <div ref={imgRef} className="relative overflow-hidden bg-gray-100">
-      {/* Instant blur placeholder - shows immediately */}
-      {showBlur && loadState !== 'error' && (
-        <img
-          src={blurPlaceholder}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover filter blur-sm opacity-60"
-          style={{ 
-            transition: 'opacity 0.3s ease-out',
-            opacity: loadState === 'loaded' ? 0 : 0.6 
-          }}
-          aria-hidden="true"
-        />
+    <div ref={imgRef} className={`relative overflow-hidden bg-gray-50 min-h-[150px] ${className}`}>
+      {/* Always show a placeholder background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200" />
+      
+      {/* Loading shimmer */}
+      {loadState === 'loading' && showLoader && (
+        <div className="absolute inset-0 z-10 shimmer" />
       )}
       
-      {/* Shimmer loading animation overlay */}
-      {(loadState === 'blur' || loadState === 'thumbnail') && showLoader && (
-        <div className="absolute inset-0 z-10 shimmer" style={{
-          opacity: loadState === 'loaded' ? 0 : 1,
-          transition: 'opacity 0.3s ease-out'
-        }} />
-      )}
-      
-      {/* Main progressive image */}
-      {currentSrc && (
+      {/* Main image */}
+      {currentSrc && loadState === 'loaded' && (
         <img
           src={currentSrc}
           alt={alt}
-          className={`w-full h-full object-cover transition-all duration-300 ${
-            loadState === 'loaded' ? 'opacity-100 filter-none' : 'opacity-80'
-          } ${className}`}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-100"
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          style={{
-            transition: 'opacity 0.3s ease-out, filter 0.3s ease-out'
-          }}
+          onError={handleImageError}
           {...props}
         />
       )}
       
-      {/* Error state */}
+      {/* Error state with better fallback */}
       {loadState === 'error' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-500 text-sm">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-500">
           <div className="text-center p-4">
-            <div className="text-gray-400 mb-2">📷</div>
-            <div>Image unavailable</div>
+            <div className="text-2xl mb-2 text-gray-400">🖼️</div>
+            <div className="text-xs font-medium">Image not available</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Loading state */}
+      {loadState === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          <div className="text-center">
+            <div className="text-xl mb-1">📷</div>
+            <div className="text-xs">Loading...</div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-// Expose method for getting full quality source (for zoom components)
-FastImage.getFullQualitySource = (src, size = 'productHigh') => {
-  return src ? getFullQualityImage(src) : '';
 };
 
 export default FastImage;

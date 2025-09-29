@@ -36,30 +36,61 @@
   transition: filter 0.3s ease-out;
 }
 
-/* Enhanced shimmer animation for ultra-fast image loading feedback */
+/* Mobile-optimized shimmer animation for image loading */
 @keyframes shimmer {
   0% { 
     background-position: -200% 0;
-    opacity: 0.6;
+    opacity: 0.4;
   }
   50% { 
     background-position: 0% 0;
-    opacity: 0.8;
+    opacity: 0.7;
   }
   100% { 
     background-position: 200% 0;
-    opacity: 0.6;
+    opacity: 0.4;
   }
 }
 
 .shimmer {
   background: linear-gradient(90deg, 
-    rgba(240,240,240,0.8) 25%, 
-    rgba(255,255,255,0.9) 50%, 
-    rgba(240,240,240,0.8) 75%
+    rgba(229,231,235,0.6) 25%, 
+    rgba(255,255,255,0.8) 50%, 
+    rgba(229,231,235,0.6) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.2s ease-in-out infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .shimmer {
+    animation-duration: 2s; /* Slower on mobile to reduce battery drain */
+  }
+  
+  /* Prevent layout shifts on mobile */
+  .mobile-image-container {
+    min-height: 150px;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  }
+  
+  /* Optimize image containers for mobile */
+  .image-wrapper {
+    position: relative;
+    overflow: hidden;
+    background: #f9fafb;
+  }
+  
+  /* Better fallback for missing images on mobile */
+  .image-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    background: linear-gradient(45deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
 }
 
 /* Progressive image loading states */

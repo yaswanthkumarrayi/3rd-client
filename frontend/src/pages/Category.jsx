@@ -108,12 +108,12 @@ const Category = () => {
         onClick={() => handleProductClick(product.id)}
         className="relative group cursor-pointer"
       >
-        <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-lg bg-gray-200">
+        <div className="w-full h-64 overflow-hidden rounded-lg bg-gray-200">
           <FastImage
             src={product.hero_image_url}
             alt={product.title}
             size="card"
-            className="h-full w-full object-cover object-center group-hover:opacity-75"
+            className="group-hover:opacity-75 transition-opacity duration-300"
             priority={false}
             showLoader={true}
             fallback="/Designer.jpg"
