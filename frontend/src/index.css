@@ -93,24 +93,36 @@
   }
 }
 
-/* Progressive image loading states */
-.image-blur-placeholder {
+/* Enhanced blur-to-sharp transitions */
+.image-blur-to-sharp-transition {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.image-blur-state {
   filter: blur(8px);
   transform: scale(1.02);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.image-loading {
-  filter: blur(2px);
-  opacity: 0.9;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.image-loaded {
-  filter: blur(0px);
   opacity: 1;
+}
+
+.image-sharp-state {
+  filter: blur(0px);
   transform: scale(1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+
+/* Smooth blur overlay transitions */
+.blur-overlay-exit {
+  opacity: 0;
+  filter: blur(12px);
+  transform: scale(1.05);
+  transition: all 0.5s ease-out;
+}
+
+.sharp-image-enter {
+  opacity: 1;
+  filter: blur(0px);
+  transform: scale(1);
+  transition: all 0.5s ease-out;
 }
 
 /* Text utilities */
