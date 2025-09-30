@@ -4,7 +4,6 @@ import { supabase } from "../supabaseClient";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FastImage from "../components/FastImage";
-import ImageLoadTest from "../components/ImageLoadTest";
 import { ArrowRight, Star, Sparkles, Heart, ShoppingBag, DollarSign, Shield, Award } from "lucide-react";
 import { optimizeImage, createBlurPlaceholder, preloadImages, BLUR_PLACEHOLDER_STYLE, LOADED_IMAGE_STYLE, getThumbnail, getUltraFastThumbnail } from "../utils/imageOptimizer";
 import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
@@ -631,9 +630,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* Temporary Image Loading Test - Remove after testing */}
-      <ImageLoadTest />
       
       <Footer />
 
