@@ -10,7 +10,8 @@ import {
   Facebook,
   Instagram,
   Youtube,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from 'lucide-react';
 import SubFooter from './SubFooter';
 

@@ -10,32 +10,32 @@ import { simplePerformanceTracker } from "../utils/simplePerformanceTracker";
 
 const testimonials = [
   {
-    quote: "The recent lehanga which I have purchased from you is excellent.. quality and fitting of blouse and lehanga is top notch. Thank you for maintaining such good quality and fast delivery service.",
-    purchased: "Paithani Lehanga",
-    name: "Komali",
-    location: "Hyderabad, Telangana",
-    initial: "K"
+    quote: "Beautiful collection and amazing quality! I ordered a silk saree and the colors are even more vibrant in person. The customer service team was very helpful throughout.",
+    purchased: "Pure Silk Saree",
+    name: "Lakshmi Reddy",
+    location: "Vijayawada, Andhra Pradesh",
+    initial: "L"
   },
   {
-    quote: "Bought latest trending space silk saree from your page .. wore it for a wedding. Got many compliments from everyone. Thank you ",
-    purchased: "Space silk saree with Jarkhan work",
-    name: "Swetha",
-    location: "Nellore, Andhra Pradesh",
-    initial: "S"
+    quote: "I've been a regular customer for over a year now. Every purchase exceeds my expectations. The fabric quality and traditional designs are unmatched!",
+    purchased: "Cotton Handloom Saree",
+    name: "Divya Sharma",
+    location: "Bangalore, Karnataka",
+    initial: "D"
   },
   {
-    quote: "Absolutely in love with the saree I ordered! The fabric quality is top-notch, and it looked exactly like the pictures. Ashok kumar Textiles has become my go-to for festive shopping!",
-    purchased: "Benarasi Saree",
-    name: "Priya",
-    location: "Hanumakonda, Telangana",
-    initial: "P"
+    quote: "Perfect blend of tradition and elegance! The lehanga I bought fit perfectly and received so many compliments at the wedding. Definitely ordering again!",
+    purchased: "Designer Lehanga Set",
+    name: "Meera Patel",
+    location: "Mumbai, Maharashtra",
+    initial: "M"
   },
   {
-    quote: "Was worried about online saree shopping, but Ashok Kumar Textiles made it so easy. The frock fitting is perfect and delivery was on time. Highly recommended. Customer service was very responsive too!!",
-    purchased: "Mul Mul Cotton Saree",
-    name: "Anilisha",
-    location: "Chennai, Tamil Nadu",
-    initial: "A"
+    quote: "Fast delivery and genuine products. I was skeptical about buying online but Ashok Kumar Textiles proved me wrong. The saree quality is superb and packaging was excellent.",
+    purchased: "Kanchipuram Silk Saree",
+    name: "Radha Krishnan",
+    location: "Guntur, Andhra Pradesh",
+    initial: "R"
   }
 ];
 
@@ -628,7 +628,6 @@ const Home = () => {
               </div>
             ))}
           </div>
-          <h1>example</h1>
         </div>
       </section>
 

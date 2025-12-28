@@ -19,14 +19,14 @@ const RefundPolicy = () => (
 
       <SectionTitle>Important Policy Notice</SectionTitle>
       <ul className="list-disc ml-6 text-pink-700 mb-4">
-        <li>⚠️ <span className="font-semibold">NO RETURNS POLICY</span> — All sales are final and non-refundable.</li>
-        <li>⚠️ <span className="font-semibold">NO CANCELLATION</span> — Strictly no cancellation after payment is completed. Please review your order carefully before making payment.</li>
+        <li>⚠️ <span className="font-semibold">RETURNS NOT ACCEPTED</span> — All transactions are conclusive and irreversible.</li>
+        <li>⚠️ <span className="font-semibold">CANCELLATIONS PROHIBITED</span> — Orders cannot be cancelled once payment has been finalized. Kindly verify your order details before completing payment.</li>
       </ul>
 
       <SectionTitle>Exchange Policy</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Limited Exchange Available</p>
       <p className="text-gray-700 mb-4">
-        Exchange (same sarees) is applicable <span className="font-semibold">ONLY</span> if damage is clearly shown in the unpacking video.
+        Product replacement (identical sarees) is permitted <span className="font-semibold">EXCLUSIVELY</span> when defects are documented in the unboxing recording.
       </p>
 
       <SectionTitle>Exchange Eligibility Criteria</SectionTitle>

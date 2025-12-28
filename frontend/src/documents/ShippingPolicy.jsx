@@ -19,14 +19,14 @@ const ShippingPolicy = () => (
       
       <SectionTitle>Free Shipping All Over India! 🇮🇳</SectionTitle>
       <p className="text-pink-700 font-semibold mb-4 text-center">
-        Enjoy complimentary shipping on all orders within India, no minimum order value required.
+        Experience zero-cost delivery throughout India with no minimum purchase requirement.
       </p>
       
       <SectionTitle>Order Processing Time</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Standard Processing</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>2-3 working days before dispatch</li>
-        <li>Includes order verification, quality check, and careful packaging of your saree</li>
+        <li>2-3 business days prior to shipment</li>
+        <li>Encompasses purchase confirmation, quality assessment, and secure packaging of your saree</li>
       </ul>
       <p className="text-gray-700 mb-4">
         <span className="font-semibold">What We Do:</span>
@@ -43,16 +43,16 @@ const ShippingPolicy = () => (
       
       <SectionTitle>Delivery Timeline</SectionTitle>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>Domestic Shipping (India): 8-9 working days after dispatch</li>
-        <li>Free shipping nationwide 🚚</li>
+        <li>Within India: 8-9 business days following dispatch</li>
+        <li>Complimentary delivery across the country 🚚</li>
       </ul>
       
       <SectionTitle>Factors Affecting Delivery Time</SectionTitle>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>Weather conditions and natural disasters</li>
-        <li>Peak season demand (festivals, holidays)</li>
-        <li>Remote location accessibility</li>
-        <li>Local courier service schedules</li>
+        <li>Climate circumstances and environmental events</li>
+        <li>High-demand periods (celebrations, public holidays)</li>
+        <li>Geographic remoteness and terrain challenges</li>
+        <li>Regional courier operational timings</li>
       </ul>
       
       <SectionTitle>Shipping Coverage</SectionTitle>

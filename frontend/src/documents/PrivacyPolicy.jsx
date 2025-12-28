@@ -20,29 +20,29 @@ const PrivacyPolicy = () => (
       <SectionTitle>Information We Collect</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Personal Information</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>Name, email address, and phone number</li>
-        <li>Billing and shipping addresses</li>
-        <li>Payment information (processed securely through Razorpay)</li>
-        <li>Order history and preferences</li>
-        <li>Account credentials and profile information</li>
+        <li>Full name, contact email, and telephone number</li>
+        <li>Payment and delivery address details</li>
+        <li>Transaction details (securely handled via Razorpay)</li>
+        <li>Purchase records and shopping preferences</li>
+        <li>Login details and user profile data</li>
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Non-Personal Information</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>Browser type, device information, and IP address</li>
-        <li>Website usage patterns and analytics data</li>
-        <li>Cookies and tracking preferences</li>
+        <li>Web browser details, device specifications, and IP location</li>
+        <li>Site interaction patterns and statistical information</li>
+        <li>Cookie settings and tracking configurations</li>
       </ul>
       
       <SectionTitle>How We Use Your Information</SectionTitle>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>Processing and fulfilling your orders</li>
-        <li>Providing customer support and responding to inquiries</li>
-        <li>Sending order confirmations, updates, and shipping notifications</li>
-        <li>Improving our website functionality and user experience</li>
-        <li>Analyzing website usage to enhance our services</li>
-        <li>Sending promotional content and newsletters (with your consent)</li>
-        <li>Ensuring website security and preventing fraud</li>
-        <li>Complying with legal obligations and requirements</li>
+        <li>Completing and managing your purchase requests</li>
+        <li>Delivering support services and addressing customer queries</li>
+        <li>Transmitting purchase confirmations, status updates, and delivery alerts</li>
+        <li>Enhancing site performance and visitor satisfaction</li>
+        <li>Evaluating site metrics to optimize our offerings</li>
+        <li>Distributing marketing materials and email updates (upon authorization)</li>
+        <li>Maintaining platform integrity and detecting fraudulent activity</li>
+        <li>Adhering to statutory duties and regulatory compliance</li>
       </ul>
       
       <SectionTitle>Third-Party Services</SectionTitle>

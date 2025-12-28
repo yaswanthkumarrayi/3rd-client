@@ -85,7 +85,7 @@ function Payment() {
       // Try to get profile from users table using email
       const { data: userData, error: userError } = await supabase
         .from("users")
-        .select("full_name, email, phone")
+        .select("full_name, email, phone, address, city, state, pincode")
         .eq("email", email)
         .single();
 
@@ -95,7 +95,7 @@ function Payment() {
         // If users table fails, try profiles table
         const { data: profileResponse, error: profileError } = await supabase
           .from("profiles")
-          .select("full_name, email, phone")
+          .select("full_name, email, phone, address, city, state, pincode")
           .eq("id", userId)
           .single();
         

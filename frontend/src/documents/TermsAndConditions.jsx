@@ -16,20 +16,20 @@ const TermsAndConditions = () => (
       <p className="text-sm text-gray-500 mb-2 text-center">Last updated: August 14, 2025</p>
       <SectionTitle>Acceptance of Terms</SectionTitle>
       <p className="text-gray-700 mb-4">
-        By accessing and using the Ashok Kumar textiles website, placing orders, or using our services, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use our website or services.
+        When you visit the Ashok Kumar Textiles website, make purchases, or utilize our offerings, you confirm your understanding and acceptance of these Terms and Conditions. Should you disagree with any portion of these terms, please refrain from accessing our website or utilizing our services.
       </p>
       <SectionTitle>Important Notice</SectionTitle>
       <ul className="list-disc ml-6 text-pink-700 mb-4">
-        <li>⚠️ <span className="font-semibold">STRICTLY NO CANCELLATION</span> after payment is completed</li>
-        <li>⚠️ <span className="font-semibold">NO RETURNS</span> - Exchange (same dress) applicable only if damage is shown in unpacking video</li>
+        <li>⚠️ <span className="font-semibold">ORDERS CANNOT BE CANCELLED</span> once payment has been processed</li>
+        <li>⚠️ <span className="font-semibold">REFUNDS NOT AVAILABLE</span> - Product replacement (identical item) permitted only when defects are documented in unboxing video</li>
       </ul>
       <SectionTitle>Order and Payment Terms</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Payment Processing</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>All payments are processed securely through Razorpay</li>
-        <li>We accept major credit cards, debit cards, UPI, and net banking</li>
-        <li>Prices are listed in Indian Rupees (INR) and include applicable taxes</li>
-        <li>Payment must be completed at the time of placing the order</li>
+        <li>Payment transactions are handled securely via Razorpay platform</li>
+        <li>Accepted payment modes include major credit/debit cards, UPI, and online banking</li>
+        <li>All pricing is displayed in Indian Rupees (INR) with taxes included</li>
+        <li>Full payment is required when submitting your order</li>
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Order Confirmation</p>
       <p className="text-gray-700 mb-4">
@@ -44,17 +44,17 @@ const TermsAndConditions = () => (
       </ul>
       <SectionTitle>Shipping and Delivery</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">Processing Time</p>
-      <p className="text-gray-700 mb-4">Order processing time is 2-3 working days before dispatch.</p>
+      <p className="text-gray-700 mb-4">Your order will be prepared within 2-3 business days prior to shipment.</p>
       <p className="text-gray-700 mb-2 font-semibold">Delivery Timeline</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>India: 8-9 working days after dispatch</li>
-        <li>Free shipping available all over India</li>
+        <li>India: 8-9 business days following shipment</li>
+        <li>Complimentary nationwide shipping across India</li>
       </ul>
       <p className="text-gray-700 mb-2 font-semibold">Delivery Conditions</p>
       <ul className="list-disc ml-6 mb-4 text-gray-700">
-        <li>If door delivery is not possible, customers must collect the package from the courier service</li>
-        <li>If a package shows "delivered" but you haven't received it, please visit the nearest courier branch</li>
-        <li>Delivery address cannot be changed once the order is shipped</li>
+        <li>When home delivery isn't feasible, packages must be picked up from the local courier office</li>
+        <li>Should tracking indicate "delivered" without receipt, kindly visit your closest courier location</li>
+        <li>Shipping addresses are final once packages are dispatched</li>
       </ul>
       <SectionTitle>Returns and Exchange Policy</SectionTitle>
       <p className="text-gray-700 mb-2 font-semibold">No Returns Policy</p>
