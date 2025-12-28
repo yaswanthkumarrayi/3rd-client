@@ -40,7 +40,7 @@ const testimonials = [
 ];
 
 const stats = [
-  { label: "Unique Designs", value: "500+", icon: Sparkles },
+  { label: "Curated Styles", value: "500+", icon: Sparkles },
   { label: "Happy Customers", value: "1000+", icon: Heart },
   { label: "Instagram Followers", value: "100K+", icon: Award }
 ];
@@ -253,7 +253,7 @@ const Home = () => {
               </div>
               
               <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto lg:mx-0 animate-fade-in-up font-inter">
-                Indulge in the artistry of timeless weaves, crafted to celebrate your elegance and make every occasion unforgettable.
+                Discover exquisite sarees that bring grace and sophistication to your wardrobe, designed for every special moment in your life.
               </p>
 
               {/* Stats */}
@@ -371,7 +371,7 @@ const Home = () => {
             FEATURED COLLECTION
           </h2>
           <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto font-inter">
-            Handpicked sarees that embody the perfect blend of traditional craftsmanship and contemporary elegance
+            Carefully selected sarees showcasing exceptional quality, timeless beauty, and stunning designs for every occasion
           </p>
         </div>
 
@@ -505,7 +505,7 @@ const Home = () => {
               SEARCH BY CATEGORIES
             </h2>
             <p className="text-gray-600 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto font-inter">
-              Explore our diverse collection of traditional and contemporary sarees
+              Browse through premium categories featuring authentic Indian textiles and modern designs
             </p>
           </div>
           
@@ -564,7 +564,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 bg-clip-text text-transparent mb-3 sm:mb-4 font-heading">
-              WHAT OUR CUSTOMERS SAY
+              TESTIMONALS
             </h2>
             <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed font-inter">
               Real stories from real customers who love Ashok Kumar Textiles

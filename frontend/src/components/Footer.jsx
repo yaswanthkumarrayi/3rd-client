@@ -49,9 +49,9 @@ const Footer = () => {
           <div className="lg:col-span-2">
             <h3 className="text-2xl font-bold mb-4 font-heading">ASHOK KUMAR TEXTILES</h3>
             <p className="text-fuchsia-200 mb-6 leading-relaxed font-normal">
-              Artistry in every drape - handpicked, handcrafted and unique. 
-              We have sarees for every occasion ranging from festivals, cocktail parties, 
-              daytime social events or simply elegant everyday wear.
+              Where tradition meets elegance - crafted with passion, designed for perfection. 
+              From grand celebrations to casual gatherings, discover sarees that add grace 
+              and charm to every moment of your life.
             </p>
             
             <div className="space-y-3 mb-8">

@@ -91,10 +91,10 @@ const About = () => {
             </h1>
             <div className="w-24 h-1 bg-gradient-to-r from-fuchsia-500 to-fuchsia-300 mx-auto mb-6 rounded-full"></div>
             <p className="text-gray-700 text-xl md:text-2xl mb-4 font-medium max-w-4xl mx-auto leading-relaxed font-inter">
-              Artistry in every drape - handpicked, handcrafted and unique
+              Where tradition meets elegance - crafted with passion, designed for perfection
             </p>
             <p className="text-gray-600 text-lg max-w-3xl mx-auto">
-              We have sarees for every occasion ranging from festivals, cocktail parties, daytime social events or simply elegant everyday wear.
+              From grand celebrations to casual gatherings, discover sarees that add grace and charm to every moment of your life.
             </p>
           </div>
         </div>
