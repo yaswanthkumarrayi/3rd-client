@@ -663,19 +663,11 @@ function Payment() {
         // Send admin notification email via backend API
         try {
           console.log('📧 Sending admin notification email via Gmail...');
-          const adminResponse = await fetch('http://localhost:5000/api/send-admin-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ orderData: emailOrderData })
-          });
-          
-          if (adminResponse.ok) {
-            const adminResult = await adminResponse.json();
-            console.log('✅ Admin notification email sent successfully:', adminResult.messageId);
+          const adminEmailSent = await emailService.sendOrderNotificationToAdmin(emailOrderData);
+          if (adminEmailSent) {
+            console.log('✅ Admin notification email sent successfully');
           } else {
-            console.warn('⚠️ Admin notification email failed:', adminResponse.status);
+            console.warn('⚠️ Admin notification email failed');
           }
         } catch (adminEmailError) {
           console.error('❌ Admin email error:', adminEmailError);
@@ -684,19 +676,11 @@ function Payment() {
         // Send customer confirmation email via backend API
         try {
           console.log('📧 Sending customer confirmation email via Gmail...');
-          const customerResponse = await fetch('http://localhost:5000/api/send-customer-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ orderData: emailOrderData })
-          });
-          
-          if (customerResponse.ok) {
-            const customerResult = await customerResponse.json();
-            console.log('✅ Customer confirmation email sent successfully:', customerResult.messageId);
+          const customerEmailSent = await emailService.sendOrderConfirmationToCustomer(emailOrderData);
+          if (customerEmailSent) {
+            console.log('✅ Customer confirmation email sent successfully');
           } else {
-            console.warn('⚠️ Customer confirmation email failed:', customerResponse.status);
+            console.warn('⚠️ Customer confirmation email failed');
           }
         } catch (customerEmailError) {
           console.error('❌ Customer email error:', customerEmailError);

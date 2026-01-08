@@ -28,7 +28,7 @@ async function fetchAllOrders(pageNum = 0) {
     // Start with minimal query to avoid column errors
     const { data: orders, error: ordersError } = await supabase
       .from("orders")
-      .select("id, user_email, items, amount, status, created_at")
+      .select("id, user_email, items, amount, status, created_at, phone, address, city, state, pincode")
       .order("created_at", { ascending: false })
       .range(offset, offset + ORDERS_PER_PAGE - 1);
 

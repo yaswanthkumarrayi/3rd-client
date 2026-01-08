@@ -414,14 +414,61 @@ class EmailService {
 
   async sendOrderConfirmationToCustomer(orderData) {
     try {
-      return await this.sendEmailToBackend({
-        to: orderData.customerEmail,
-        subject: `✅ Order Confirmation #${orderData.orderNumber} - Thank you for your purchase!`,
-        html: this.generateCustomerConfirmationHTML(orderData),
-        text: this.generateCustomerConfirmationText(orderData)
+      console.log('📧 Sending customer confirmation via direct API...');
+      console.log('📦 Customer email data:', {
+        orderNumber: orderData.orderNumber,
+        customerEmail: orderData.customerEmail,
+        customerName: orderData.customerName
       });
+      
+      // Use the direct customer email API
+      const response = await fetch(`${this.emailServerUrl}/api/send-customer-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ orderData })
+      });
+
+      if (!response.ok) {
+        console.error(`❌ Customer email HTTP Error: ${response.status} ${response.statusText}`);
+        
+        try {
+          const errorText = await response.text();
+          console.error('❌ Customer email error response:', errorText);
+          
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+            console.error('❌ Customer email error details:', errorData);
+          } catch (parseError) {
+            console.error('❌ Customer email response is not JSON:', errorText);
+            errorData = { error: errorText || `HTTP ${response.status}: ${response.statusText}` };
+          }
+          
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        } catch (responseError) {
+          console.error('❌ Failed to read customer email error response:', responseError);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        console.error('❌ Failed to parse customer email response as JSON:', parseError);
+        throw new Error('Invalid response format from customer email service');
+      }
+
+      if (result.success) {
+        console.log('📧 Customer email sent successfully via direct API:', result.messageId);
+        return true;
+      } else {
+        throw new Error(result.error || 'Customer email sending failed');
+      }
     } catch (error) {
-      console.error('Failed to send customer confirmation email:', error);
+      console.error('❌ Failed to send customer confirmation email:', error);
       return false;
     }
   }
