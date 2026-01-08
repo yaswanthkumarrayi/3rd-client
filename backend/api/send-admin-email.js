@@ -18,8 +18,8 @@ export default async function handler(req, res) {
   try {
     const { orderData } = req.body;
     
-    // Use hardcoded admin email (same as test email works)
-    const adminEmail = 'yash.freelancer17@gmail.com';
+    // Use admin email from environment or default to aktexmsp9@gmail.com
+    const adminEmail = process.env.ADMIN_EMAIL || 'aktexmsp9@gmail.com';
 
     // Check Gmail credentials
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
